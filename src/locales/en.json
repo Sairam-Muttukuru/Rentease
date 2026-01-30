@@ -1,0 +1,65 @@
+{
+    "common": {
+        "dashboard": "Dashboard",
+        "my_property": "My Property",
+        "payments": "Payments",
+        "complaints": "Complaints",
+        "settings": "Settings",
+        "home_services": "Home Services",
+        "logout": "Logout",
+        "welcome_back": "Welcome back,"
+    },
+    "dashboard": {
+        "settled": "Settled",
+        "action_required": "Action Required",
+        "current_rent_due": "Current Rent Due",
+        "next_due_date": "Next Due Date",
+        "property_status": "Property Status",
+        "recent_transactions": "Recent Transactions",
+        "view_all": "View All",
+        "pay_rent": "Pay Rent",
+        "help_desk": "Help Desk"
+    },
+    "settings": {
+        "profile_info": "Profile Information",
+        "full_name": "Full Name",
+        "email_address": "Email Address",
+        "phone_number": "Phone Number",
+        "save_changes": "Save Changes",
+        "security": "Security",
+        "change_password": "Change Password",
+        "preferences": "Preferences",
+        "language": "Language"
+    },
+    "complaints": {
+        "receipt": "Receipt",
+        "priority": "Priority",
+        "details_title": "Complaint Details",
+        "id_prefix": "ID: #",
+        "attached_evidence": "Attached Evidence",
+        "no_images": "No images attached to this complaint.",
+        "ticket_info": "Ticket Information",
+        "update_status": "Update Status",
+        "mark_in_progress": "Mark as In Progress",
+        "mark_resolved": "Mark as Resolved",
+        "timeline": "Timeline",
+        "submitted": "Complaint Submitted",
+        "status_updated": "Status Updated to"
+    },
+    "property": {
+        "title": "Property Details",
+        "address": "Address",
+        "monthly_rent": "Monthly Rent",
+        "lease_start": "Lease Start",
+        "lease_end": "Lease End",
+        "lease_active": "Lease Active",
+        "residents": "Residents",
+        "landlord_details": "Landlord Details",
+        "message_landlord": "Message Landlord",
+        "view_profile": "View Profile",
+        "type": "Type",
+        "size": "Size",
+        "bedrooms": "Bedrooms",
+        "bathrooms": "Bathrooms"
+    }
+}

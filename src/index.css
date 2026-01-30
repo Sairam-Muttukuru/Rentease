@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* IMPORTANT: Reset margins to prevent layout breakage */
+body,
+html {
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  /* Prevents accidental horizontal scroll */
+  scroll-behavior: smooth;
+}

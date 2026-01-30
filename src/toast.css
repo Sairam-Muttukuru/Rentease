@@ -1,0 +1,22 @@
+/* Success toast container */
+.Toastify__toast--success {
+  background: #ffffff !important;   /* white background */
+  color: #0f172a !important;         /* dark text */
+  border-left: 5px solid #22c55e;    /* green accent */
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+/* Success icon (green tick) */
+.Toastify__toast--success .Toastify__toast-icon svg {
+  fill: #22c55e !important;          /* green tick */
+}
+
+/* Remove progress bar completely */
+.Toastify__progress-bar {
+  background: #22c55e !important;
+}
+
+/* Optional: make close button subtle */
+.Toastify__close-button {
+  color: #64748b !important;
+}

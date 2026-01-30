@@ -1,0 +1,65 @@
+{
+    "common": {
+        "dashboard": "डैशबोर्ड",
+        "my_property": "मेरी संपत्ति",
+        "payments": "भुगतान",
+        "complaints": "शिकायतें",
+        "settings": "सेटिंग्स",
+        "home_services": "होम सेवाएं",
+        "logout": "लॉगआउट",
+        "welcome_back": "वापसी पर स्वागत है,"
+    },
+    "dashboard": {
+        "settled": "निपटारा",
+        "action_required": "कार्रवाई आवश्यक",
+        "current_rent_due": "वर्तमान किराया देय",
+        "next_due_date": "अगली देय तिथि",
+        "property_status": "संपत्ति की स्थिति",
+        "recent_transactions": "हाल के लेनदेन",
+        "view_all": "सभी देखें",
+        "pay_rent": "किराया दें",
+        "help_desk": "सहायता केंद्र"
+    },
+    "settings": {
+        "profile_info": "प्रोफ़ाइल जानकारी",
+        "full_name": "पूरा नाम",
+        "email_address": "ईमेल पता",
+        "phone_number": "फ़ोन नंबर",
+        "save_changes": "परिवर्तन सहेजें",
+        "security": "सुरक्षा",
+        "change_password": "पासवर्ड बदलें",
+        "preferences": "प्राथमिकताएँ",
+        "language": "भाषा"
+    },
+    "complaints": {
+        "receipt": "रसीद",
+        "priority": "प्राथमिकता",
+        "details_title": "शिकायत विवरण",
+        "id_prefix": "आईडी: #",
+        "attached_evidence": "संलग्न प्रमाण",
+        "no_images": "इस शिकायत के साथ कोई चित्र नहीं हैं।",
+        "ticket_info": "टिकट जानकारी",
+        "update_status": "स्थिति अपडेट करें",
+        "mark_in_progress": "प्रगति में के रूप में चिह्नित करें",
+        "mark_resolved": "समाधान के रूप में चिह्नित करें",
+        "timeline": "समय रेखा",
+        "submitted": "शिकायत दर्ज की गई",
+        "status_updated": "स्थिति अपडेट की गई"
+    },
+    "property": {
+        "title": "संपत्ति विवरण",
+        "address": "पता",
+        "monthly_rent": "मासिक किराया",
+        "lease_start": "लीज़ शुरू",
+        "lease_end": "लीज़ समाप्त",
+        "lease_active": "लीज़ सक्रिय",
+        "residents": "निवासी",
+        "landlord_details": "मकान मालिक विवरण",
+        "message_landlord": "मकान मालिक को संदेश भेजें",
+        "view_profile": "प्रोफ़ाइल देखें",
+        "type": "प्रकार",
+        "size": "आकार",
+        "bedrooms": "बेडरूम",
+        "bathrooms": "बाथरूम"
+    }
+}

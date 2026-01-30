@@ -1,0 +1,1 @@
+CHECK (((payment_status)::text = ANY ((ARRAY['PAID'::character varying, 'PENDING'::character varying, 'OVERDUE'::character varying])::text[])))

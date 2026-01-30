@@ -1,0 +1,138 @@
+const Property = require("../models/PropertyModel");
+const Images = require("../models/PropertyImageModel");
+const Amenities = require("../models/PropertyAmenityModel");
+
+/* =======================
+   CREATE PROPERTY
+======================= */
+exports.createProperty = async (landlordId, data) => {
+  const property = await Property.createProperty({
+    landlord_id: landlordId,
+    ...data
+  });
+
+  // images
+  if (data.images?.length) {
+    for (const img of data.images) {
+      await Images.addImage(property.id, img.url, img.is_cover || false);
+    }
+  }
+
+  // amenities
+  if (data.amenities?.length) {
+    for (const amenityId of data.amenities) {
+      await Amenities.addAmenityToProperty(property.id, amenityId);
+    }
+  }
+
+  return property;
+};
+
+/* =======================
+   GET ALL PROPERTIES
+======================= */
+exports.getAllProperties = async () => {
+  const properties = await Property.getAllProperties();
+
+  // Populate images and amenities for each property
+  for (const property of properties) {
+    property.images = await Images.getImagesByProperty(property.id);
+    property.amenities = await Amenities.getAmenitiesByProperty(property.id);
+  }
+
+  return properties;
+};
+
+/* =======================
+   GET PROPERTIES BY LANDLORD
+======================= */
+exports.getPropertiesByLandlord = async (landlordId) => {
+  const properties = await Property.getPropertiesByLandlordId(landlordId);
+
+  // Populate images and amenities for each property
+  for (const property of properties) {
+    property.images = await Images.getImagesByProperty(property.id);
+    property.amenities = await Amenities.getAmenitiesByProperty(property.id);
+  }
+
+  return properties;
+};
+
+/* =======================
+   GET PROPERTY DETAILS
+======================= */
+exports.getPropertyDetails = async (propertyId) => {
+  const property = await Property.getPropertyById(propertyId);
+  if (!property) throw new Error("Property not found");
+
+  property.images = await Images.getImagesByProperty(propertyId);
+  property.amenities = await Amenities.getAmenitiesByProperty(propertyId);
+
+  return property;
+};
+
+/* =======================
+   UPDATE PROPERTY
+======================= */
+exports.updateProperty = async (propertyId, landlordId, data) => {
+  // 1️⃣ Update property basic details
+  const updatedProperty = await Property.updateProperty(
+    propertyId,
+    landlordId,
+    data
+  );
+
+  if (!updatedProperty) {
+    throw new Error("Unauthorized or property not found");
+  }
+
+  // 2️⃣ Update images (if sent)
+  if (data.images) {
+    await Images.deleteImagesByProperty(propertyId);
+
+    for (let img of data.images) {
+      await Images.addImage(propertyId, img.url, img.is_cover);
+    }
+  }
+
+  // 3️⃣ Update amenities (if sent)
+  if (data.amenities) {
+    await Amenities.removeAmenitiesFromProperty(propertyId);
+
+    for (let amenityId of data.amenities) {
+      await Amenities.addAmenityToProperty(propertyId, amenityId);
+    }
+  }
+
+  return updatedProperty;
+};
+
+
+// exports.updateProperty = async (propertyId, landlordId, data) => {
+//   const updatedProperty = await Property.updateProperty(
+//     propertyId,
+//     landlordId,
+//     data
+//   );
+
+//   if (!updatedProperty) {
+//     throw new Error("Unauthorized or property not found");
+//   }
+
+//   return updatedProperty;
+// };
+
+
+/* =======================
+   DELETE PROPERTY
+======================= */
+exports.deleteProperty = async (propertyId, landlordId) => {
+  const property = await Property.getPropertyById(propertyId);
+
+  if (!property || property.landlord_id !== landlordId) {
+    throw new Error("Unauthorized or property not found");
+  }
+
+  // delete property (Model handles deletion of related images/amenities in a transaction)
+  return await Property.deletePropertyWithRelations(propertyId, landlordId);
+};

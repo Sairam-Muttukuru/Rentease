@@ -1,0 +1,65 @@
+{
+    "common": {
+        "dashboard": "డ్యాష్‌బోర్డ్",
+        "my_property": "నా ఆస్తి",
+        "payments": "చెల్లింపులు",
+        "complaints": "ఫిర్యాదులు",
+        "settings": "సెట్టింగ్‌లు",
+        "home_services": "గృహ సేవలు",
+        "logout": "లాగౌట్",
+        "welcome_back": "స్వాగతం,"
+    },
+    "dashboard": {
+        "settled": "పూర్తయింది",
+        "action_required": "చర్య అవసరం",
+        "current_rent_due": "ప్రస్తుత అద్దె బాకీ",
+        "next_due_date": "తదుపరి గడువు తేదీ",
+        "property_status": "ఆస్తి స్థితి",
+        "recent_transactions": "ఇటీవలి లావాదేవీలు",
+        "view_all": "అన్నీ చూడండి",
+        "pay_rent": "అద్దె చెల్లించండి",
+        "help_desk": "సహాయ కేంద్రం"
+    },
+    "settings": {
+        "profile_info": "ప్రొఫైల్ సమాచారం",
+        "full_name": "పూర్తి పేరు",
+        "email_address": "ఈమెయిల్ చిరునామా",
+        "phone_number": "ఫోన్ నంబర్",
+        "save_changes": "మార్పులను సేవ్ చేయండి",
+        "security": "భద్రత",
+        "change_password": "పాస్‌వర్డ్ మార్చండి",
+        "preferences": "ప్రాధాన్యతలు",
+        "language": "భాష"
+    },
+    "complaints": {
+        "receipt": "రసీదు",
+        "priority": "ప్రాధాన్యత",
+        "details_title": "ఫిర్యాదు వివరాలు",
+        "id_prefix": "ID: #",
+        "attached_evidence": "జోడించిన ఆధారాలు",
+        "no_images": "ఈ ఫిర్యాదుకు చిత్రాలు జోడించబడలేదు.",
+        "ticket_info": "టికెట్ సమాచారం",
+        "update_status": "స్థితిని నవీకరించండి",
+        "mark_in_progress": "పురోగతిలో ఉన్నట్లు గుర్తించండి",
+        "mark_resolved": "పరిష్కరించబడినట్లు గుర్తించండి",
+        "timeline": "కాలక్రమం",
+        "submitted": "ఫిర్యాదు సమర్పించబడింది",
+        "status_updated": "స్థితి నవీకరించబడింది"
+    },
+    "property": {
+        "title": "ఆస్తి వివరాలు",
+        "address": "చిరునామా",
+        "monthly_rent": "నెలవారీ అద్దె",
+        "lease_start": "లీజు ప్రారంభం",
+        "lease_end": "లీజు ముగింపు",
+        "lease_active": "లీజు యాక్టివ్",
+        "residents": "నివాసితులు",
+        "landlord_details": "యజమాని వివరాలు",
+        "message_landlord": "యజమానికి సందేశం పంపండి",
+        "view_profile": "ప్రొఫైల్ చూడండి",
+        "type": "రకం",
+        "size": "పరిమాణం",
+        "bedrooms": "పడకగదులు",
+        "bathrooms": "స్నానపు గదులు"
+    }
+}
