@@ -22,7 +22,7 @@ const CARD_ELEMENT_OPTIONS = {
   },
 };
 
-const CheckoutForm = ({ amount, tenantId, propertyId, tenantName, isDarkMode }) => {
+const CheckoutForm = ({ amount, tenantId, propertyId, tenantName, isDarkMode, paymentType = 'RENT' }) => {
   const stripe = useStripe();
   const elements = useElements();
 
@@ -106,7 +106,12 @@ const CheckoutForm = ({ amount, tenantId, propertyId, tenantName, isDarkMode }) 
 
       // 3️⃣ Payment Success - Save to DB
       if (result.paymentIntent?.status === "succeeded") {
-        await fetch("http://localhost:5000/api/payment/rent-payment", {
+        // Determine endpoint based on paymentType
+        const endpoint = paymentType === 'SECURITY_DEPOSIT'
+          ? "http://localhost:5000/api/payment/security-deposit"
+          : "http://localhost:5000/api/payment/rent-payment";
+
+        await fetch(endpoint, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -136,7 +141,11 @@ const CheckoutForm = ({ amount, tenantId, propertyId, tenantName, isDarkMode }) 
       // This is enabled because the user requested "anyhow make it work"
       try {
         const mockTx = "MOCK_TX_" + Date.now();
-        const saveRes = await fetch("http://localhost:5000/api/payment/rent-payment", {
+        const endpoint = paymentType === 'SECURITY_DEPOSIT'
+          ? "http://localhost:5000/api/payment/security-deposit"
+          : "http://localhost:5000/api/payment/rent-payment";
+
+        const saveRes = await fetch(endpoint, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -327,8 +336,8 @@ const CheckoutForm = ({ amount, tenantId, propertyId, tenantName, isDarkMode }) 
             <span className="text-xs text-gray-400 flex items-center gap-1"><ShieldCheck size={12} /> Secure Payment</span>
           </label>
           <div className={`p-4 border rounded-xl transition-all shadow-sm ${isDarkMode
-              ? "bg-slate-800 border-slate-700 focus-within:ring-2 focus-within:ring-violet-500 focus-within:border-transparent"
-              : "bg-gray-50 border-gray-200 focus-within:ring-2 focus-within:ring-violet-500 focus-within:border-transparent"
+            ? "bg-slate-800 border-slate-700 focus-within:ring-2 focus-within:ring-violet-500 focus-within:border-transparent"
+            : "bg-gray-50 border-gray-200 focus-within:ring-2 focus-within:ring-violet-500 focus-within:border-transparent"
             }`}>
             <CardElement options={cardElementOptions} />
           </div>

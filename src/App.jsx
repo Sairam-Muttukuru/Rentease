@@ -6,9 +6,11 @@ import Signup from './components/Signup';
 import ForgotPassword from './components/ForgotPassword';
 import VerifyOtp from './components/VerifyOtp';
 import ResetPassword from './components/ResetPassword';
+import ScrollToTop from './components/ScrollToTop';
 import './App.css'
 import LandlordDashboard from './pages/LandlordDashboard';
 import PropertyBrowse from './pages/PropertyBrowse';
+import PropertyDetails from './pages/PropertyDetails';
 import TenantDashboard from './pages/TenantDashboard';
 import View from './pages/View'
 import Forbidden403 from './pages/Forbidden403';
@@ -18,6 +20,8 @@ import DashboardRedirect from './components/DashboardRedirect';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { ThemeProvider } from './context/ThemeContext';
+import { AuthProvider } from './context/AuthContext';
+import Loader from './pages/Loader';
 import Adminpage from './pages/Adminpage';
 import ServiceProvider from './pages/ServiceProvider';
 import HomeServices from './pages/HomeServices';
@@ -39,56 +43,62 @@ function App() {
 
   return (
     <ThemeProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/verify-otp" element={<VerifyOtp />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          {/* <Route path="/browse/properties" element={<PropertyBrowse/>}/>  */}
-          <Route path="/browse/properties" element={<View />} />
-          <Route
-            path="/:userName/tenant/dashboard/*"
-            element={
-              <ProtectedRoute allowedRoles={["tenant"]}>
-                <TenantDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/landlord/dashboard"
-            element={
-              <ProtectedRoute allowedRoles={["landlord"]}>
-                <DashboardRedirect />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/tenant/dashboard"
-            element={
-              <ProtectedRoute allowedRoles={["tenant"]}>
-                <DashboardRedirect />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/:userName/landlord/dashboard/*"
-            element={
-              <ProtectedRoute allowedRoles={["landlord"]}>
-                <LandlordDashboard />
-              </ProtectedRoute>
-            }
-          />
+      <AuthProvider>
+        <BrowserRouter>
+          <ScrollToTop />
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/loader" element={<Loader />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/verify-otp" element={<VerifyOtp />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/browse/properties" element={<PropertyBrowse />} />
+            <Route path="/properties/:id" element={<PropertyDetails />} />
+            {/* <Route path="/browse/properties" element={<View />} /> */}
+            <Route
+              path="/:userName/tenant/dashboard/*"
+              element={
+                <ProtectedRoute>
+                  <TenantDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/landlord/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["landlord"]}>
+                  <DashboardRedirect />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/tenant/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardRedirect />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/:userName/landlord/dashboard/*"
+              element={
+                <ProtectedRoute allowedRoles={["landlord"]}>
+                  <LandlordDashboard />
+                </ProtectedRoute>
+              }
+            />
 
-          <Route path="/403/forbidden" element={<Forbidden403 />} />
-          <Route path="*" element={<NotFound404 />} />
-          <Route path="/admin/dashboard" element={<Adminpage />} />
-          <Route path="/service-provider/dashboard" element={<ServiceProvider />} />
-          <Route path="/home-services" element={<HomeServices />} />
-        </Routes>
-      </BrowserRouter>
+            <Route path="/403/forbidden" element={<Forbidden403 />} />
+            <Route path="*" element={<NotFound404 />} />
+            <Route path="/admin/dashboard" element={<Adminpage />} />
+            <Route path="/service-provider/dashboard" element={<ServiceProvider />} />
+            <Route path="/home-services" element={<HomeServices />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+
       {/* <TenantDashboard/> */}
       {/* <LandlordDashboard/> */}
       <ToastContainer

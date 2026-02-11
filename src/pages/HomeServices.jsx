@@ -1,54 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { Search, Star, ShieldCheck, Clock, Award, ChevronRight, Zap, Droplet, Hammer, Paintbrush, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Search, Star, ShieldCheck, Clock, Award, ChevronRight, Zap, Droplet, Hammer, Paintbrush, ArrowRight, ArrowLeft, LayoutGrid, X } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
-const SERVICES_DATA = {
-    ac: {
-        title: "AC & Cooling",
-        icon: Zap,
-        color: "blue",
-        items: [
-            { name: "AC Installation", price: "₹1500", image: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=600" },
-            { name: "Deep Cleaning", price: "₹599", image: "https://images.unsplash.com/photo-1621905252507-b35a830137d3?auto=format&fit=crop&q=80&w=600" },
-            { name: "Repair & Fix", price: "₹299", image: "https://plus.unsplash.com/premium_photo-1663013289069-b5860c451da7?auto=format&fit=crop&q=80&w=600" },
-            { name: "Gas Refill", price: "₹2500", image: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&q=80&w=600" }
-        ]
-    },
-    cleaning: {
-        title: "Premium Cleaning",
-        icon: Droplet,
-        color: "emerald",
-        items: [
-            { name: "Full Home Spa", price: "₹2999", image: "https://images.unsplash.com/photo-1581578731117-10d52143b0d4?auto=format&fit=crop&q=80&w=600" },
-            { name: "Kitchen Detox", price: "₹999", image: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&q=80&w=600" },
-            { name: "Sofa Shampooing", price: "₹599", image: "https://images.unsplash.com/photo-1540573133985-1153bc681b49?auto=format&fit=crop&q=80&w=600" },
-            { name: "Sparkling Bathroom", price: "₹499", image: "https://images.unsplash.com/photo-1584622050111-993a426fbf0a?auto=format&fit=crop&q=80&w=600" },
-            { name: "Weekend Weekly", price: "₹1499", image: "https://images.unsplash.com/photo-1527513984046-12475d53fdae?auto=format&fit=crop&q=80&w=600" }
-        ]
-    },
-    repair: {
-        title: "Quick Repairs",
-        icon: Hammer,
-        color: "amber",
-        items: [
-            { name: "Electrician", price: "₹199", image: "https://images.unsplash.com/photo-1621905251918-48416bd8575a?auto=format&fit=crop&q=80&w=600" },
-            { name: "Expert Plumber", price: "₹199", image: "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?auto=format&fit=crop&q=80&w=600" },
-            { name: "Carpenter", price: "₹299", image: "https://images.unsplash.com/photo-1601058268499-e52642d41a3d?auto=format&fit=crop&q=80&w=600" }
-        ]
-    },
-    interior: {
-        title: "Dream Interiors",
-        icon: Paintbrush,
-        color: "purple",
-        items: [
-            { name: "Full Interiors", price: "₹1.5L", image: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&q=80&w=600" },
-            { name: "Renovation", price: "₹50k", image: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&q=80&w=600" }
-        ]
-    }
+// --- ICONS MAPPING ---
+const ICON_MAP = {
+    Fan: Zap, // Fallback/Mapping
+    Sparkles: Droplet,
+    Zap: Zap,
+    Paintbrush: Paintbrush,
+    Wrench: Hammer,
+    Hammer: Hammer,
+    Home: LayoutGrid,
+    Star: Star,
+    LayoutGrid: LayoutGrid
 };
 
 const container = {
@@ -66,38 +36,434 @@ const itemAnim = {
     show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 50 } }
 };
 
-const ServiceCard = ({ item }) => (
+// --- COMPONENTS ---
+
+const CategoryCard = ({ category, onClick }) => {
+    // Map string icon name to Lucide component
+    const Icon = ICON_MAP[category.icon_name] || ICON_MAP[category.icon] || LayoutGrid;
+
+    // Color mapping for dynamic classes not supported by Tailwind JIT without safelist, using style or standard colors
+    const colorClasses = {
+        blue: "bg-blue-500",
+        emerald: "bg-emerald-500",
+        amber: "bg-amber-500",
+        purple: "bg-purple-500",
+        indigo: "bg-indigo-500"
+    };
+
+    return (
+        <motion.div
+            variants={itemAnim}
+            onClick={() => onClick(category)}
+            className="relative group cursor-pointer overflow-hidden rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 h-64"
+        >
+            <div className="h-full overflow-hidden relative">
+                <img
+                    src={category.image_url || category.image || "https://images.unsplash.com/photo-1581578731117-104f2a41272c?q=80&w=2670&auto=format&fit=crop"}
+                    alt={category.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+                <div className="absolute bottom-0 left-0 w-full p-6">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className={`p-2 ${colorClasses[category.color] || 'bg-indigo-500'} text-white rounded-xl shadow-lg ring-4 ring-white/20`}>
+                            <Icon size={20} />
+                        </div>
+                        <h3 className="text-2xl font-black text-white tracking-tight">{category.name}</h3>
+                    </div>
+                    <p className="text-slate-200/80 text-sm font-medium line-clamp-2">
+                        {category.description || `Explore ${category.name} services`}
+                    </p>
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
+const TypeSelectionModal = ({ isOpen, onClose, category, types, onSelectType }) => {
+    if (!isOpen) return null;
+
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={onClose}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+                    />
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+                    >
+                        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl overflow-hidden max-h-[80vh] flex flex-col pointer-events-auto">
+                            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                                        {category?.image_url ? <img src={category.image_url} className="w-full h-full object-cover rounded-xl" /> : <LayoutGrid size={24} />}
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-black text-slate-900 dark:text-white">{category?.name}</h3>
+                                        <p className="text-slate-500 text-sm font-bold">Select a service type</p>
+                                    </div>
+                                </div>
+                                <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+                                    <X size={24} className="text-slate-500" />
+                                </button>
+                            </div>
+
+                            <div className="p-8 overflow-y-auto">
+                                {types.length === 0 ? (
+                                    <div className="text-center py-10 text-slate-500 font-medium">No service types available.</div>
+                                ) : (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {types.map((type) => (
+                                            <div
+                                                key={type.id}
+                                                onClick={() => onSelectType(type)}
+                                                className="group flex items-center gap-4 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/20 cursor-pointer transition-all duration-300"
+                                            >
+                                                <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+                                                    <img
+                                                        src={type.image_url || "https://images.unsplash.com/photo-1581578731117-104f2a41272c?q=80&w=2670&auto=format&fit=crop"}
+                                                        alt={type.name}
+                                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors text-lg">{type.name}</h4>
+                                                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1 flex items-center gap-1 group-hover:gap-2 transition-all">
+                                                        View Services <ArrowRight size={12} />
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </motion.div>
+                </>
+            )}
+        </AnimatePresence>
+    );
+};
+
+const ServiceDetailsModal = ({ isOpen, onClose, service, onBook }) => {
+    if (!isOpen || !service) return null;
+
+    return (
+        <AnimatePresence>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={onClose}>
+                <motion.div
+                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                    onClick={e => e.stopPropagation()}
+                    className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
+                >
+                    <div className="relative h-64 sm:h-80 bg-slate-200">
+                        <img
+                            src={service.image_url || "https://images.unsplash.com/photo-1581578731117-104f2a41272c?q=80&w=2670&auto=format&fit=crop"}
+                            alt={service.name}
+                            className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                        <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-black/30 hover:bg-black/50 backdrop-blur-md rounded-full text-white transition-colors">
+                            <X size={24} />
+                        </button>
+                        <div className="absolute bottom-0 left-0 w-full p-8">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="px-3 py-1 bg-indigo-600 text-white text-xs font-bold uppercase tracking-wider rounded-full">
+                                    {service.category_name || "Service"}
+                                </span>
+                                {service.type_name && (
+                                    <span className="px-3 py-1 bg-white/20 backdrop-blur-md text-white text-xs font-bold uppercase tracking-wider rounded-full">
+                                        {service.type_name}
+                                    </span>
+                                )}
+                            </div>
+                            <h2 className="text-3xl md:text-4xl font-black text-white mb-2">{service.name}</h2>
+                            {service.provider_name && (
+                                <p className="text-white/90 font-bold text-lg mb-2">by {service.provider_name}</p>
+                            )}
+                            <div className="flex items-center gap-2 text-slate-200 font-bold">
+                                <span>₹{service.base_price || service.price}</span>
+                                <span>•</span>
+                                <div className="flex items-center gap-1 text-emerald-400">
+                                    <ShieldCheck size={16} /> Verified Expert
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-8 overflow-y-auto custom-scrollbar">
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white mb-3">About this Service</h3>
+                        <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-8 text-lg">
+                            {service.description || "This service includes a comprehensive assessment and professional execution by verified experts. We ensure high-quality standards and customer satisfaction."}
+                        </p>
+
+                        {service.features && service.features.length > 0 && (
+                            <>
+                                <h3 className="text-lg font-black text-slate-900 dark:text-white mb-4">What's Included</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                                    {service.features.map((feature, idx) => (
+                                        <div key={idx} className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                                            <div className="p-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 rounded-full mt-0.5">
+                                                <Award size={14} />
+                                            </div>
+                                            <span className="text-slate-700 dark:text-slate-300 font-medium">{feature}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white mb-4">Why Choose Us?</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                            {[
+                                { icon: Clock, title: "On-Time", desc: "Always punctual" },
+                                { icon: ShieldCheck, title: "Secure", desc: "Verified pros" },
+                                { icon: Star, title: "Top Rated", desc: "4.8+ Average" }
+                            ].map((item, i) => (
+                                <div key={i} className="text-center p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/30">
+                                    <item.icon className="w-8 h-8 mx-auto mb-2 text-indigo-600" />
+                                    <div className="font-bold text-slate-900 dark:text-white">{item.title}</div>
+                                    <div className="text-xs text-slate-500">{item.desc}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 mt-auto sticky bottom-0 z-10">
+                        <button
+                            onClick={() => {
+                                onClose();
+                                onBook(service);
+                            }}
+                            className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-lg shadow-xl shadow-indigo-500/20 flex justify-center items-center gap-2 transition-all transform active:scale-95"
+                        >
+                            Book Application Now <ArrowRight size={20} />
+                        </button>
+                    </div>
+                </motion.div>
+            </motion.div>
+        </AnimatePresence>
+    );
+};
+
+const BookingModal = ({ isOpen, onClose, service, onConfirm, initialAddress }) => {
+    if (!isOpen || !service) return null;
+
+    const [formData, setFormData] = useState({
+        date: '',
+        time: '',
+        address: initialAddress || '',
+        contact_number: ''
+    });
+
+    useEffect(() => {
+        if (isOpen && initialAddress) {
+            setFormData(prev => ({ ...prev, address: initialAddress }));
+        }
+    }, [isOpen, initialAddress]);
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onConfirm(formData);
+    };
+
+    return (
+        <AnimatePresence>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={onClose}>
+                <motion.div
+                    initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                    onClick={e => e.stopPropagation()}
+                    className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] border border-slate-100 dark:border-slate-800"
+                >
+                    <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0 bg-slate-50/50 dark:bg-slate-900">
+                        <div>
+                            <h3 className="text-xl font-black text-slate-900 dark:text-white">Secure Booking</h3>
+                            <p className="text-slate-500 text-xs font-bold mt-1">Complete your request</p>
+                        </div>
+                        <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors">
+                            <X size={20} className="text-slate-500" />
+                        </button>
+                    </div>
+
+                    <div className="overflow-y-auto custom-scrollbar p-6 space-y-6">
+                        {/* Service Summary */}
+                        <div className="flex items-center gap-4 p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl border border-indigo-100 dark:border-indigo-500/20">
+                            <div className="p-3 bg-indigo-100 dark:bg-indigo-500/30 text-indigo-600 dark:text-indigo-300 rounded-xl">
+                                <Zap size={24} />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-slate-900 dark:text-white text-lg">{service.name}</h4>
+                                {service.provider_name && <p className="text-xs text-slate-500 font-bold">by {service.provider_name}</p>}
+                                <p className="text-indigo-600 dark:text-indigo-400 font-bold">₹{service.base_price || service.price}</p>
+                            </div>
+                        </div>
+
+                        <form id="booking-form" onSubmit={handleSubmit} className="space-y-6">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Date</label>
+                                    <div className="relative">
+                                        <input
+                                            type="date"
+                                            required
+                                            value={formData.date}
+                                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 transition-colors dark:text-white font-medium"
+                                            onChange={e => setFormData({ ...formData, date: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Time</label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="time"
+                                            required
+                                            value={formData.time}
+                                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 transition-colors dark:text-white font-medium"
+                                            onChange={e => setFormData({ ...formData, time: e.target.value })}
+                                        />
+                                        <select
+                                            className="p-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 transition-colors dark:text-white font-medium"
+                                            onChange={e => setFormData({ ...formData, ampm: e.target.value })}
+                                            value={formData.ampm || ""}
+                                            required
+                                        >
+                                            <option value="" disabled>AM/PM</option>
+                                            <option value="AM">AM</option>
+                                            <option value="PM">PM</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Contact Number</label>
+                                <input
+                                    type="tel"
+                                    required
+                                    placeholder="Enter your contact number"
+                                    value={formData.contact_number}
+                                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 transition-colors dark:text-white font-medium"
+                                    onChange={e => setFormData({ ...formData, contact_number: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Location Details</label>
+                                <textarea
+                                    required
+                                    placeholder="Enter your complete address..."
+                                    value={formData.address}
+                                    className="w-full p-4 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 transition-colors min-h-[100px] dark:text-white font-medium resize-none"
+                                    onChange={e => setFormData({ ...formData, address: e.target.value })}
+                                ></textarea>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Priority</label>
+                                <select
+                                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 transition-colors dark:text-white font-medium"
+                                    onChange={e => setFormData({ ...formData, priority: e.target.value })}
+                                    value={formData.priority || "Normal"}
+                                >
+                                    <option value="Low">Low</option>
+                                    <option value="Normal">Normal</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                </select>
+                            </div>
+
+                            <div className="flex items-start gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl">
+                                <ShieldCheck size={16} className="text-emerald-600 mt-0.5" />
+                                <p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Payment will be collected after service completion. No upfront charge.</p>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
+                        <button form="booking-form" type="submit" className="w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-xl font-black text-lg shadow-xl shadow-indigo-500/20 active:scale-95 transition-all flex items-center justify-center gap-2">
+                            Confirm Booking <ArrowRight size={20} />
+                        </button>
+                    </div>
+                </motion.div>
+            </motion.div >
+        </AnimatePresence >
+    );
+};
+
+
+const ServiceListCard = ({ service, onClick, onBook }) => (
     <motion.div
         variants={itemAnim}
-        whileHover={{ y: -10, scale: 1.02 }}
-        className="group relative bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 border border-slate-100 dark:border-slate-700 cursor-pointer"
+        whileHover={{ scale: 1.01 }}
+        className="group bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 flex flex-col sm:flex-row gap-6 hover:shadow-xl transition-all duration-300 cursor-pointer h-full"
+        onClick={onClick}
     >
-        <div className="h-56 overflow-hidden relative">
-            <motion.img
-                whileHover={{ scale: 1.1 }}
-                transition={{ duration: 0.6 }}
-                src={item.image}
-                alt={item.name}
-                className="w-full h-full object-cover"
+        <div className="w-full sm:w-40 h-40 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 relative">
+            <img
+                src={service.image_url || "https://images.unsplash.com/photo-1581578731117-104f2a41272c?q=80&w=2670&auto=format&fit=crop"}
+                alt={service.name}
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300"></div>
-            <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
-                <span className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-slate-900 dark:text-white text-xs font-black px-3 py-1.5 rounded-full shadow-lg">
-                    {item.price}
-                </span>
+            <div className="absolute top-2 left-2 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-lg shadow-sm">
+                <span className="text-sm font-black text-slate-900 dark:text-white">₹{service.base_price || service.price}</span>
             </div>
         </div>
-        <div className="p-6 relative">
-            <h3 className="font-exited text-lg font-bold text-slate-800 dark:text-white mb-2 group-hover:text-blue-600 transition-colors">{item.name}</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3 text-emerald-500" /> Wrrnty Verified
+
+        <div className="flex-1 flex flex-col">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-indigo-600 transition-colors">
+                {service.name || service.service_name}
+            </h3>
+            {service.provider_name && (
+                <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mb-1">
+                    Provided by: {service.provider_name}
+                </p>
+            )}
+            <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 flex-1">
+                {service.description || "Professional service with verified experts."}
             </p>
-            <motion.button
-                whileTap={{ scale: 0.95 }}
-                className="absolute bottom-6 right-6 w-10 h-10 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-colors"
-            >
-                <ArrowRight className="w-5 h-5" />
-            </motion.button>
+
+            <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100 dark:border-slate-700">
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-full uppercase tracking-wider">
+                        <ShieldCheck size={10} />
+                        Verified
+                    </div>
+                </div>
+                <div className="flex gap-2">
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onClick();
+                        }}
+                        className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                    >
+                        View Details
+                    </button>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onBook(service);
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-black uppercase tracking-wider group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm"
+                    >
+                        Book Now <ArrowRight size={14} />
+                    </button>
+                </div>
+            </div>
         </div>
     </motion.div>
 );
@@ -105,138 +471,346 @@ const ServiceCard = ({ item }) => (
 const HomeServices = () => {
     const { theme } = useTheme();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Debugging location state
+    console.log("HomeServices Location State:", location.state);
+
+    const initialAddress = location.state?.address || '';
+    const propertyImage = location.state?.property_image || null; // Get property image
     const [searchTerm, setSearchTerm] = useState('');
 
+    // State for Dynamic Data
+    const [categories, setCategories] = useState([]);
+    const [types, setTypes] = useState([]);
+    const [services, setServices] = useState([]);
+    const [featuredServices, setFeaturedServices] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    // UI State
+    const [viewState, setViewState] = useState('CATEGORIES'); // CATEGORIES, SERVICES
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [selectedType, setSelectedType] = useState(null);
+    const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);
+
+    // Booking State
+    const [selectedService, setSelectedService] = useState(null);
+    const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+
+    // Details Modal State
+    const [selectedServiceDetails, setSelectedServiceDetails] = useState(null);
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+
+    // Initial Fetch: Categories & Featured
+    useEffect(() => {
+        fetchCategories();
+    }, []);
+
+    const fetchCategories = async () => {
+        setLoading(true);
+        try {
+            // Using public endpoints now
+            const res = await axios.get('http://localhost:5000/api/tenants/catalog/categories');
+            setCategories(res.data);
+        } catch (error) {
+            console.error("Error fetching categories:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchTypes = async (categoryId) => {
+        try {
+            // Using public endpoints now
+            const res = await axios.get(`http://localhost:5000/api/tenants/catalog/types/${categoryId}`);
+            setTypes(res.data);
+            setIsTypeModalOpen(true); // Open modal after fetching
+        } catch (error) {
+            console.error("Error fetching types:", error);
+            toast.error("Failed to load service types.");
+        }
+    };
+
+    const fetchServices = async (typeId) => {
+        setLoading(true);
+        try {
+            // Using public endpoints now
+            const res = await axios.get(`http://localhost:5000/api/tenants/catalog/services/${typeId}`);
+            setServices(res.data);
+            setViewState('SERVICES');
+            setIsTypeModalOpen(false); // Close modal
+        } catch (error) {
+            console.error("Error fetching services:", error);
+            toast.error("Failed to load services.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchServicesByCategory = async (categoryId) => {
+        setLoading(true);
+        try {
+            const res = await axios.get(`http://localhost:5000/api/tenants/catalog/category/${categoryId}/services`);
+            setServices(res.data);
+            setViewState('SERVICES'); // Move to Services view directly
+        } catch (error) {
+            console.error("Error fetching services by category:", error);
+            toast.error("Failed to load services.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCategoryClick = (category) => {
+        setSelectedCategory(category);
+        fetchServicesByCategory(category.id);
+    };
+
+    const handleTypeSelect = (typeName) => {
+        setSelectedType(typeName);
+        setViewState('SUB_CATEGORIES'); // Move to Level 3
+    };
+
+    const handleSubCategorySelect = (serviceName) => {
+        setSelectedServiceDetails(serviceName); // Reusing this state to store selected sub-category name
+        setViewState('SERVICES'); // Move to Level 4
+    };
+
+    const handleBack = () => {
+        if (viewState === 'SERVICES') {
+            if (selectedType) {
+                setViewState('TYPES'); // Go back to types if we came from there
+            } else {
+                setViewState('CATEGORIES'); // Go back to categories if we came directly
+                setSelectedCategory(null);
+            }
+        }
+        else if (viewState === 'SUB_CATEGORIES') setViewState('TYPES');
+        else if (viewState === 'TYPES') {
+            setViewState('CATEGORIES');
+            setSelectedCategory(null);
+        }
+    };
+
+    const handleServiceClick = (service) => {
+        setSelectedServiceDetails(service);
+        setIsDetailsModalOpen(true);
+    };
+
+    const handleBookClick = (service) => {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+            toast.info("Please login to book a service");
+            navigate('/login');
+            return;
+        }
+        setSelectedService(service);
+        setIsBookingModalOpen(true);
+    };
+
+    const handleBookingConfirm = async (formData) => {
+        // Ensure we send the global service ID (which is 'id' if fetching from public catalog, or 'service_id' if from provider list)
+        // But for public catalog, 'id' IS the service_id.
+        // The issue might be that selectedService is a provider_service object? 
+        // Let's assume selectedService has 'id' as primary key of WHATEVER table it came from.
+        // If it came from 'st.getServices', it's provider_services join services.
+        // If it came from 'st.getCatalogServices', it's services table.
+
+        // selectedService comes from provider_services JOIN services
+        // id = service_id (from services table, due to select s.*)
+        // provider_id = from provider_services
+        // price = from provider_services
+
+        const payload = {
+            service_id: selectedService.id, // This is the Service ID
+            provider_id: selectedService.provider_id, // This is the Provider ID
+            amount: selectedService.price || selectedService.base_price,
+            amount: selectedService.price || selectedService.base_price,
+            address: formData.address,
+            contact_number: formData.contact_number,
+            property_image: propertyImage, // Send property image to backend
+            payment_method: 'COD',
+            booking_date: formData.date,
+            booking_time: `${formData.time} ${formData.ampm || ''}`.trim(),
+            service_type: selectedService.type_name || selectedService.category_name || 'Standard', // Use type from service object
+            priority: formData.priority || 'Normal'
+        };
+
+        const token = localStorage.getItem('accessToken');
+        try {
+            await axios.post('http://localhost:5000/api/tenants/service-request', payload, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            toast.success("Booking Request Sent Successfully!");
+            setIsBookingModalOpen(false);
+            setSelectedService(null);
+        } catch (error) {
+            console.error("Booking failed:", error);
+            toast.error(error.response?.data?.error || "Booking failed. Please try again.");
+        }
+    };
+
     return (
-        <div className={`min-h-screen ${theme === 'dark' ? 'bg-slate-950' : 'bg-slate-50'} overflow-hidden`}>
+        <div className={`min-h-screen ${theme === 'dark' ? 'bg-slate-950' : 'bg-slate-50'} overflow-x-hidden`}>
             <Navbar />
 
             {/* --- HERO SECTION --- */}
-            <div className="relative pt-40 pb-32 px-4 sm:px-6 lg:px-8 overflow-hidden">
-                {/* Animated Background Blobs */}
+            <div className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
                 <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-                    <motion.div
-                        animate={{
-                            scale: [1, 1.2, 1],
-                            rotate: [0, 90, 0],
-                            opacity: [0.3, 0.5, 0.3]
-                        }}
-                        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                        className="absolute -top-[20%] -right-[10%] w-[800px] h-[800px] bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full blur-3xl"
-                    />
-                    <motion.div
-                        animate={{
-                            scale: [1, 1.3, 1],
-                            x: [0, 100, 0],
-                            opacity: [0.2, 0.4, 0.2]
-                        }}
-                        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-                        className="absolute -bottom-[20%] -left-[10%] w-[600px] h-[600px] bg-gradient-to-tr from-emerald-500/20 to-cyan-500/20 rounded-full blur-3xl"
-                    />
+                    <motion.div animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} className="absolute -top-[20%] -right-[10%] w-[800px] h-[800px] bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full blur-3xl" />
+                    <motion.div animate={{ scale: [1, 1.3, 1], x: [0, 100, 0], opacity: [0.2, 0.4, 0.2] }} transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }} className="absolute -bottom-[20%] -left-[10%] w-[600px] h-[600px] bg-gradient-to-tr from-emerald-500/20 to-cyan-500/20 rounded-full blur-3xl" />
                 </div>
 
                 <div className="max-w-5xl mx-auto text-center relative z-10">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6 }}
-                    >
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
                         <span className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider mb-8 shadow-sm">
-                            <Star className="w-3 h-3 text-amber-500 fill-amber-500" /> Rated #1 Home Services App
+                            <Star className="w-3 h-3 text-amber-500 fill-amber-500" /> Rated #1 Home Services in India
                         </span>
-
                         <h1 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white mb-8 tracking-tight leading-tight">
-                            Expert Care for <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 animate-gradient-x">Your Dream Home</span>
+                            Your Home, <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 animate-gradient-x">Our Priority.</span>
                         </h1>
-
-                        <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-                            Book trusted professionals for cleaning, repairs, and renovation.
-                            <span className="font-bold text-slate-800 dark:text-white"> Instant booking. 100% Secure.</span>
+                        <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed font-medium">
+                            Expert repairs, cleaning, and maintenance services at your doorstep.
                         </p>
                     </motion.div>
 
                     {/* Search Bar */}
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.2, duration: 0.5 }}
-                        className="relative max-w-2xl mx-auto mb-16 group"
-                    >
+                    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2, duration: 0.5 }} className="relative max-w-2xl mx-auto mb-16 group z-20">
                         <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
                         <div className="relative flex items-center bg-white dark:bg-slate-900 rounded-2xl p-2 shadow-2xl">
-                            <div className="pl-4 text-slate-400">
-                                <Search className="h-6 w-6" />
-                            </div>
-                            <input
-                                type="text"
-                                placeholder="Try 'Sofa Cleaning' or 'AC Repair'..."
-                                className="w-full px-4 py-4 md:py-5 bg-transparent border-0 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-0 text-lg font-medium"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                            <button className="hidden md:block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all transform hover:scale-105">
-                                Search
-                            </button>
+                            <div className="pl-4 text-slate-400"><Search className="h-6 w-6" /></div>
+                            <input type="text" placeholder="Search for 'AC Service', 'Cleaning'..." className="w-full px-4 py-4 md:py-5 bg-transparent border-0 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-0 text-lg font-bold" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                            <button className="hidden md:block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all transform hover:scale-105 active:scale-95">Search</button>
                         </div>
-                    </motion.div>
-
-                    {/* Trust Badges */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.4 }}
-                        className="flex flex-wrap justify-center gap-4 md:gap-8"
-                    >
-                        {[
-                            { icon: ShieldCheck, text: "Verified Pros", color: "text-emerald-500" },
-                            { icon: Clock, text: "On-Time Guarantee", color: "text-blue-500" },
-                            { icon: Award, text: "5-Star Quality", color: "text-amber-500" },
-                        ].map((badge, i) => (
-                            <div key={i} className="flex items-center gap-2 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm px-4 py-2 rounded-full border border-slate-100 dark:border-slate-700 shadow-sm">
-                                <badge.icon className={`w-5 h-5 ${badge.color}`} />
-                                <span className="font-bold text-slate-700 dark:text-slate-200 text-sm">{badge.text}</span>
-                            </div>
-                        ))}
                     </motion.div>
                 </div>
             </div>
 
-            {/* --- SECTIONS --- */}
+            {/* --- MAIN CONTENT --- */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-32 space-y-32">
-                {Object.entries(SERVICES_DATA).map(([key, category], idx) => (
-                    <section key={key} className="relative">
-                        <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.5 }}
-                            className="flex items-center gap-4 mb-10"
-                        >
-                            <div className={`p-4 rounded-3xl bg-${category.color}-100 dark:bg-${category.color}-900/30 text-${category.color}-600`}>
-                                <category.icon className="w-8 h-8" />
-                            </div>
-                            <div>
-                                <h2 className="text-4xl font-black text-slate-900 dark:text-white">{category.title}</h2>
-                                <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium">Professional services at your doorstep</p>
-                            </div>
-                            <div className="hidden md:block h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-700 ml-8"></div>
-                        </motion.div>
 
-                        <motion.div
-                            variants={container}
-                            initial="hidden"
-                            whileInView="show"
-                            viewport={{ once: true, margin: "-100px" }}
-                            className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${key === 'cleaning' ? '3' : key === 'repair' ? '3' : '4'} gap-8`}
-                        >
-                            {category.items.map((item, i) => (
-                                <ServiceCard key={i} item={item} />
-                            ))}
-                        </motion.div>
-                    </section>
-                ))}
+                {viewState !== 'CATEGORIES' && (
+                    <button onClick={handleBack} className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white mb-8 font-bold transition-all">
+                        <ArrowLeft className="w-4 h-4" /> Back to Categories
+                    </button>
+                )}
+
+                {loading ? (
+                    <div className="flex justify-center py-20">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                    </div>
+                ) : (
+                    <AnimatePresence mode="wait">
+                        {/* CATEGORIES VIEW - GRID OF CARDS */}
+                        {viewState === 'CATEGORIES' && (
+                            <motion.div key="categories" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-12">
+                                <div className="text-center mb-10">
+                                    <h2 className="text-4xl font-black text-slate-900 dark:text-white mb-4">Explore our Services</h2>
+                                    <div className="h-1 w-20 bg-indigo-500 mx-auto rounded-full"></div>
+                                </div>
+                                {categories.length === 0 ? (
+                                    <div className="text-center py-10 text-slate-500 font-bold">No services available at the moment.</div>
+                                ) : (
+                                    <motion.div variants={container} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                        {categories.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase())).map((cat) => (
+                                            <CategoryCard key={cat.id} category={cat} onClick={handleCategoryClick} />
+                                        ))}
+                                    </motion.div>
+                                )}
+
+                                {/* --- FEATURED SECTION: AC & Appliance --- */}
+                                {featuredServices.length > 0 && (
+                                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 mt-20 pt-10 border-t border-slate-200 dark:border-slate-800">
+                                        <div className="flex items-center gap-4">
+                                            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-2xl">
+                                                <Zap size={32} />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-3xl font-black text-slate-900 dark:text-white">AC & Appliance Repair</h2>
+                                                <p className="text-slate-500 font-bold">Expert services for your home appliances</p>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {featuredServices.map(service => (
+                                                <ServiceListCard
+                                                    key={service.id}
+                                                    service={service}
+                                                    onClick={() => handleServiceClick(service)}
+                                                    onBook={() => handleBookClick(service)}
+                                                />
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </motion.div>
+                        )}
+
+                        {/* SERVICES VIEW - LIST OF CARDS */}
+                        {viewState === 'SERVICES' && (
+                            <motion.div key="services" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-slate-50 dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800">
+                                    <div className="flex items-center gap-6">
+                                        <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-lg">
+                                            <img src={selectedType?.image_url || selectedCategory?.image_url} className="w-full h-full object-cover" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-3xl font-black text-slate-900 dark:text-white">{selectedType?.name || selectedCategory?.name}</h2>
+                                            <p className="text-slate-500 dark:text-slate-400 mt-1 font-bold">{selectedType ? selectedCategory?.name : 'All Services'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-6 py-3 rounded-2xl font-black text-sm border border-slate-200 dark:border-slate-700 shadow-xl">
+                                        {services.length} Packages Available
+                                    </div>
+                                </div>
+
+                                {services.length === 0 ? (
+                                    <div className="text-center py-20 bg-slate-50 dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700">
+                                        <p className="text-slate-500 font-bold">No services currently available in this category.</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        {services.map((service) => (
+                                            <ServiceListCard
+                                                key={service.id}
+                                                service={service}
+                                                onClick={() => handleServiceClick(service)}
+                                                onBook={() => handleBookClick(service)}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                )}
             </div>
+
+            {/* Sub-Category (Types) Modal */}
+            <TypeSelectionModal
+                isOpen={isTypeModalOpen}
+                onClose={() => setIsTypeModalOpen(false)}
+                category={selectedCategory}
+                types={types}
+                onSelectType={handleTypeSelect}
+            />
+
+            {/* Booking Modal */}
+            <BookingModal
+                isOpen={isBookingModalOpen}
+                onClose={() => setIsBookingModalOpen(false)}
+                service={selectedService}
+                onConfirm={handleBookingConfirm}
+                initialAddress={initialAddress}
+            />
+
+            {/* Service Details Modal */}
+            <ServiceDetailsModal
+                isOpen={isDetailsModalOpen}
+                onClose={() => setIsDetailsModalOpen(false)}
+                service={selectedServiceDetails}
+                onBook={handleBookClick}
+            />
 
             <Footer />
         </div>

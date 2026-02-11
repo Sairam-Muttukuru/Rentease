@@ -69,3 +69,17 @@ exports.resetPassword = async (req, res) => {
         res.status(400).json({ error: err.message });
     }
 };
+
+exports.changePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const result = await AuthService.changePassword(
+            req.user.id,
+            currentPassword,
+            newPassword
+        );
+        res.status(200).json(result);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+};

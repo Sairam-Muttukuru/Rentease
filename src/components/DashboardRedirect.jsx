@@ -16,12 +16,13 @@ const DashboardRedirect = () => {
 
                 if (role === 'landlord') {
                     navigate(`/${slug}/landlord/dashboard`, { replace: true });
-                } else if (role === 'tenant') {
-                    navigate(`/${slug}/tenant/dashboard`, { replace: true });
+                } else if (role === 'admin') {
+                    navigate('/admin/dashboard', { replace: true });
+                } else if (role === 'service_provider') {
+                    navigate('/service-provider/dashboard', { replace: true });
                 } else {
-                    // Fallback or error handling
-                    console.error('Unknown user role:', role);
-                    navigate('/', { replace: true });
+                    // Default everyone else to Tenant Dashboard
+                    navigate(`/${slug}/tenant/dashboard`, { replace: true });
                 }
             } else {
                 navigate('/login', { replace: true });

@@ -22,5 +22,4 @@ const roleMiddleware = (requiredRole) => {
     next();
   };
 };
-
 module.exports = roleMiddleware;

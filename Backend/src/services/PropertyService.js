@@ -31,16 +31,28 @@ exports.createProperty = async (landlordId, data) => {
 /* =======================
    GET ALL PROPERTIES
 ======================= */
-exports.getAllProperties = async () => {
-  const properties = await Property.getAllProperties();
+/* =======================
+   GET ALL PROPERTIES
+======================= */
+exports.getAllProperties = async (filters) => {
+  const properties = await Property.getAllProperties(filters);
 
   // Populate images and amenities for each property
-  for (const property of properties) {
-    property.images = await Images.getImagesByProperty(property.id);
-    property.amenities = await Amenities.getAmenitiesByProperty(property.id);
-  }
+  // Note: The SQL query already does some of this, but if we need full object hydration:
+  // The SQL uses json_agg for efficiency. We might not need the loops below if the SQL returns correct structure.
+  // The new SQL returns 'images' and 'amenities' as JSON arrays. 
+  // We can skip the N+1 queries here!
+
+  // However, check strictly if the SQL was returning what we expect. 
+  // references: PropertyModel.js lines 79-88 (in original) and in my edit.
+  // My edit INCLUDES json_agg for images and amenities.
+  // So the loops below are REDUNDANT and SLOW. I will remove them.
 
   return properties;
+};
+
+exports.getPropertiesCount = async (filters) => {
+  return await Property.getPropertiesCount(filters);
 };
 
 /* =======================

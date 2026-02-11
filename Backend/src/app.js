@@ -15,7 +15,8 @@ const allowedOrigins =
             "https://www.rentease.com"
         ]
         : [
-            "http://localhost:5173"
+            "http://localhost:5173",
+            "http://127.0.0.1:5173"
         ];
 
 app.use(cors({
@@ -45,5 +46,9 @@ app.use("/api/notifications", require("./routes/NotificationRoutes"));
 app.use("/api/test", require("./routes/TestMailRoutes"));
 app.use("/api/payment", require("./routes/PaymentRoutes"));
 app.use("/api/admin", require("./routes/AdminRoutes"));
+app.use("/api/bookings", require("./routes/BookingRoutes"));
+app.use("/api/service-provider", require("./routes/ServiceProviderRoutes"));
+app.use("/api/service-provider/reviews", require("./routes/ReviewRoutes"));
+
 
 module.exports = app;

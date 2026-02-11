@@ -7,7 +7,8 @@
         "settings": "सेटिंग्स",
         "home_services": "होम सेवाएं",
         "logout": "लॉगआउट",
-        "welcome_back": "वापसी पर स्वागत है,"
+        "welcome_back": "वापसी पर स्वागत है,",
+        "saving": "सहेजा जा रहा है..."
     },
     "dashboard": {
         "settled": "निपटारा",
@@ -21,7 +22,9 @@
         "help_desk": "सहायता केंद्र"
     },
     "settings": {
+        "manage_preferences": "अपनी खाता सेटिंग्स और प्राथमिकताएं प्रबंधित करें",
         "profile_info": "प्रोफ़ाइल जानकारी",
+        "update_personal_details": "यहां अपने व्यक्तिगत विवरण अपडेट करें",
         "full_name": "पूरा नाम",
         "email_address": "ईमेल पता",
         "phone_number": "फ़ोन नंबर",

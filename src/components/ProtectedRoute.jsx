@@ -26,7 +26,7 @@ const ProtectedRoute = ({ allowedRoles, children }) => {
     ? allowedRoles.map((r) => (r || '').toLowerCase())
     : null;
 
-  if (!userRole || (normalizedAllowedRoles && !normalizedAllowedRoles.includes(userRole))) {
+  if (normalizedAllowedRoles && (!userRole || !normalizedAllowedRoles.includes(userRole))) {
     // Logged in but role not allowed -> 403 page
     return <Navigate to="/403/forbidden" replace />;
   }

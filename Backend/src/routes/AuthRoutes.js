@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const controller = require("../controllers/AuthController");
-const Role = require("../middlewares/RoleMiddleware");
+const protect = require("../middlewares/AuthMiddleware");
 
 router.post("/signup", controller.signup);
 router.post("/login", controller.login);
@@ -8,4 +8,6 @@ router.post("/logout", controller.logout);
 router.post("/forgot-password", controller.forgotPassword);
 router.post("/verify-otp", controller.verifyOtp);
 router.post("/reset-password", controller.resetPassword);
+router.post("/change-password", protect, controller.changePassword);
+
 module.exports = router;

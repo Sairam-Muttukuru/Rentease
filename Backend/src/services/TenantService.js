@@ -2,6 +2,31 @@ const Tenant = require("../models/TenantModel");
 const TenantMember = require("../models/TenantMemberModel");
 const Property = require("../models/PropertyModel");
 const UserModel = require("../models/UserModel");
+const Complaint = require("../models/ComplaintModel");
+const ServiceRequestModel = require("../models/ServiceRequestModel");
+
+// ... existing code ...
+
+exports.getPayments = async (userId) => {
+  const tenant = await Tenant.getByUserId(userId);
+  if (!tenant) return [];
+
+  const payments = await Tenant.getPaymentsByTenantId(tenant.id);
+
+  // Map payment_date to date for frontend
+  return payments.map(p => ({
+    ...p,
+    date: p.payment_date,
+    receipt_number: p.receipt_no // ensuring optional field mapping if needed
+  }));
+};
+
+exports.getComplaints = async (userId) => {
+  const tenant = await Tenant.getByUserId(userId);
+  if (!tenant) return [];
+
+  return await Complaint.getByTenantId(tenant.id);
+};
 
 exports.addTenant = async (landlordId, propertyId, data) => {
   // 🔒 check property ownership
@@ -95,6 +120,9 @@ exports.getDashboardData = async (userId) => {
   // 1️⃣ Get tenant + property + images
   const tenant = await Tenant.getByUserId(userId);
 
+  // 1.5 Get service requests
+  const serviceRequests = await ServiceRequestModel.getByUser(userId);
+
   // 2️⃣ Get tenant user info
   const user = await UserModel.findUserById(userId);
 
@@ -127,16 +155,66 @@ exports.getDashboardData = async (userId) => {
   // 3️⃣ Get family members
   const members = await TenantMember.getByTenantId(tenant.id);
 
-  // 4️⃣ Return merged response
+  // 4️⃣ Calculate Accumulated Rent
+  const payments = await Tenant.getPaymentsByTenantId(tenant.id);
+  const totalPaid = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+
+  const currentDate = new Date();
+  const startDate = new Date(tenant.start_date);
+
+  // Calculate months elapsed (including current month if start date passed)
+  const monthsElapsed = Math.max(1,
+    (currentDate.getFullYear() - startDate.getFullYear()) * 12 +
+    (currentDate.getMonth() - startDate.getMonth()) +
+    (currentDate.getDate() >= startDate.getDate() ? 1 : 0)
+  );
+
+  let expectedRent = monthsElapsed * parseFloat(tenant.monthly_rent);
+  let accumulatedDue = Math.max(0, expectedRent - totalPaid);
+
+  // 10-Day Policy Logic: 
+  // If there is an outstanding balance AND we are > 10 days past the current cycle's due date,
+  // we proactively add the NEXT month's rent to the "Accumulated Due".
+  if (accumulatedDue > 0) {
+    // Determine the "Current" Due Date (the one that triggered the current expectedRent)
+    // This is effectively StartDate + (monthsElapsed - 1) months
+    const currentDueDate = new Date(startDate);
+    currentDueDate.setMonth(startDate.getMonth() + (monthsElapsed - 1));
+
+    // Calculate days past this due date
+    const diffTime = Math.abs(currentDate - currentDueDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    // If we are more than 10 days past the due date (e.g., Due Feb 1, Today Feb 12)
+    if (diffDays > 10) {
+      accumulatedDue += parseFloat(tenant.monthly_rent);
+    }
+  }
+
+  // 5️⃣ Return merged response
   return {
     ...tenant,
+    // Map mismatched fields for frontend
+    name: `${user.first_name} ${user.last_name}`,
+    email: user.email,
+    propertyName: tenant.property_name,
+    landlord: tenant.landlord_name,
+    monthlyRent: tenant.monthly_rent,
+    propertyImages: tenant.images,
 
-    // 👇 tenant user info
+    accumulated_due: accumulatedDue,
+    months_elapsed: monthsElapsed,
+    total_paid: totalPaid,
+
+    // Keep existing backend fields just in case
     tenant_name: `${user.first_name} ${user.last_name}`,
     tenant_email: user.email,
+    phone: user.phone,
+    avatar_url: user.avatar_url,
 
     members,
-    familyMembers: members.length
+    familyMembers: members.length,
+    serviceRequests
   };
 };
 
@@ -144,7 +222,18 @@ exports.getPayments = async (userId) => {
   const tenant = await Tenant.getByUserId(userId);
   if (!tenant) return [];
 
-  return await Tenant.getPaymentsByTenantId(tenant.id);
+  const payments = await Tenant.getPaymentsByTenantId(tenant.id);
+  // Map payment_date to date for frontend
+  return payments.map(p => ({
+    ...p,
+    date: p.payment_date
+  }));
+};
+
+exports.getComplaints = async (userId) => {
+  const tenant = await Tenant.getByUserId(userId);
+  if (!tenant) return [];
+  return await Complaint.getByTenantId(tenant.id);
 };
 
 exports.updateTenantProfile = async (userId, data) => {
@@ -156,7 +245,9 @@ exports.updateTenantProfile = async (userId, data) => {
   await UserModel.updateUser(userId, {
     first_name: firstName,
     last_name: lastName,
-    email: data.email
+    email: data.email,
+    phone: data.phone,
+    avatar_url: data.avatar_url
   });
 
   // 2. Update Tenant Member Table (Phone, Name, Email)

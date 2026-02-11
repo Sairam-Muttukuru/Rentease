@@ -55,6 +55,9 @@ exports.getByLandlordId = async (landlordId) => {
         p.flat_number,
         p.building_name,
         p.property_type,
+        p.address,
+        p.city,
+        p.locality,
         tm.full_name AS tenant_name,
         to_char(c.created_at, 'Mon DD, YYYY') as formatted_date,
         COALESCE(

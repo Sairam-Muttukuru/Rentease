@@ -63,9 +63,13 @@ import {
   Upload,
   Edit,
   UserCheck,
-  UserX
+  UserX,
+  MessageCircle
 } from 'lucide-react';
 import { Card } from '../components/ui/card';
+import ChatWindow from '../components/chat/ChatWindow';
+import ImageGalleryModal from '../components/ui/ImageGalleryModal';
+
 
 // --- Mock Data & Constants ---
 const INITIAL_USER = {
@@ -299,7 +303,17 @@ const AddPropertyView = ({ newProperty, setNewProperty, isDarkMode, setActiveTab
         office_type: newProperty.office_type,
         seating_capacity: newProperty.seating_capacity ? parseInt(newProperty.seating_capacity) : null,
         cabins_available: newProperty.cabins_available,
-        conference_room: newProperty.conference_room
+        conference_room: newProperty.conference_room,
+
+        // Financials & Policies
+        security_deposit: parseFloat(newProperty.security_deposit) || 0,
+        rent_escalation_desc: newProperty.rent_escalation_desc || null,
+        bank_account: newProperty.bank_account || null,
+        ifsc_code: newProperty.ifsc_code || null,
+        upi_id: newProperty.upi_id || null,
+        rent_due_day: parseInt(newProperty.rent_due_day) || 5,
+        late_penalty_amount: parseFloat(newProperty.late_penalty_amount) || 0,
+        guidelines: newProperty.guidelines || null
       };
 
       const response = await axios.post("http://localhost:5000/api/properties/addproperty", propertyPayload, {
@@ -323,7 +337,9 @@ const AddPropertyView = ({ newProperty, setNewProperty, isDarkMode, setActiveTab
           duplex_type: false, private_parking_slots: "", private_garden: false,
           room_type: "", food_included: false, electricity_included: false, gender_allowed: "",
           shop_use_type: "", water_available: false,
-          office_type: "", seating_capacity: "", cabins_available: false, conference_room: false
+          office_type: "", seating_capacity: "", cabins_available: false, conference_room: false,
+          security_deposit: "", rent_escalation_desc: "", bank_account: "", ifsc_code: "", upi_id: "",
+          rent_due_day: "5", late_penalty_amount: "", guidelines: ""
         });
       }
     } catch (error) {
@@ -799,6 +815,65 @@ const AddPropertyView = ({ newProperty, setNewProperty, isDarkMode, setActiveTab
               </div>
             )}
           </Card>
+
+          {/* New Financials & Policies Section */}
+          <Card isDarkMode={isDarkMode} className="p-8 space-y-6">
+            <div className="flex items-center gap-3 border-b border-slate-800/50 pb-4">
+              <div className="p-2 rounded-xl bg-teal-600/20 text-teal-400"><IndianRupee size={24} /></div>
+              <h4 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>Financials & Policies</h4>
+            </div>
+
+            {/* Financial Terms */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-xs font-black text-black dark:text-white uppercase tracking-widest mb-2">Security Deposit (₹)</label>
+                <input required name="security_deposit" value={newProperty.security_deposit || ''} onChange={handleInputChange} type="number" placeholder="50000" className={inputClasses} />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-black dark:text-white uppercase tracking-widest mb-2">Rent Escalation Clause</label>
+                <input name="rent_escalation_desc" value={newProperty.rent_escalation_desc || ''} onChange={handleInputChange} type="text" placeholder="e.g. 5% increase every Jan" className={inputClasses} />
+              </div>
+            </div>
+
+            {/* Bank Details */}
+            <div className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 space-y-4">
+              <h5 className="font-bold text-sm uppercase tracking-widest text-slate-500">Bank Details (For Tenant View)</h5>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-2">Bank Account No.</label>
+                  <input name="bank_account" value={newProperty.bank_account || ''} onChange={handleInputChange} type="text" placeholder="XXXXXXXXXXXX" className={inputClasses} />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-2">IFSC Code</label>
+                  <input name="ifsc_code" value={newProperty.ifsc_code || ''} onChange={handleInputChange} type="text" placeholder="HDFC0001234" className={inputClasses} />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-bold text-slate-500 mb-2">UPI ID</label>
+                  <input name="upi_id" value={newProperty.upi_id || ''} onChange={handleInputChange} type="text" placeholder="name@bank" className={inputClasses} />
+                </div>
+              </div>
+            </div>
+
+            {/* Late Fees */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-xs font-black text-black dark:text-white uppercase tracking-widest mb-2">Rent Due Day (of Month)</label>
+                <input required name="rent_due_day" value={newProperty.rent_due_day || '5'} onChange={handleInputChange} type="number" min="1" max="31" className={inputClasses} />
+              </div>
+              <div>
+                <label className="block text-xs font-black text-black dark:text-white uppercase tracking-widest mb-2">Late Penalty (₹ Per Day)</label>
+                <input required name="late_penalty_amount" value={newProperty.late_penalty_amount || '0'} onChange={handleInputChange} type="number" placeholder="500" className={inputClasses} />
+              </div>
+            </div>
+
+            {/* Guidelines */}
+            <div>
+              <label className="block text-xs font-black text-black dark:text-white uppercase tracking-widest mb-2">Property Guidelines / Rules</label>
+              <textarea name="guidelines" value={newProperty.guidelines || ''} onChange={handleInputChange} rows="4" placeholder="- No loud music after 10 PM&#10;- Parking sticker mandatory&#10;- Garbage collection at 9 AM" className={inputClasses}></textarea>
+              <p className="text-xs text-slate-500 mt-2">List rules clearly on separate lines.</p>
+            </div>
+
+          </Card>
         </div>
 
         <div className="space-y-8">
@@ -1195,7 +1270,15 @@ const EditPropertyModal = ({ isOpen, onClose, property, onUpdate, isDarkMode }) 
     city: property.city || "",
     locality: property.locality || "",
     address: property.address || "",
-    is_featured: property.is_featured || false
+    is_featured: property.is_featured || false,
+    security_deposit: property.security_deposit || 0,
+    rent_escalation_desc: property.rent_escalation_desc || "",
+    bank_account: property.bank_account || "",
+    ifsc_code: property.ifsc_code || "",
+    upi_id: property.upi_id || "",
+    rent_due_day: property.rent_due_day || 5,
+    late_penalty_amount: property.late_penalty_amount || 0,
+    guidelines: property.guidelines || ""
   });
 
   const [images, setImages] = useState(property.images || []);
@@ -1318,6 +1401,24 @@ const EditPropertyModal = ({ isOpen, onClose, property, onUpdate, isDarkMode }) 
             <div><label className="text-xs font-bold text-slate-500 uppercase">Locality</label><input name="locality" value={formData.locality} onChange={handleChange} className={inputClass} /></div>
           </div>
           <div><label className="text-xs font-bold text-slate-500 uppercase">Full Address</label><textarea name="address" value={formData.address} onChange={handleChange} rows="2" className={inputClass}></textarea></div>
+
+          {/* Financials & Policies (Edit) */}
+          <div className="space-y-4 pt-4 border-t border-slate-800/50">
+            <h4 className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Financials & Policies</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div><label className="text-xs font-bold text-slate-500 uppercase">Security Deposit</label><input type="number" name="security_deposit" value={formData.security_deposit || ''} onChange={handleChange} className={inputClass} /></div>
+              <div><label className="text-xs font-bold text-slate-500 uppercase">Rent Escalation</label><input name="rent_escalation_desc" value={formData.rent_escalation_desc || ''} onChange={handleChange} className={inputClass} /></div>
+
+              <div><label className="text-xs font-bold text-slate-500 uppercase">Bank Account</label><input name="bank_account" value={formData.bank_account || ''} onChange={handleChange} className={inputClass} /></div>
+              <div><label className="text-xs font-bold text-slate-500 uppercase">IFSC Code</label><input name="ifsc_code" value={formData.ifsc_code || ''} onChange={handleChange} className={inputClass} /></div>
+              <div><label className="text-xs font-bold text-slate-500 uppercase">UPI ID</label><input name="upi_id" value={formData.upi_id || ''} onChange={handleChange} className={inputClass} /></div>
+
+              <div><label className="text-xs font-bold text-slate-500 uppercase">Rent Due Day</label><input type="number" name="rent_due_day" value={formData.rent_due_day || ''} onChange={handleChange} className={inputClass} /></div>
+              <div><label className="text-xs font-bold text-slate-500 uppercase">Late Penalty (₹)</label><input type="number" name="late_penalty_amount" value={formData.late_penalty_amount || ''} onChange={handleChange} className={inputClass} /></div>
+            </div>
+            <div><label className="text-xs font-bold text-slate-500 uppercase">Guidelines</label><textarea name="guidelines" value={formData.guidelines || ''} onChange={handleChange} rows="3" className={inputClass}></textarea></div>
+          </div>
+
           <div className="flex gap-4 pt-4 border-t border-slate-800/50">
             <Button onClick={onClose} variant="secondary" className="flex-1" isDarkMode={isDarkMode}>Cancel</Button>
             <Button type="submit" className="flex-1" isDarkMode={isDarkMode}>Save Changes</Button>
@@ -1329,18 +1430,52 @@ const EditPropertyModal = ({ isOpen, onClose, property, onUpdate, isDarkMode }) 
 };
 
 const MaintenanceDetailsView = ({ complaint, onBack, isDarkMode, onUpdateStatus }) => {
+  const navigate = useNavigate(); // Hook for navigation
+
   if (!complaint) return null;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-10 duration-500">
       {/* Header */}
       <div className="flex items-center gap-6">
-        <button
-          onClick={onBack}
-          className={`p-2.5 rounded-xl border transition-all ${isDarkMode ? 'border-slate-800 text-slate-400 hover:text-white hover:bg-slate-900' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
-        >
-          <ArrowLeft size={20} />
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onBack}
+            className={`p-2.5 rounded-xl border transition-all ${isDarkMode ? 'border-slate-800 text-slate-400 hover:text-white hover:bg-slate-900' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+          >
+            <ArrowLeft size={20} />
+          </button>
+
+          <button
+            onClick={() => {
+              // Navigate to Home Services with address state
+              console.log("Navigating from LandlordDashboard with complaint:", complaint);
+
+              const addressParts = [
+                complaint.property_name,
+                complaint.flat_number,
+                complaint.building_name,
+                complaint.locality,
+                complaint.city,
+                complaint.address
+              ].filter(part => part && part.trim() !== '');
+
+              const formattedAddress = addressParts.join(', ');
+              console.log("Formatted address:", formattedAddress);
+
+              navigate('/home-services', {
+                state: {
+                  address: formattedAddress,
+                  fromLandlord: true,
+                  property_image: complaint.property_cover_image || complaint.propertyImage
+                }
+              });
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-bold shadow-lg shadow-violet-600/20 active:scale-95 transition-all"
+          >
+            <Calendar size={18} /> Book Service
+          </button>
+        </div>
 
         {complaint.property_cover_image || complaint.propertyImage ? (
           <img src={complaint.property_cover_image || complaint.propertyImage} className="w-16 h-16 rounded-2xl object-cover border-2 border-slate-700 shadow-lg" alt="Property" />
@@ -2262,6 +2397,8 @@ const LandlordTenantsView = ({
 }) => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [selectedChatTenant, setSelectedChatTenant] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { userName } = useParams();
@@ -2349,32 +2486,37 @@ const LandlordTenantsView = ({
               {/* Avatar & Main Info */}
               <div className="relative px-8 pb-8 -mt-16 text-center">
                 <div className="relative inline-block mb-4 group-hover:scale-110 transition-transform duration-500">
-                  <div className={`w-32 h-32 rounded-full flex items-center justify-center text-5xl font-black text-white shadow-2xl relative z-10 bg-gradient-to-br from-violet-600 to-indigo-600`}>
-                    {tenant.name?.charAt(0)}
+                  <div className={`w-32 h-32 rounded-full flex items-center justify-center text-5xl font-black text-white shadow-2xl relative z-10 overflow-hidden bg-gradient-to-br from-violet-600 to-indigo-600`}>
+                    {tenant.avatar_url ? (
+                      <img src={tenant.avatar_url} alt={tenant.name} className="w-full h-full object-cover" />
+                    ) : (
+                      tenant.name?.charAt(0)
+                    )}
                   </div>
                 </div>
 
                 <h3 className={`text-2xl font-black mb-1 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{tenant.name}</h3>
                 {/* Info Grid */}
-                <div className={`mt-8 space-y-4 text-left p-6 rounded-3xl ${isDarkMode ? 'bg-slate-950/50' : 'bg-slate-50'}`}>
+                {/* Info Grid */}
+                <div className={`mt-6 space-y-4 text-left p-5 rounded-3xl ${isDarkMode ? 'bg-slate-950/50' : 'bg-slate-50'}`}>
                   <div className="flex items-center gap-4">
                     <div className={`p-2.5 rounded-xl ${isDarkMode ? 'bg-slate-800 text-slate-400' : 'bg-white text-slate-500 shadow-sm'}`}><Home size={18} /></div>
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Property</p>
-                      <p className={`font-bold text-sm truncate max-w-[180px] ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{tenant.property_name}</p>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Property</p>
+                      <p className={`font-bold text-sm truncate ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{tenant.property_name}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className={`p-2.5 rounded-xl ${isDarkMode ? 'bg-slate-800 text-slate-400' : 'bg-white text-slate-500 shadow-sm'}`}><Phone size={18} /></div>
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Contact</p>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Contact</p>
                       <p className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{tenant.phone}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="mt-8 flex items-center gap-3">
+                <div className="mt-6 flex items-center gap-3">
                   <button
                     onClick={() => {
                       setSelectedTenantId(tenant.id);
@@ -2389,24 +2531,39 @@ const LandlordTenantsView = ({
                       }
                       navigate(`${basePath}/tenant-details?name=${encodeURIComponent(tenant.name)}`);
                     }}
-                    className="flex-1 py-3.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold shadow-lg shadow-violet-600/20 transition-all active:scale-95"
+                    className="flex-1 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold shadow-lg shadow-violet-600/20 transition-all active:scale-95 text-sm"
                   >
                     View Details
                   </button>
-                  <div className="flex gap-2">
-                    <button onClick={() => onEditClick(tenant)} className={`p-3.5 rounded-xl border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-800 text-slate-400 hover:text-white' : 'border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-indigo-600'}`}>
-                      <Edit size={20} />
-                    </button>
-                    <button onClick={() => onDeleteClick(tenant.id)} className={`p-3.5 rounded-xl border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-rose-950/30 text-rose-500' : 'border-slate-200 hover:bg-rose-50 text-rose-500'}`}>
-                      <Trash2 size={20} />
-                    </button>
-                  </div>
+
+                  <button onClick={() => {
+                    setSelectedChatTenant(tenant);
+                    setIsChatOpen(true);
+                  }} className={`p-3 rounded-xl border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-800 text-slate-400 hover:text-white' : 'border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-indigo-600'}`}>
+                    <MessageCircle size={18} />
+                  </button>
+                  <button onClick={() => onEditClick(tenant)} className={`p-3 rounded-xl border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-800 text-slate-400 hover:text-white' : 'border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-indigo-600'}`}>
+                    <Edit size={18} />
+                  </button>
+                  <button onClick={() => onDeleteClick(tenant.id)} className={`p-3 rounded-xl border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-rose-950/30 text-rose-500' : 'border-slate-200 hover:bg-rose-50 text-rose-500'}`}>
+                    <Trash2 size={18} />
+                  </button>
                 </div>
               </div>
             </div>
           ))
         )}
       </div>
+
+      {/* Chat Window */}
+      {selectedChatTenant && (
+        <ChatWindow
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+          recipient={selectedChatTenant}
+          isDarkMode={isDarkMode}
+        />
+      )}
     </div>
   );
 };
@@ -2459,11 +2616,30 @@ export default function RentEaseDashboard() {
       localStorage.removeItem('selectedTenantId');
     }
   }, [selectedTenantId]);
-  const [selectedComplaintId, setSelectedComplaintId] = useState(null);
 
-  const [user, setUser] = useState(INITIAL_USER);
+  /* --- User State with Immediate Initialization for Loader --- */
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem("user");
+    return saved ? JSON.parse(saved) : INITIAL_USER;
+  });
+
+  const [notifications, setNotifications] = useState([]);
+
+  const fetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
+      const res = await axios.get("http://localhost:5000/api/notifications", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNotifications(res.data);
+    } catch (error) {
+      console.error("Failed to fetch notifications", error);
+    }
+  };
+
+
   const [payments, setPayments] = useState(INITIAL_PAYMENTS);
-  /* --- Fetch Complaints (Real Data) --- */
   const [complaints, setComplaints] = useState([]);
 
   const fetchComplaints = async () => {
@@ -2485,21 +2661,8 @@ export default function RentEaseDashboard() {
     fetchComplaints();
   }, []);
 
-  const [notifications, setNotifications] = useState([]);
+  const [selectedComplaintId, setSelectedComplaintId] = useState(null);
 
-  const fetchNotifications = async () => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return;
-      const res = await axios.get("http://localhost:5000/api/notifications", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      // Map API response to UI expected format if needed, but we updated component to use API fields
-      setNotifications(res.data);
-    } catch (error) {
-      console.error("Failed to fetch notifications", error);
-    }
-  };
 
   const markAsRead = async (id) => {
     try {
@@ -2538,8 +2701,9 @@ export default function RentEaseDashboard() {
   const [loadingProperties, setLoadingProperties] = useState(true);
 
   const [rentDue, setRentDue] = useState(0);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedProperty, setSelectedProperty] = useState(null);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [selectedPropertyImages, setSelectedPropertyImages] = useState([]);
   const [showComplaintModal, setShowComplaintModal] = useState(false);
   const [notificationToast, setNotificationToast] = useState(null);
 
@@ -2892,7 +3056,7 @@ export default function RentEaseDashboard() {
   };
 
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [selectedProperty, setSelectedProperty] = useState(null);
+  // const [selectedProperty, setSelectedProperty] = useState(null); // Already declared above
 
   const handleLogout = () => {
     toast.success("Logging out...");
@@ -3029,53 +3193,59 @@ export default function RentEaseDashboard() {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
+          <div className="lg:col-span-2 h-full">
             <RevenueLineChart />
-
-            {/* Recent Transactions List */}
-            <Card isDarkMode={isDarkMode} className="p-6">
-              <h3 className={`text-xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Recent Transactions</h3>
-              <div className="space-y-4">
-                {loadingPayments ? (
-                  <p className="text-slate-500 text-center py-4">Loading transactions...</p>
-                ) : realPayments.length === 0 ? (
-                  <p className="text-slate-500 text-center py-4">No transactions recorded.</p>
-                ) : (
-                  realPayments.map((p, i) => (
-                    <div key={p.id || i} className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${isDarkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                      <div className="flex items-center gap-4">
-                        <div className={`p-3 rounded-full ${p.status === 'PAID' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
-                          <IndianRupee size={20} />
-                        </div>
-                        <div>
-                          <p className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{p.tenant_name || 'Unknown Tenant'}</p>
-                          <p className="text-xs text-slate-500">{p.property_name} • {new Date(p.date).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className={`font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>₹{Number(p.amount).toLocaleString()}</p>
-                          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{p.status}</p>
-                        </div>
-                        <button
-                          onClick={() => downloadReceipt(p.id)}
-                          className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`}
-                          title="Download Receipt"
-                        >
-                          <Download size={18} />
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </Card>
           </div>
-          <div className="space-y-8">
+          <div className="lg:col-span-1 h-full">
             <RevenueTrendsChart isDarkMode={isDarkMode} />
           </div>
         </div>
+
+        {/* Recent Transactions List - Full Width */}
+        <Card isDarkMode={isDarkMode} className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Recent Transactions</h3>
+            <Button variant="outline" className="text-xs h-8" isDarkMode={isDarkMode}>View All</Button>
+          </div>
+          <div className="space-y-4">
+            {loadingPayments ? (
+              <p className="text-slate-500 text-center py-4">Loading transactions...</p>
+            ) : realPayments.length === 0 ? (
+              <p className="text-slate-500 text-center py-4">No transactions recorded.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {realPayments.slice(0, 6).map((p, i) => (
+                  <div key={p.id || i} className={`flex items-center justify-between p-4 rounded-xl border transition-colors ${isDarkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                    <div className="flex items-center gap-4">
+                      <div className={`p-3 rounded-full ${p.status === 'PAID' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                        <IndianRupee size={20} />
+                      </div>
+                      <div>
+                        <p className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{p.tenant_name || 'Unknown Tenant'}</p>
+                        <p className="text-xs text-slate-500">{p.property_name} • {new Date(p.date).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className={`font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>₹{Number(p.amount).toLocaleString()}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{p.status}</p>
+                      </div>
+                      <button
+                        onClick={() => downloadReceipt(p.id)}
+                        className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`}
+                        title="Download Receipt"
+                      >
+                        <Download size={18} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </Card>
       </div>
     );
   };
@@ -3329,8 +3499,59 @@ export default function RentEaseDashboard() {
           </div>
         </div>
 
-        {/* Quick Actions */}
+
+        {/* Quick Actions & Rent Collection */}
         <div className="space-y-6">
+
+          {/* Rent Collection Donut Chart */}
+          <Card isDarkMode={isDarkMode} className="p-6">
+            <div className="flex items-center gap-2 mb-6">
+              <CreditCard className="text-emerald-500" size={24} />
+              <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Rent Collection</h3>
+            </div>
+
+            <div className="relative h-48 w-48 mx-auto mb-4">
+              {/* SVG Donut Chart */}
+              <svg viewBox="0 0 100 100" className="transform -rotate-90 w-full h-full">
+                <circle cx="50" cy="50" r="40" fill="transparent" stroke={isDarkMode ? "#1e293b" : "#f1f5f9"} strokeWidth="12" />
+                {/* Paid Segment */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="transparent"
+                  stroke="#10b981" // emerald-500
+                  strokeWidth="12"
+                  strokeDasharray={`${((tenants.filter(t => t.status === 'PAID').length || 0) / (tenants.length || 1)) * 251.2} 251.2`}
+                  className="transition-all duration-1000 ease-out"
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className={`text-3xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                  {Math.round(((tenants.filter(t => t.status === 'PAID').length || 0) / (tenants.length || 1)) * 100)}%
+                </span>
+                <span className="text-xs text-slate-500 uppercase font-bold">Collected</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex justify-between items-center text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                  <span className={isDarkMode ? 'text-slate-300' : 'text-slate-600'}>Paid</span>
+                </div>
+                <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{tenants.filter(t => t.status === 'PAID').length}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-rose-500"></div>
+                  <span className={isDarkMode ? 'text-slate-300' : 'text-slate-600'}>Pending</span>
+                </div>
+                <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{tenants.filter(t => t.status !== 'PAID').length}</span>
+              </div>
+            </div>
+          </Card>
+
           <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>Quick Actions</h3>
           <Card isDarkMode={isDarkMode} className="p-4 space-y-2">
             {[
@@ -3387,7 +3608,13 @@ export default function RentEaseDashboard() {
           landlordProperties.map(prop => (
             <Card key={prop.id} isDarkMode={isDarkMode} className="overflow-hidden group hover:shadow-2xl transition-all duration-300">
               {/* Image Section */}
-              <div className="h-64 relative overflow-hidden">
+              <div className="h-64 relative overflow-hidden cursor-pointer" onClick={() => {
+                const galleryImages = (prop.images && prop.images.length > 0)
+                  ? prop.images.map(img => img.image_url)
+                  : [prop.image];
+                setSelectedPropertyImages(galleryImages);
+                setIsGalleryOpen(true);
+              }}>
                 <img src={prop.image} alt={prop.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                 <div className="absolute top-4 right-4">
                   <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border shadow-sm ${prop.status === 'Occupied' ? 'bg-white text-slate-900' : 'bg-yellow-400 text-slate-900'}`}>
@@ -3397,38 +3624,69 @@ export default function RentEaseDashboard() {
               </div>
 
               {/* Content Section */}
-              <div className="p-6 space-y-4">
+              <div className="p-6 space-y-5">
                 <div>
-                  <h3 className={`text-xl font-black ${isDarkMode ? 'text-white' : 'text-black'} mb-1`}>{prop.name}</h3>
+                  <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'} mb-1`}>{prop.name}</h3>
                   <div className="flex items-center gap-2 text-sm text-slate-500">
-                    <MapPin size={14} />
-                    {prop.address || "No address provided"}
+                    <MapPin size={14} className="shrink-0" />
+                    <span className="truncate">{prop.address || "No address provided"}</span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between py-4 border-y border-slate-800/10">
-                  <div className="flex items-center gap-2 text-sm text-slate-500">
-                    <Home size={16} />
-                    <span>{prop.type}</span>
+                {/* Property Details Column */}
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-3 text-slate-500">
+                      <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                        <Home size={16} />
+                      </div>
+                      <span className="font-medium">{prop.type}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-slate-500">
+                      <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                        <Users size={16} />
+                      </div>
+                      <span className="font-medium text-right">{prop.units}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-slate-500">
-                    <Users size={16} />
-                    <span>{prop.units}</span>
+
+                  <div className="flex items-center gap-3 text-sm text-slate-500">
+                    <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-emerald-500/10 text-emerald-500' : 'bg-emerald-50 text-emerald-600'}`}>
+                      <IndianRupee size={16} />
+                    </div>
+                    <span className="font-bold flex items-center gap-1">
+                      ₹{(prop.price || 0).toLocaleString()}
+                      <span className="text-xs font-normal text-slate-400">/month</span>
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-2">
-                  <div>
-                    <p className={`text-lg font-black ${isDarkMode ? 'text-white' : 'text-black'}`}>₹{(prop.price || 0).toLocaleString()}<span className="text-xs font-normal text-slate-500">/month</span></p>
+                {/* Financial Summary Small Pills */}
+                <div className="flex gap-4 pt-2 border-t border-slate-800/10 dark:border-slate-800/50">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Deposit</span>
+                    <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-700'}`}>₹{(prop.security_deposit || 0).toLocaleString()}</span>
                   </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => { setSelectedProperty(prop); setIsEditOpen(true); }} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold border ${isDarkMode ? 'border-slate-700 hover:bg-slate-700' : 'border-slate-200 hover:bg-slate-50'}`}>
-                      <Edit size={14} /> Edit
-                    </button>
-                    <button onClick={() => handleDeleteClick(prop.id)} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold border text-rose-500 ${isDarkMode ? 'border-slate-700 hover:bg-rose-500/10' : 'border-slate-200 hover:bg-rose-50'}`}>
-                      <Trash2 size={14} /> Delete
-                    </button>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Rent Due</span>
+                    <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-700'}`}>{prop.rent_due_day || 5}th</span>
                   </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => { setSelectedProperty(prop); setIsEditOpen(true); }}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-800 text-white' : 'border-slate-200 hover:bg-slate-50 text-slate-700'}`}
+                  >
+                    <Edit size={16} /> Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteClick(prop.id)}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border border-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all`}
+                  >
+                    <Trash2 size={16} /> Delete
+                  </button>
                 </div>
               </div>
             </Card>
@@ -3437,6 +3695,8 @@ export default function RentEaseDashboard() {
       </div>
     </div>
   );
+
+
 
 
 
@@ -3541,7 +3801,7 @@ export default function RentEaseDashboard() {
                         onClose={() => setIsDeleteTenantModalOpen(false)}
                         onConfirm={confirmDeleteTenant}
                         isDarkMode={isDarkMode}
-                        title="Delete Tenant?"
+                        title="Delete Tenant"
                         message="Are you sure you want to delete this tenant? This action will remove the tenant and all family members permanently."
                       />
                     </>
@@ -3594,6 +3854,12 @@ export default function RentEaseDashboard() {
         isDarkMode={isDarkMode}
         title="Delete Property?"
         message="Are you sure you want to delete this property? This action cannot be undone."
+      />
+
+      <ImageGalleryModal
+        isOpen={isGalleryOpen}
+        onClose={() => setIsGalleryOpen(false)}
+        images={selectedPropertyImages}
       />
     </div>
   );

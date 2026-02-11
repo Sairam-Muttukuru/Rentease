@@ -98,4 +98,20 @@ const resetPassword = async (email, newPassword) => {
     return { message: "Password reset successful" };
 };
 
-module.exports = { signup, login, sendResetOtp, verifyResetOtp, resetPassword };
+const changePassword = async (userId, oldPassword, newPassword) => {
+    const user = await User.findUserById(userId);
+    if (!user) throw new Error("User not found");
+
+    // Need to get the full user record to check the password (findUserById only returns specific fields)
+    const fullUser = await User.findUserByEmail(user.email);
+
+    const match = await bcrypt.compare(oldPassword, fullUser.password);
+    if (!match) throw new Error("Incorrect current password");
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await User.updatePasswordByEmail(user.email, hashedPassword);
+
+    return { message: "Password updated successfully" };
+};
+
+module.exports = { signup, login, sendResetOtp, verifyResetOtp, resetPassword, changePassword };

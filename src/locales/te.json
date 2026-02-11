@@ -7,7 +7,8 @@
         "settings": "సెట్టింగ్‌లు",
         "home_services": "గృహ సేవలు",
         "logout": "లాగౌట్",
-        "welcome_back": "స్వాగతం,"
+        "welcome_back": "స్వాగతం,",
+        "saving": "సేవ్ అవుతోంది..."
     },
     "dashboard": {
         "settled": "పూర్తయింది",
@@ -21,7 +22,9 @@
         "help_desk": "సహాయ కేంద్రం"
     },
     "settings": {
+        "manage_preferences": "మీ ఖాతా సెట్టింగ్‌లు మరియు ప్రాధాన్యతలను నిర్వహించండి",
         "profile_info": "ప్రొఫైల్ సమాచారం",
+        "update_personal_details": "మీ వ్యక్తిగత వివరాలను ఇక్కడ నవీకరించండి",
         "full_name": "పూర్తి పేరు",
         "email_address": "ఈమెయిల్ చిరునామా",
         "phone_number": "ఫోన్ నంబర్",

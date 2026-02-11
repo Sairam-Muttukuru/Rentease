@@ -7,7 +7,8 @@
         "settings": "Settings",
         "home_services": "Home Services",
         "logout": "Logout",
-        "welcome_back": "Welcome back,"
+        "welcome_back": "Welcome back,",
+        "saving": "Saving..."
     },
     "dashboard": {
         "settled": "Settled",
@@ -21,7 +22,9 @@
         "help_desk": "Help Desk"
     },
     "settings": {
+        "manage_preferences": "Manage your account settings and preferences",
         "profile_info": "Profile Information",
+        "update_personal_details": "Update your personal details here",
         "full_name": "Full Name",
         "email_address": "Email Address",
         "phone_number": "Phone Number",

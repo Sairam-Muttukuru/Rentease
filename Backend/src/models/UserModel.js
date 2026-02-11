@@ -39,7 +39,7 @@ const updatePasswordByEmail = async (email, hashedPassword) => {
 const findUserById = async (id) => {
     return (
         await db.query(
-            "SELECT id, first_name, last_name, email FROM users WHERE id = $1",
+            "SELECT id, first_name, last_name, email, phone, avatar_url FROM users WHERE id = $1",
             [id]
         )
     ).rows[0];
@@ -62,6 +62,8 @@ const updateUser = async (id, data) => {
     if (data.first_name) { fields.push(`first_name=$${idx++}`); values.push(data.first_name); }
     if (data.last_name) { fields.push(`last_name=$${idx++}`); values.push(data.last_name); }
     if (data.email) { fields.push(`email=$${idx++}`); values.push(data.email); }
+    if (data.phone) { fields.push(`phone=$${idx++}`); values.push(data.phone); }
+    if (data.avatar_url) { fields.push(`avatar_url=$${idx++}`); values.push(data.avatar_url); }
 
     if (fields.length === 0) return null;
 

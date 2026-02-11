@@ -17,9 +17,31 @@ exports.createProperty = async (req, res) => {
 
 exports.getAllProperties = async (req, res) => {
   try {
-    const properties = await PropertyService.getAllProperties();
-    res.json(properties);
+    const filters = {
+      search: req.query.search,
+      city: req.query.city,
+      locality: req.query.locality,
+      minPrice: req.query.minPrice,
+      maxPrice: req.query.maxPrice,
+      propertyType: req.query.type, // Frontend uses 'type', DB 'property_type'
+      bedrooms: req.query.bedrooms,
+      amenities: req.query.amenities ? req.query.amenities.split(',').map(Number) : [],
+      sortBy: req.query.sortBy,
+      limit: parseInt(req.query.limit) || 12,
+      offset: parseInt(req.query.offset) || 0
+    };
+
+    const properties = await PropertyService.getAllProperties(filters);
+    const totalCount = await PropertyService.getPropertiesCount(filters);
+
+    res.json({
+      properties,
+      totalCount,
+      totalPages: Math.ceil(totalCount / filters.limit || 12),
+      currentPage: Math.floor(filters.offset / filters.limit) + 1
+    });
   } catch (err) {
+    console.error("getAllProperties Error:", err);
     res.status(500).json({ error: err.message });
   }
 };

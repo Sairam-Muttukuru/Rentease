@@ -46,9 +46,11 @@ exports.getAllByLandlordId = async (landlordId) => {
       tm.full_name as name,
       tm.phone,
       tm.tenant_emailid as email,
-      (SELECT COUNT(*) FROM tenant_members WHERE tenant_id = t.id) as members
+      (SELECT COUNT(*) FROM tenant_members WHERE tenant_id = t.id) as members,
+      u.avatar_url
     FROM tenants t
     JOIN properties p ON p.id = t.property_id
+    JOIN users u ON u.id = t.user_id 
     JOIN tenant_members tm ON tm.tenant_id = t.id AND tm.is_primary = true
     WHERE t.landlord_id = $1
     `,
@@ -105,7 +107,20 @@ exports.getByUserId = async (userId) => {
       p.address,
       p.city,
       p.locality,
+      p.locality,
       p.price as property_rent,
+      
+      -- Financials & Policies
+      p.security_deposit as "securityDeposit",
+      t.security_deposit_status as "securityDepositStatus",
+      p.rent_escalation_desc as "rentEscalation",
+      p.bank_account as "bankAccount",
+      p.ifsc_code as "ifscCode",
+      p.upi_id as "upiId",
+      p.late_penalty_amount as "latePenaltyAmount",
+      p.rent_due_day as "rentDueDay",
+      p.guidelines,
+
       CONCAT(u.first_name, ' ', u.last_name) as landlord_name,
       u.email as landlord_email,
       CONCAT(tu.first_name, ' ', tu.last_name) as full_name, -- Fetch tenant name
@@ -113,7 +128,13 @@ exports.getByUserId = async (userId) => {
         (SELECT json_agg(pi.image_url)
          FROM property_images pi
          WHERE pi.property_id = p.id)
-      , '[]') as images
+      , '[]') as images,
+      COALESCE(
+        (SELECT json_agg(a.name)
+         FROM property_amenities pa
+         JOIN amenities a ON a.id = pa.amenity_id
+         WHERE pa.property_id = p.id)
+      , '[]') as amenities
     FROM tenants t
     LEFT JOIN properties p ON p.id = t.property_id
     LEFT JOIN users u ON u.id = t.landlord_id
