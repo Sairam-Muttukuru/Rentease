@@ -1,3 +1,32 @@
 node_modules/
 .env
 dist/
+# Debug files
+debug_*
+*.log
+*.cjs
+#test files
+test_*
+*.log
+*.cjs
+# Local scripts
+check_db.js
+db_update.js
+add_tenant_deposit_status.js
+# Debug scripts
+Backend/check_*
+Backend/fix_*
+Backend/migrate_*
+Backend/seed_*
+Backend/debug_*
+Backend/inspect*
+Backend/list*
+Backend/schema_*
+Backend/migration_log.txt
+
+# Logs
+*.log
+*.txt
+
+# # Environment
+# .env
