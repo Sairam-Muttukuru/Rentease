@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
 import { Menu, Calendar, Clock } from 'lucide-react';
-import { useTheme } from "../../../context/ThemeContext";
+import { useTheme } from '../../../context/ThemeContext';
+import TenantAnnouncementsWidget from './TenantAnnouncementsWidget';
+import QuickActions from './QuickActions';
 import RentOverviewCard from './RentOverviewCard';
 import StatsCards from './StatsCards';
 import MyPropertyCard from './MyPropertyCard';
 import HomeServicesTeaser from './HomeServicesTeaser';
 import UsageChart from './UsageChart';
-import ImportantContacts from './ImportantContacts';
 import RecentActivity from './RecentActivity';
-import VacateCard from './VacateCard';
 import PropertyRules from './PropertyRules';
-import RecentPaymentsPreview from './RecentPaymentsPreview';
 import RecentComplaintsPreview from './RecentComplaintsPreview';
+import ImportantContacts from './ImportantContacts';
 import RequestedServices from './RequestedServices';
+import VacateCard from './VacateCard';
+import RecentPaymentsPreview from './RecentPaymentsPreview';
 import ChatWindow from '../../chat/ChatWindow';
 
 const DashboardHome = ({
@@ -128,10 +130,20 @@ const DashboardHome = ({
                     <HomeServicesTeaser navigate={navigate} />
 
                     <UsageChart user={user} isPaid={isPaid} />
+
+                    <RecentActivity dashboardNotifications={dashboardNotifications} />
+
+                    <PropertyRules />
+
+                    <RecentComplaintsPreview complaints={complaints} navigate={navigate} />
                 </div>
 
                 {/* Right Column: Information Stack */}
                 <div className="flex flex-col gap-8">
+                    <TenantAnnouncementsWidget isDarkMode={isDarkMode} />
+
+                    <QuickActions navigate={navigate} isPaid={isPaid} />
+
                     <ImportantContacts user={user} onChatClick={() => setIsChatOpen(true)} />
 
                     <RequestedServices
@@ -139,15 +151,9 @@ const DashboardHome = ({
                         fetchTenantData={fetchTenantData}
                     />
 
-                    <RecentActivity dashboardNotifications={dashboardNotifications} />
-
                     <VacateCard />
 
-                    <PropertyRules />
-
                     <RecentPaymentsPreview payments={payments} navigate={navigate} />
-
-                    <RecentComplaintsPreview complaints={complaints} navigate={navigate} />
 
                 </div>
             </div>

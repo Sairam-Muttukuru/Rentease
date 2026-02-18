@@ -15,7 +15,7 @@
 //         { id: 'phonepe', name: 'PhonePe', icon: Smartphone, color: 'bg-violet-600' },
 //         { id: 'paytm', name: 'Paytm', icon: Smartphone, color: 'bg-sky-400' },
 //     ];
-
+ 
 //     // Mock NetBanking Banks
 //     const banks = [
 //         { id: 'hdfc', name: 'HDFC Bank', logo: 'H' },
@@ -175,7 +175,6 @@
 //                                 {method === 'card' && <div className="w-2.5 h-2.5 bg-blue-600 rounded-full" />}
 //                             </div>
 //                         </button>
-
 //                         {/* Card Form (Mock) */}
 //                         {method === 'card' && (
 //                             <div className="mt-3 pl-14 space-y-3 animate-in slide-in-from-top-2">
@@ -202,7 +201,6 @@
 //                             </div>
 //                         )}
 //                     </div>
-
 //                     {/* NetBanking Method */}
 //                     <div className="bg-white p-4 shadow-sm">
 //                         <button
@@ -220,7 +218,6 @@
 //                                 {method === 'netbanking' && <div className="w-2.5 h-2.5 bg-emerald-600 rounded-full" />}
 //                             </div>
 //                         </button>
-
 //                         {/* Bank Grid */}
 //                         {method === 'netbanking' && (
 //                             <div className="mt-3 pl-14 grid grid-cols-4 gap-2 animate-in slide-in-from-top-2">
@@ -241,9 +238,7 @@
 //                             </div>
 //                         )}
 //                     </div>
-
 //                 </div>
-
 //                 {/* Footer */}
 //                 <div className="p-4 bg-white border-t border-gray-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] sticky bottom-0">
 //                     <button
@@ -263,10 +258,8 @@
 //                         <span className="text-[10px] font-semibold text-gray-500">Secured by Stripe (Test)</span>
 //                     </div>
 //                 </div>
-
 //             </div>
 //         </div>
 //     );
 // };
-
 // export default RazorpayCheckout;

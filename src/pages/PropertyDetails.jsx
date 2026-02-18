@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import { MapPin, Bed, Bath, Maximize, ArrowLeft, Star, Heart, Share2, CheckCircle, AlertCircle, MessageCircle, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
+import ChatWindow from '../components/chat/ChatWindow';
 
 const PropertyDetails = () => {
     const { id } = useParams();
@@ -15,6 +16,16 @@ const PropertyDetails = () => {
     const [bookingMessage, setBookingMessage] = useState("");
     const [isBooking, setIsBooking] = useState(false);
     const [showAllImages, setShowAllImages] = useState(false);
+    const [isChatOpen, setIsChatOpen] = useState(false);
+
+    const handleChat = () => {
+        if (!user) {
+            toast.info("Please login to chat");
+            navigate('/login');
+            return;
+        }
+        setIsChatOpen(true);
+    };
 
     useEffect(() => {
         const fetchProperty = async () => {
@@ -31,20 +42,32 @@ const PropertyDetails = () => {
         fetchProperty();
     }, [id]);
 
+    const [visitDate, setVisitDate] = useState('');
+    const [visitTime, setVisitTime] = useState('');
+
     const handleBooking = async () => {
         if (!user) {
             toast.info("Please login to book");
             navigate('/login');
             return;
         }
+        if (!visitDate || !visitTime) {
+            toast.error("Please select a preferred visit date and time");
+            return;
+        }
+
+        const visitSlot = new Date(`${visitDate}T${visitTime}`).toISOString();
+
         setIsBooking(true);
         try {
             await axios.post('http://localhost:5000/api/bookings',
-                { propertyId: id, message: bookingMessage },
+                { propertyId: id, message: bookingMessage, visitSlot },
                 { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } }
             );
             toast.success("Booking request sent successfully!");
             setBookingMessage("");
+            setVisitDate("");
+            setVisitTime("");
         } catch (err) {
             toast.error(err.response?.data?.error || "Booking failed");
         } finally {
@@ -242,29 +265,62 @@ const PropertyDetails = () => {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="space-y-4 mb-8">
-                                    <label className="text-sm font-bold text-gray-500 dark:text-gray-400 ml-2">Message to Landlord</label>
-                                    <textarea
-                                        value={bookingMessage}
-                                        onChange={(e) => setBookingMessage(e.target.value)}
-                                        placeholder="Hi, I'm interested in this property..."
-                                        className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 outline-none h-32 resize-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600"
-                                    ></textarea>
-                                    <button
-                                        onClick={handleBooking}
-                                        disabled={isBooking || user?.role === 'LANDLORD'}
-                                        className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:text-gray-500 py-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2 group"
-                                    >
-                                        {isBooking ? 'Sending...' : 'Request Booking'}
-                                        {!isBooking && <ArrowLeft key="arrow" className="rotate-180 transition-transform group-hover:translate-x-1" />}
-                                    </button>
-                                </div>
+                                <>
+                                    <div className="space-y-4 mb-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-gray-500 dark:text-gray-400">
+                                                    Visit Date
+                                                </label>
+                                                <input
+                                                    type="date"
+                                                    value={visitDate}
+                                                    onChange={(e) => setVisitDate(e.target.value)}
+                                                    min={new Date().toISOString().split('T')[0]}
+                                                    className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-xl p-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 outline-none transition-all"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-gray-500 dark:text-gray-400">
+                                                    Time
+                                                </label>
+                                                <input
+                                                    type="time"
+                                                    value={visitTime}
+                                                    onChange={(e) => setVisitTime(e.target.value)}
+                                                    className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-xl p-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 outline-none transition-all"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4 mb-8">
+                                        <label className="text-sm font-bold text-gray-500 dark:text-gray-400 ml-2">Message to Landlord</label>
+                                        <textarea
+                                            value={bookingMessage}
+                                            onChange={(e) => setBookingMessage(e.target.value)}
+                                            placeholder="Hi, I'm interested in this property..."
+                                            className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-2xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 outline-none h-32 resize-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                                        ></textarea>
+                                        <button
+                                            onClick={handleBooking}
+                                            disabled={isBooking}
+                                            className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:text-gray-500 py-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2 group"
+                                        >
+                                            {isBooking ? 'Sending...' : 'Request Booking'}
+                                            {!isBooking && <ArrowLeft key="arrow" className="rotate-180 transition-transform group-hover:translate-x-1" />}
+                                        </button>
+                                    </div>
+                                </>
                             )}
 
                             {/* Chat Section */}
                             <div className="pt-6 border-t border-gray-200 dark:border-white/10">
                                 {user ? (
-                                    <button className="w-full py-4 border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 rounded-xl text-gray-600 dark:text-gray-300 font-bold transition-all flex items-center justify-center gap-2">
+                                    <button
+                                        onClick={handleChat}
+                                        className="w-full py-4 border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5 rounded-xl text-gray-600 dark:text-gray-300 font-bold transition-all flex items-center justify-center gap-2"
+                                    >
                                         <MessageCircle size={20} /> Chat with Landlord
                                     </button>
                                 ) : (
@@ -303,6 +359,22 @@ const PropertyDetails = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Chat Window */}
+            {isChatOpen && property && (
+                <ChatWindow
+                    isOpen={isChatOpen}
+                    onClose={() => setIsChatOpen(false)}
+                    recipient={{
+                        id: property.landlord_id,
+                        name: `${property.first_name} ${property.last_name}`,
+                        email: property.email,
+                        // avatar_url: property.landlord_avatar // If available
+                    }}
+                    currentUserRole={user?.role?.toLowerCase() || 'tenant'}
+                    isDarkMode={true}
+                />
             )}
         </div>
     );

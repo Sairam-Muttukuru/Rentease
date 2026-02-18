@@ -27,9 +27,7 @@ const ImportantContacts = ({ user, onChatClick }) => {
                         >
                             <MessageCircle size={18} />
                         </button>
-                        <button className={`p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                            <Phone size={18} />
-                        </button>
+
                     </div>
                 </div>
 
@@ -41,9 +39,7 @@ const ImportantContacts = ({ user, onChatClick }) => {
                         <p className={`font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Emergency Support</p>
                         <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>24/7 Maintenance</p>
                     </div>
-                    <button className={`ml-auto p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                        <Phone size={18} />
-                    </button>
+
                 </div>
             </div>
         </Card>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from 'react-toastify';
 import image1 from "../assets/image1.png";
 import image2 from "../assets/image2.png";
 import image3 from "../assets/image3.png";
@@ -207,6 +208,30 @@ const ImageSlider = ({ images = [], autoplay = true, interval = 3600 }) => {
 const Hero = () => {
   const navigate = useNavigate();
   const images = [image1, image2, image3, image4, image5];
+  const [userRole, setUserRole] = useState(null);
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (user) {
+      setUserRole(user.role);
+    }
+  }, []);
+
+  const handleListProperty = () => {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+
+    if (user) {
+      const slug = user.name ? user.name.toLowerCase().replace(/\s+/g, '-') : 'user';
+      if (user.role === 'LANDLORD') {
+        navigate(`/${slug}/landlord/dashboard/add-property`);
+      } else if (user.role === 'TENANT') {
+        navigate(`/${slug}/tenant/dashboard`);
+      }
+    } else {
+      toast.info("To list a property, please sign up as a Landlord.");
+      navigate('/signup');
+    }
+  };
 
   return (
     <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden min-h-screen flex flex-col justify-center">
@@ -240,9 +265,10 @@ const Hero = () => {
             </button>
 
             <button
+              onClick={handleListProperty}
               className="flex items-center justify-center gap-2 px-8 py-4 text-lg font-semibold text-slate-950 rounded-full bg-slate-900/55 ring-1 ring-indigo-600/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.02),0_8px_24px_rgba(2,6,23,0.45)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.03),0_12px_34px_rgba(2,6,23,0.55)] hover:-translate-y-0.5 transition-all duration-300 dark:text-slate-300"
             >
-              List Your Property
+              {userRole === 'TENANT' ? 'Go to Dashboard' : 'List Your Property'}
             </button>
           </div>
         </RevealOnScroll>

@@ -25,11 +25,13 @@ const FilterSidebar = ({ filters, setFilters, onApply, onClear, isOpen, onClose 
                 />
             )}
 
-            <aside className={`
-        fixed inset-y-0 left-0 z-50 w-80 bg-white dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-white/10 transform transition-transform duration-300 ease-in-out overflow-y-auto no-scrollbar
-        md:translate-x-0 md:h-[calc(100vh-80px)] md:sticky md:top-20 md:rounded-2xl md:border md:mb-8 md:shadow-sm dark:md:shadow-none
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
+            <aside
+                className={`
+                    fixed inset-y-0 left-0 z-50 w-80 bg-white dark:bg-[#0a0a0a] border-r border-gray-200 dark:border-white/10 transform transition-transform duration-300 ease-in-out overflow-y-auto no-scrollbar
+                    md:translate-x-0 md:h-[calc(100vh-10rem)] md:sticky md:top-28 md:rounded-2xl md:border md:mb-8 md:shadow-sm dark:md:shadow-none
+                    ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+                `}
+            >
                 <div className="p-6 space-y-8">
                     <div className="flex items-center justify-between md:hidden">
                         <h3 className="text-xl font-bold text-gray-900 dark:text-white">Filters</h3>
@@ -71,34 +73,30 @@ const FilterSidebar = ({ filters, setFilters, onApply, onClear, isOpen, onClose 
                     <div>
                         <h4 className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">Property Type</h4>
                         <div className="space-y-2">
-                            {['Apartment', 'House', 'Villa', 'PG', 'Office'].map((type) => (
-                                <label key={type} className="flex items-center gap-3 cursor-pointer group">
-                                    <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${filters.type === type ? 'bg-violet-600 border-violet-600' : 'border-gray-200 dark:border-white/20 group-hover:border-gray-400 dark:group-hover:border-white/40'}`}>
-                                        {filters.type === type && <Check className="w-3 h-3 text-white" />}
+                            {[
+                                { label: 'Apartment', value: 'APARTMENT' },
+                                { label: 'Independent House', value: 'INDEPENDENT' },
+                                { label: 'Villa', value: 'VILLA' },
+                                { label: 'Studio', value: 'STUDIO' },
+                                { label: 'Independent Floor', value: 'INDEPENDENT_FLOOR' },
+                                { label: 'PG / Hostel', value: 'PG' },
+                                { label: 'Commercial Shop', value: 'COMMERCIAL_SHOP' },
+                                { label: 'Office Space', value: 'OFFICE_SPACE' }
+                            ].map((item) => (
+                                <label key={item.value} className="flex items-center gap-3 cursor-pointer group">
+                                    <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${filters.type === item.value ? 'bg-violet-600 border-violet-600' : 'border-gray-200 dark:border-white/20 group-hover:border-gray-400 dark:group-hover:border-white/40'}`}>
+                                        {filters.type === item.value && <Check className="w-3 h-3 text-white" />}
                                     </div>
                                     <input
                                         type="radio"
                                         name="propertyType"
                                         className="hidden"
-                                        checked={filters.type === type}
-                                        onChange={() => handleChange('type', type)}
+                                        checked={filters.type === item.value}
+                                        onChange={() => handleChange('type', filters.type === item.value ? 'all' : item.value)}
                                     />
-                                    <span className={`text-sm ${filters.type === type ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-300'}`}>{type}</span>
+                                    <span className={`text-sm ${filters.type === item.value ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-300'}`}>{item.label}</span>
                                 </label>
                             ))}
-                            <label className="flex items-center gap-3 cursor-pointer group">
-                                <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${!filters.type || filters.type === 'all' ? 'bg-violet-600 border-violet-600' : 'border-gray-200 dark:border-white/20 group-hover:border-gray-400 dark:group-hover:border-white/40'}`}>
-                                    {(!filters.type || filters.type === 'all') && <Check className="w-3 h-3 text-white" />}
-                                </div>
-                                <input
-                                    type="radio"
-                                    name="propertyType"
-                                    className="hidden"
-                                    checked={!filters.type || filters.type === 'all'}
-                                    onChange={() => handleChange('type', 'all')}
-                                />
-                                <span className={`text-sm ${!filters.type || filters.type === 'all' ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-300'}`}>Any</span>
-                            </label>
                         </div>
                     </div>
 

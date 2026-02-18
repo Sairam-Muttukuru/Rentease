@@ -90,7 +90,12 @@ const TenantTopbar = ({
                         >
                             <div className="text-right hidden sm:block">
                                 <p className={`text-sm font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{user.name || "User"}</p>
-                                <p className="text-[10px] lowercase font-bold text-slate-500">{user.email}</p>
+                                <div className="flex items-center justify-end gap-2">
+                                    {user.role?.toLowerCase() === 'landlord' && (
+                                        <span className="text-[9px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-1.5 py-0.5 rounded-md font-black uppercase tracking-tighter">Landlord View</span>
+                                    )}
+                                    <p className="text-[10px] lowercase font-bold text-slate-500">{user.email}</p>
+                                </div>
                             </div>
                             <div className="w-10 h-10 rounded-2xl overflow-hidden bg-gradient-to-tr from-violet-600 to-fuchsia-600 flex items-center justify-center text-white font-black shadow-lg">
                                 {user.avatar_url ? (

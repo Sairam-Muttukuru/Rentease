@@ -15,19 +15,33 @@ const ICON_MAP = {
     Sparkles, PaintBucket, Droplets, Zap, Hammer, Truck, Sofa, Home, LayoutGrid
 };
 
+// Category Images Map
+const CATEGORY_IMAGES = {
+    'Ac and Appliance repair': '/ac.png',
+    'Carpentry': '/carpentry.png',
+    'Electrical': '/electrical.png',
+    'Home Cleaning': '/cleaning.png',
+    'Interior & Renovation': 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=800&auto=format&fit=crop',
+    'Painting': '/painting.png',
+    'Plumbing': '/plumbing.png',
+    'default': 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=800&auto=format&fit=crop'
+};
+
 export default function TenantHomeServices({ toggleSidebar }) {
     const { theme } = useTheme();
     const isDarkMode = theme === 'dark';
     const location = useLocation();
 
     // State
-    const [viewState, setViewState] = useState('CATEGORIES'); // CATEGORIES, TYPES, SERVICES
+    const [viewState, setViewState] = useState('CATEGORIES'); // CATEGORIES, TYPES, SUB_TYPES, SERVICES
     const [categories, setCategories] = useState([]);
     const [types, setTypes] = useState([]);
+    const [subTypes, setSubTypes] = useState([]); // Sub-Service Types
     const [services, setServices] = useState([]);
 
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [selectedType, setSelectedType] = useState(null);
+    const [selectedSubType, setSelectedSubType] = useState(null);
     const [selectedService, setSelectedService] = useState(null);
 
     const [isLoading, setIsLoading] = useState(false);
@@ -80,10 +94,32 @@ export default function TenantHomeServices({ toggleSidebar }) {
         }
     };
 
-    const fetchServices = async (typeId) => {
+    const fetchSubTypes = async (typeId) => {
         setIsLoading(true);
         try {
-            const res = await axios.get(`http://localhost:5000/api/tenants/catalog/services/${typeId}`, {
+            // Reusing the same endpoint structure, assuming tenant controller routes exist or proxy through general catalog
+            // We need to ensure TenantController has getSubTypes. 
+            // Wait, I need to check TenantController.js. 
+            // It likely needs an update to expose getSubTypes. 
+            // For now, I will optimistically implement this and then fix the backend controller.
+            const res = await axios.get(`http://localhost:5000/api/tenants/catalog/sub-types/${typeId}`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+            setSubTypes(res.data);
+            setViewState('SUB_TYPES');
+        } catch (error) {
+            console.error("Error fetching sub-types:", error);
+            toast.error("Failed to load sub-service types.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fetchServices = async (subTypeId) => {
+        setIsLoading(true);
+        try {
+            // Updated endpoint to fetch by sub-type
+            const res = await axios.get(`http://localhost:5000/api/tenants/catalog/services-by-subtype/${subTypeId}`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
             setServices(res.data);
@@ -103,13 +139,21 @@ export default function TenantHomeServices({ toggleSidebar }) {
 
     const handleTypeClick = (type) => {
         setSelectedType(type);
-        fetchServices(type.id);
+        fetchSubTypes(type.id);
+    };
+
+    const handleSubTypeClick = (subType) => {
+        setSelectedSubType(subType);
+        fetchServices(subType.id);
     };
 
     const handleBack = () => {
         if (viewState === 'SERVICES') {
+            setViewState('SUB_TYPES');
+            setSelectedService(null);
+        } else if (viewState === 'SUB_TYPES') {
             setViewState('TYPES');
-            setSelectedType(null);
+            setSelectedSubType(null);
         } else if (viewState === 'TYPES') {
             setViewState('CATEGORIES');
             setSelectedCategory(null);
@@ -157,14 +201,16 @@ export default function TenantHomeServices({ toggleSidebar }) {
                         <h1 className="text-3xl md:text-5xl font-black tracking-tight">
                             {viewState === 'CATEGORIES' && "Expert Home Services"}
                             {viewState === 'TYPES' && selectedCategory?.name}
-                            {viewState === 'SERVICES' && selectedType?.name}
+                            {viewState === 'SUB_TYPES' && selectedType?.name}
+                            {viewState === 'SERVICES' && selectedSubType?.name}
                         </h1>
                     </div>
 
                     <p className="text-lg text-violet-100 mb-8 font-medium">
                         {viewState === 'CATEGORIES' && "Quality repairs, cleaning, and maintenance at your fingertips."}
                         {viewState === 'TYPES' && selectedCategory?.description}
-                        {viewState === 'SERVICES' && selectedType?.description}
+                        {viewState === 'SUB_TYPES' && selectedType?.description}
+                        {viewState === 'SERVICES' && selectedSubType?.description}
                     </p>
 
                     {viewState === 'CATEGORIES' && (
@@ -202,42 +248,62 @@ export default function TenantHomeServices({ toggleSidebar }) {
                                 <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Browse Categories</h2>
                             </div>
 
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {categories.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase())).map((category) => (
                                     <div
                                         key={category.id}
                                         onClick={() => handleCategoryClick(category)}
-                                        className={`p-6 rounded-2xl border transition-all duration-300 cursor-pointer group hover:-translate-y-1 hover:shadow-xl relative overflow-hidden
-                                            ${isDarkMode
-                                                ? 'bg-slate-800/50 border-slate-700 hover:border-violet-500/50'
-                                                : 'bg-white border-slate-200 hover:border-violet-200'}
-                                        `}
+                                        className={`group relative h-72 rounded-3xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 border-2 ${isDarkMode ? 'border-slate-800' : 'border-white'}`}
                                     >
-                                        <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                                            {getIcon(category.icon_name)}
+                                        {/* Background Image */}
+                                        <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-110">
+                                            <img
+                                                src={category.image_url || CATEGORY_IMAGES[category.name] || CATEGORY_IMAGES.default}
+                                                alt={category.name}
+                                                className="w-full h-full object-cover"
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-60"></div>
                                         </div>
 
-                                        <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 shadow-lg
-                                            bg-gradient-to-br from-${category.color || 'violet'}-400 to-${category.color || 'violet'}-600 text-white
-                                        `}>
-                                            {getIcon(category.icon_name)}
+                                        {/* Content Container */}
+                                        <div className="absolute inset-0 p-6 flex flex-col justify-end items-start">
+                                            {/* Icon Badge */}
+                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 backdrop-blur-md border border-white/20 transition-all duration-500 group-hover:scale-110 group-hover:rotate-6
+                                                ${isDarkMode ? 'bg-white/10 text-white' : 'bg-white/20 text-white'}
+                                            `}>
+                                                {getIcon(category.icon_name)}
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <h3 className="text-xl font-black text-white tracking-tight transform transition-transform duration-500 group-hover:translate-x-1">
+                                                    {category.name}
+                                                </h3>
+                                                <p className="text-xs text-slate-300 font-medium line-clamp-2 opacity-80 group-hover:opacity-100 transition-opacity">
+                                                    {category.description}
+                                                </p>
+                                            </div>
+
+                                            {/* Action Indicator */}
+                                            <div className="mt-4 flex items-center gap-2 text-white/40 group-hover:text-white transition-colors duration-500">
+                                                <span className="text-[10px] font-bold uppercase tracking-widest">Explore</span>
+                                                <ArrowRight size={14} className="transform -rotate-45 group-hover:rotate-0 transition-transform duration-500" />
+                                            </div>
                                         </div>
-                                        <h3 className={`font-bold text-lg leading-tight transition-colors ${isDarkMode ? 'text-slate-200 group-hover:text-white' : 'text-slate-800 group-hover:text-violet-700'}`}>
-                                            {category.name}
-                                        </h3>
-                                        <p className={`text-xs mt-2 line-clamp-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{category.description}</p>
+
+                                        {/* Premium Shine Effect */}
+                                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 bg-gradient-to-tr from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full pointer-events-none transform -skew-x-12"></div>
                                     </div>
                                 ))}
                             </div>
                         </div>
                     )}
 
-                    {/* View: TYPES (Sub-categories) */}
+                    {/* View: TYPES (Service Types) */}
                     {viewState === 'TYPES' && (
                         <div>
                             <div className="mb-6">
-                                <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Select a Service Type</h2>
-                                <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Choose a specific type of {selectedCategory.name} service.</p>
+                                <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Select a Service Domain</h2>
+                                <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Choose a specific domain within {selectedCategory.name}.</p>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -273,6 +339,53 @@ export default function TenantHomeServices({ toggleSidebar }) {
                                             <Search size={24} />
                                         </div>
                                         <p>No service types found for this category.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* View: SUB_TYPES (Sub-Service Types) */}
+                    {viewState === 'SUB_TYPES' && (
+                        <div>
+                            <div className="mb-6">
+                                <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Select a Specific Service Type</h2>
+                                <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>Refine your search within {selectedType.name}.</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {subTypes.map((subType) => (
+                                    <div
+                                        key={subType.id}
+                                        onClick={() => handleSubTypeClick(subType)}
+                                        className={`flex items-center gap-4 p-4 rounded-2xl border cursor-pointer hover:shadow-lg transition-all duration-300 group
+                                            ${isDarkMode ? 'bg-slate-800 border-slate-700 hover:border-violet-500' : 'bg-white border-slate-200 hover:border-violet-200'}
+                                        `}
+                                    >
+                                        <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+                                            {subType.image_url ? (
+                                                <img src={subType.image_url} alt={subType.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                                    {getIcon(selectedCategory.icon_name)}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <h3 className={`font-bold text-lg mb-1 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{subType.name}</h3>
+                                            <p className={`text-sm line-clamp-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{subType.description}</p>
+                                        </div>
+                                        <div className={`ml-auto p-2 rounded-full ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-400'} group-hover:bg-violet-600 group-hover:text-white transition-colors`}>
+                                            <ChevronRight size={20} />
+                                        </div>
+                                    </div>
+                                ))}
+                                {subTypes.length === 0 && (
+                                    <div className={`col-span-full py-12 text-center rounded-3xl border border-dashed ${isDarkMode ? 'border-slate-700 text-slate-400' : 'border-slate-300 text-slate-500'}`}>
+                                        <div className="mx-auto w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                                            <Search size={24} />
+                                        </div>
+                                        <p>No sub-service types found for this type.</p>
                                     </div>
                                 )}
                             </div>
@@ -328,7 +441,7 @@ export default function TenantHomeServices({ toggleSidebar }) {
                                 ))}
                                 {services.length === 0 && (
                                     <div className={`col-span-full py-12 text-center rounded-3xl border border-dashed ${isDarkMode ? 'border-slate-700 text-slate-400' : 'border-slate-300 text-slate-500'}`}>
-                                        <p>No active services found for this type.</p>
+                                        <p>No active services found for this sub-type.</p>
                                     </div>
                                 )}
                             </div>

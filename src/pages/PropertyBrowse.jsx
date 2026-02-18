@@ -45,6 +45,7 @@ const PropertyBrowse = () => {
       const params = {
         page: pagination.currentPage,
         limit: 8, // 4 rows of 2
+        status: 'Available',
         ...filters
       };
 

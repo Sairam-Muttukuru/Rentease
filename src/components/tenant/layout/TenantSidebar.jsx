@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Building, CreditCard, MessageSquare, Settings, Wrench, LogOut } from 'lucide-react';
+import { Home, Building, CreditCard, MessageSquare, Settings, Wrench, LogOut, FileText, Bell } from 'lucide-react';
 import { useTheme } from "../../../context/ThemeContext";
 
-const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout }) => {
+const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout, user }) => {
     const { theme } = useTheme();
     const isDarkMode = theme === 'dark';
     const location = useLocation();
@@ -26,11 +26,12 @@ const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout
             <nav className="flex-1 p-6 space-y-2 mt-2 overflow-y-auto">
                 {[
                     { id: 'dashboard', path: `/${userName}/tenant/dashboard`, icon: Home, label: 'Dashboard' },
+                    { id: 'notices', path: `/${userName}/tenant/dashboard/notices`, icon: Bell, label: 'Notice Board' },
                     { id: 'my-property', path: `/${userName}/tenant/dashboard/my-property`, icon: Building, label: 'My Property' },
+                    { id: 'services', path: `/${userName}/tenant/dashboard/services`, icon: Wrench, label: 'Home Services' },
                     { id: 'payments', path: `/${userName}/tenant/dashboard/payments`, icon: CreditCard, label: 'Payments' },
                     { id: 'complaints', path: `/${userName}/tenant/dashboard/complaints`, icon: MessageSquare, label: 'Complaints' },
                     { id: 'settings', path: `/${userName}/tenant/dashboard/settings`, icon: Settings, label: 'Settings' },
-                    { id: 'services', path: `/${userName}/tenant/dashboard/services`, icon: Wrench, label: 'Home Services' },
                 ].map((item) => {
                     const isActive = item.id === 'dashboard'
                         ? (location.pathname === `/${userName}/tenant/dashboard` || location.pathname === `/${userName}/tenant/dashboard/`)

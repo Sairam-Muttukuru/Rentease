@@ -146,12 +146,37 @@ const Navbar = () => {
                           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Signed in as</p>
                           <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user.email}</p>
                         </div>
-                        <button
-                          onClick={handleDashboardClick}
-                          className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                        >
-                          <LayoutDashboard size={16} /> Dashboard
-                        </button>
+                        {user.role === 'LANDLORD' ? (
+                          <>
+                            <button
+                              onClick={() => {
+                                const slug = user?.name?.toLowerCase().replace(/\s+/g, '-') || 'user';
+                                navigate(`/${slug}/landlord/dashboard`);
+                                setIsDropdownOpen(false);
+                              }}
+                              className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                            >
+                              <LayoutDashboard size={16} /> Landlord Dashboard
+                            </button>
+                            <button
+                              onClick={() => {
+                                const slug = user?.name?.toLowerCase().replace(/\s+/g, '-') || 'user';
+                                navigate(`/${slug}/tenant/dashboard`);
+                                setIsDropdownOpen(false);
+                              }}
+                              className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                            >
+                              <User size={16} /> Tenant Dashboard
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={handleDashboardClick}
+                            className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                          >
+                            <LayoutDashboard size={16} /> Dashboard
+                          </button>
+                        )}
                         <button
                           onClick={handleLogout}
                           className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"

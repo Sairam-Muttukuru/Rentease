@@ -38,7 +38,7 @@ const MyPropertyCard = ({ user, propertyImages, currentImageIndex, navigate, isD
 
                     <div className={`p-3 rounded-lg border transition-colors duration-500 ${isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-50 border-slate-200'}`}>
                         <p className={`text-xs uppercase tracking-wider transition-colors duration-500 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Monthly Rent</p>
-                        <p className={`font-bold transition-colors duration-500 ${isDarkMode ? 'text-violet-400' : 'text-violet-600'}`}>${user.monthlyRent.toLocaleString()}</p>
+                        <p className={`font-bold transition-colors duration-500 ${isDarkMode ? 'text-violet-400' : 'text-violet-600'}`}>${user.monthlyRent?.toLocaleString() || '0'}</p>
                     </div>
                 </div>
             </div>

@@ -15,7 +15,8 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
             <button
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="p-3 rounded-xl bg-white/5 border border-white/5 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="p-3 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/5 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                aria-label="Previous Page"
             >
                 <ChevronLeft className="w-5 h-5" />
             </button>
@@ -25,8 +26,8 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
                     key={page}
                     onClick={() => onPageChange(page)}
                     className={`w-11 h-11 rounded-xl font-bold text-sm border transition-all ${currentPage === page
-                            ? 'bg-violet-600 border-violet-600 text-white shadow-[0_0_15px_rgba(139,92,246,0.5)]'
-                            : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                        ? 'bg-violet-600 border-violet-600 text-white shadow-lg shadow-violet-500/30'
+                        : 'bg-gray-100 dark:bg-white/5 border-gray-200 dark:border-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white'
                         }`}
                 >
                     {page}
@@ -36,7 +37,8 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
             <button
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="p-3 rounded-xl bg-white/5 border border-white/5 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="p-3 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/5 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                aria-label="Next Page"
             >
                 <ChevronRight className="w-5 h-5" />
             </button>

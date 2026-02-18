@@ -1,82 +1,93 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
 
-const ImageGalleryModal = ({ isOpen, onClose, images = [], initialIndex = 0 }) => {
+const ImageGalleryModal = ({ isOpen, onClose, images = [], initialIndex = 0, isDarkMode }) => {
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
     useEffect(() => {
         if (isOpen) {
             setCurrentIndex(initialIndex);
             document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = 'unset';
+
+            const handleKeyDown = (e) => {
+                if (e.key === 'Escape') onClose();
+                if (e.key === 'ArrowRight') handleNext();
+                if (e.key === 'ArrowLeft') handlePrev();
+            };
+            window.addEventListener('keydown', handleKeyDown);
+            return () => {
+                window.removeEventListener('keydown', handleKeyDown);
+                document.body.style.overflow = 'unset';
+            };
         }
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
     }, [isOpen, initialIndex]);
 
     const handleNext = (e) => {
-        e.stopPropagation();
+        if (e) e.stopPropagation();
         setCurrentIndex((prev) => (prev + 1) % images.length);
     };
 
     const handlePrev = (e) => {
-        e.stopPropagation();
+        if (e) e.stopPropagation();
         setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
     };
 
     if (!isOpen) return null;
 
-    if (!images || images.length === 0) {
-        return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}>
-                <div className="text-white flex flex-col items-center">
-                    <ImageIcon size={48} className="mb-4 text-slate-500" />
-                    <p>No images available for this property.</p>
-                    <button onClick={onClose} className="mt-8 px-6 py-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors">Close</button>
-                </div>
-            </div>
-        );
-    }
-
-    return (
+    const modalContent = (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md animate-in fade-in duration-300"
+            className={`fixed inset-0 z-[9999] flex items-center justify-center backdrop-blur-xl animate-in fade-in duration-300 ${isDarkMode ? 'bg-slate-950/98' : 'bg-white/95'}`}
             onClick={onClose}
         >
             {/* Close Button */}
             <button
                 onClick={onClose}
-                className="absolute top-4 right-4 p-3 rounded-full bg-black/50 text-white/70 hover:text-white hover:bg-black/80 transition-all z-[60]"
+                className={`absolute top-8 right-8 p-3.5 rounded-full transition-all z-[10000] hover:rotate-90 duration-300 shadow-2xl ${isDarkMode
+                        ? 'bg-white/10 text-white/70 hover:text-white hover:bg-white/20 border border-white/5'
+                        : 'bg-black/5 text-slate-700 hover:text-black hover:bg-black/10 border border-black/5'
+                    }`}
             >
-                <X size={24} />
+                <X size={28} />
             </button>
 
             {/* Navigation - Left */}
             {images.length > 1 && (
                 <button
                     onClick={handlePrev}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 text-white/70 hover:text-white hover:bg-black/80 transition-all z-[60] opacity-0 hover:opacity-100 sm:opacity-100"
+                    className={`absolute left-8 top-1/2 -translate-y-1/2 p-5 rounded-full backdrop-blur-md transition-all z-[10000] shadow-2xl flex items-center justify-center group/btn hover:scale-110 ${isDarkMode
+                            ? 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-white/10'
+                            : 'bg-white/50 text-slate-700 hover:text-black hover:bg-white border border-slate-200'
+                        }`}
+                    aria-label="Previous image"
                 >
-                    <ChevronLeft size={32} />
+                    <ChevronLeft size={40} className="group-hover/btn:-translate-x-1 transition-transform" />
                 </button>
             )}
 
             {/* Main Image Container */}
             <div
-                className="relative max-w-7xl max-h-[90vh] w-full h-full flex items-center justify-center p-4"
+                className="relative max-w-7xl max-h-[85vh] w-full h-full flex items-center justify-center p-4 sm:p-12 md:p-20"
                 onClick={(e) => e.stopPropagation()}
             >
-                <img
-                    src={images[currentIndex]?.image_url || images[currentIndex]}
-                    alt={`Property view ${currentIndex + 1}`}
-                    className="max-h-full max-w-full object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-300"
-                />
+                <div className="relative group">
+                    <img
+                        src={images[currentIndex]?.image_url || images[currentIndex]}
+                        alt={`Property view ${currentIndex + 1}`}
+                        className={`max-h-[85vh] max-w-full object-contain rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.2)] animate-in zoom-in-95 duration-500 ring-1 ${isDarkMode ? 'ring-white/10' : 'ring-black/5'}`}
+                    />
 
-                {/* Counter */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-black/50 backdrop-blur-sm text-white text-sm font-medium">
-                    {currentIndex + 1} / {images.length}
+                    {/* Subtle Internal Navigation Overlay */}
+                    <div className="absolute inset-y-0 left-0 w-1/4 cursor-w-resize" onClick={handlePrev}></div>
+                    <div className="absolute inset-y-0 right-0 w-1/4 cursor-e-resize" onClick={handleNext}></div>
+                </div>
+
+                {/* Counter Badge */}
+                <div className={`absolute -bottom-12 left-1/2 -translate-x-1/2 px-6 py-2 rounded-full backdrop-blur-md border text-xs font-bold shadow-2xl tracking-[0.3em] uppercase ${isDarkMode
+                        ? 'bg-white/5 border-white/10 text-white/80'
+                        : 'bg-black/5 border-black/5 text-slate-700'
+                    }`}>
+                    {currentIndex + 1} <span className={`mx-3 ${isDarkMode ? 'text-white/20' : 'text-black/20'}`}>/</span> {images.length}
                 </div>
             </div>
 
@@ -84,16 +95,21 @@ const ImageGalleryModal = ({ isOpen, onClose, images = [], initialIndex = 0 }) =
             {images.length > 1 && (
                 <button
                     onClick={handleNext}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 text-white/70 hover:text-white hover:bg-black/80 transition-all z-[60] opacity-0 hover:opacity-100 sm:opacity-100"
+                    className={`absolute right-8 top-1/2 -translate-y-1/2 p-5 rounded-full backdrop-blur-md transition-all z-[10000] shadow-2xl flex items-center justify-center group/btn hover:scale-110 ${isDarkMode
+                            ? 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10 border border-white/10'
+                            : 'bg-white/50 text-slate-700 hover:text-black hover:bg-white border border-slate-200'
+                        }`}
+                    aria-label="Next image"
                 >
-                    <ChevronRight size={32} />
+                    <ChevronRight size={40} className="group-hover/btn:translate-x-1 transition-transform" />
                 </button>
             )}
-
-            {/* Keyboard Support */}
-            {/* Note: In a real app, adding keydown listeners for Escape, Left, Right would be good */}
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 };
 
 export default ImageGalleryModal;
+
+

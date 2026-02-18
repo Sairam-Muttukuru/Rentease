@@ -1272,7 +1272,7 @@ const Adminpage = () => {
             localStorage.removeItem("accessToken");
             localStorage.removeItem("user");
             toast.success("Logged out successfully");
-            setTimeout(() => window.location.href = "/login", 500);
+            setTimeout(() => window.location.href = "/", 500);
         } catch (err) {
             toast.error("Logout failed");
         }

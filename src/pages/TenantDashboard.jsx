@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import { useTranslation } from 'react-i18next';
 import { loadStripe } from "@stripe/stripe-js";
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 // Layout
 import TenantLayout from '../components/tenant/layout/TenantLayout';
@@ -18,7 +19,8 @@ import PaymentsPage from '../components/tenant/payments/PaymentsPage';
 import ComplaintsPage from '../components/tenant/complaints/ComplaintsPage';
 import ComplaintDetail from '../components/tenant/complaints/ComplaintDetail';
 import TenantSettings from '../components/tenant/settings/TenantSettings';
-import TenantHomeServices from './TenantHomeServices'; // Assuming this is still here or moving? Leaving as is for now if not refactored.
+import TenantHomeServices from './TenantHomeServices';
+import NoticeBoardPage from '../components/tenant/community/NoticeBoardPage';
 
 // Modals
 import ChangePasswordModal from '../components/tenant/modals/ChangePasswordModal';
@@ -44,9 +46,13 @@ export default function TenantDashboard() {
   const { theme, toggleTheme } = useTheme();
   const isDarkMode = theme === 'dark';
 
+  // Use AuthContext to get the actual logged-in user (could be landlord)
+  const { user: authUser } = useAuth();
+  const isLandlordViewing = authUser?.role?.toLowerCase() === 'landlord';
+
   // --- App State ---
-  // Initialize from localStorage immediately to show name in PreLoader
-  const [user, setUser] = useState(() => {
+  // tenantData holds the data for the tenant dashboard being viewed
+  const [tenantData, setTenantData] = useState(() => {
     const saved = localStorage.getItem("user");
     const initialValue = saved ? JSON.parse(saved) : {
       name: "",
@@ -96,12 +102,12 @@ export default function TenantDashboard() {
 
   // --- Derived State ---
   const today = new Date();
-  const currentRentDue = user.monthlyRent || 0;
+  const currentRentDue = tenantData.monthlyRent || 0;
   const isPaid = rentDue <= 0;
   const dueDate = new Date();
-  dueDate.setDate(user.rentDueDay || 5);
+  dueDate.setDate(tenantData.rentDueDay || 5);
   // If due date passed, it's next month
-  if (today.getDate() > (user.rentDueDay || 5)) {
+  if (today.getDate() > (tenantData.rentDueDay || 5)) {
     dueDate.setMonth(dueDate.getMonth() + 1);
   }
   const isOverdue = today > dueDate && !isPaid;
@@ -111,16 +117,10 @@ export default function TenantDashboard() {
   // --- Effects ---
   useEffect(() => {
     fetchTenantData();
-  }, []); // Run once on mount
+  }, [userName]); // Re-fetch if userName param changes
 
   const fetchTenantData = async () => {
     setIsLoading(true);
-    // Enforce a minimum specific loading time for the premium feel
-    const minLoadTime = new Promise(resolve => setTimeout(resolve, 2500));
-
-    // We already initialized state from localStorage in useState, 
-    // so we don't need to do it here again for optimistic UI.
-
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) {
@@ -130,26 +130,22 @@ export default function TenantDashboard() {
 
       const headers = { Authorization: `Bearer ${token}` };
 
-      // Wait for both the data fetch and the minimum load time
-      const [
-        [userRes, paymentsRes, complaintsRes, notificationsRes],
-        _
-      ] = await Promise.all([
-        Promise.all([
-          axios.get("http://localhost:5000/api/tenants/dashboard", { headers }),
-          axios.get("http://localhost:5000/api/tenants/payments", { headers }),
-          axios.get("http://localhost:5000/api/tenants/complaints", { headers }),
-          Promise.resolve({ data: [] })
-        ]),
-        minLoadTime
+      // Optimized: Fetch data directly without artificial delay
+      const [userRes, paymentsRes, complaintsRes] = await Promise.all([
+        axios.get(`http://localhost:5000/api/tenants/dashboard${userName ? `?userName=${userName}` : ''}`, { headers }),
+        axios.get(`http://localhost:5000/api/tenants/payments${userName ? `?userName=${userName}` : ''}`, { headers }),
+        axios.get(`http://localhost:5000/api/tenants/complaints${userName ? `?userName=${userName}` : ''}`, { headers })
       ]);
 
-      setUser({
+      setTenantData({
         ...userRes.data,
         rentDueDate: userRes.data.rentDueDate || 0
       });
-      // Store updated user
-      localStorage.setItem("user", JSON.stringify(userRes.data));
+
+      // Only overwrite the "user" session if the logged-in person IS the tenant
+      if (!isLandlordViewing) {
+        localStorage.setItem("user", JSON.stringify(userRes.data));
+      }
 
       setPayments(paymentsRes.data);
       setComplaints(complaintsRes.data);
@@ -166,13 +162,8 @@ export default function TenantDashboard() {
       const daysUntilDue = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
       const lastPayment = paymentsRes.data.length > 0 ? paymentsRes.data[0] : null;
-
-      const isPaidCycle = lastPayment && (new Date(lastPayment.date) > new Date(new Date().setMonth(now.getMonth() - 1)));
-
       const isPaidStatus = (userRes.data.accumulated_due <= 0) && (daysUntilDue > 5);
-
       setRentDue(isPaidStatus ? 0 : (userRes.data.monthlyRent + (userRes.data.accumulated_due || 0)));
-
       setPropertyImages(userRes.data.propertyImages || []);
 
     } catch (err) {
@@ -187,7 +178,6 @@ export default function TenantDashboard() {
 
   // --- Handlers ---
   const handleLogout = async () => {
-    // Copy logout logic
     try {
       await axios.post("http://localhost:5000/api/auth/logout", {}, { withCredentials: true });
       localStorage.clear();
@@ -204,16 +194,18 @@ export default function TenantDashboard() {
     try {
       const token = localStorage.getItem("accessToken");
       await axios.put("http://localhost:5000/api/tenants/profile", {
-        full_name: user.name,
-        email: user.email,
-        phone: user.phone,
-        avatar_url: user.avatar_url
+        full_name: tenantData.name,
+        email: tenantData.email,
+        phone: tenantData.phone,
+        avatar_url: tenantData.avatar_url
       }, { headers: { Authorization: `Bearer ${token}` } });
 
       toast.success("Profile updated successfully!");
-      // Update local storage
-      const stored = JSON.parse(localStorage.getItem("user"));
-      localStorage.setItem("user", JSON.stringify({ ...stored, ...user }));
+      // Update local state and storage if not landlord
+      if (!isLandlordViewing) {
+        const stored = JSON.parse(localStorage.getItem("user"));
+        localStorage.setItem("user", JSON.stringify({ ...stored, ...tenantData }));
+      }
     } catch (err) {
       console.error(err);
       toast.error("Failed to update profile");
@@ -246,7 +238,6 @@ export default function TenantDashboard() {
     }
   };
 
-  // Complaint Handlers
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     files.forEach(file => {
@@ -273,19 +264,8 @@ export default function TenantDashboard() {
         category: formData.get('category'),
         priority_level: formData.get('priority_level'),
         description: formData.get('description'),
-        images: complaintImages // This normally needs Cloudinary upload first, simplified here as per original
+        images: complaintImages
       };
-
-      // If original code uploaded images to Cloudinary here, we should reproduce that.
-      // Original code didn't explicitly show Cloudinary upload loop in the view I saw, 
-      // but usually `complaintImages` (base64) are sent or needing upload.
-      // Assuming backend handles base64 or we need to upload.
-      // For now, sending as is, assuming similar logic to original.
-
-      // WAIT: In original reading (Step 193), line 1002 `handleImageChange` was just local.
-      // And `handleSubmitComplaint` was passed to Modal.
-      // I should assume the `handleSubmitComplaint` in original TenantDashboard handles it.
-      // Let's implement a robust version.
 
       await axios.post("http://localhost:5000/api/tenants/complaints", complaintData, {
         headers: { Authorization: `Bearer ${token}` }
@@ -294,7 +274,7 @@ export default function TenantDashboard() {
       toast.success("Complaint submitted successfully");
       setShowComplaintModal(false);
       setComplaintImages([]);
-      fetchTenantData(); // Refresh complaints
+      fetchTenantData();
     } catch (err) {
       console.error(err);
       toast.error("Failed to submit complaint");
@@ -316,10 +296,8 @@ export default function TenantDashboard() {
     }
   };
 
-
-  // --- Render ---
   if (isLoading) {
-    return <PreLoader userName={user.name} isDarkMode={isDarkMode} />;
+    return <PreLoader userName={tenantData.name} isDarkMode={isDarkMode} />;
   }
 
   return (
@@ -327,7 +305,7 @@ export default function TenantDashboard() {
       isSidebarOpen={isSidebarOpen}
       setIsSidebarOpen={setIsSidebarOpen}
       isDarkMode={isDarkMode}
-      user={user}
+      user={authUser || tenantData}
       handleLogout={handleLogout}
       userName={userName}
       unreadCount={unreadCount}
@@ -339,7 +317,7 @@ export default function TenantDashboard() {
       <Routes>
         <Route path="/" element={
           <DashboardHome
-            user={user}
+            user={tenantData}
             isSidebarOpen={isSidebarOpen}
             setIsSidebarOpen={setIsSidebarOpen}
             isPaid={isPaid}
@@ -355,14 +333,14 @@ export default function TenantDashboard() {
             navigate={navigate}
             payments={payments}
             complaints={complaints}
-            serviceRequests={user.serviceRequests || []}
+            serviceRequests={tenantData.serviceRequests || []}
             fetchTenantData={fetchTenantData}
           />
         } />
         <Route path="/my-property" element={
           <MyPropertyView
             isDarkMode={isDarkMode}
-            user={user}
+            user={tenantData}
             propertyImages={propertyImages}
             currentImageIndex={currentImageIndex}
             setCurrentImageIndex={setCurrentImageIndex}
@@ -372,6 +350,7 @@ export default function TenantDashboard() {
             setShowPaymentModal={setShowPaymentModal}
           />
         } />
+        <Route path="/notices" element={<NoticeBoardPage />} />
         <Route path="/payments" element={<PaymentsPage payments={payments} />} />
         <Route path="/complaints" element={
           <ComplaintsPage
@@ -395,8 +374,8 @@ export default function TenantDashboard() {
         } />
         <Route path="/settings" element={
           <TenantSettings
-            user={user}
-            setUser={setUser}
+            user={tenantData}
+            setUser={setTenantData}
             isDarkMode={isDarkMode}
             setShowChangePasswordModal={setShowChangePasswordModal}
             handleUpdateProfile={handleUpdateProfile}
@@ -408,7 +387,6 @@ export default function TenantDashboard() {
         <Route path="/services" element={<TenantHomeServices />} />
       </Routes>
 
-      {/* Global Modals */}
       {showChangePasswordModal && (
         <ChangePasswordModal
           isDarkMode={isDarkMode}
@@ -426,7 +404,7 @@ export default function TenantDashboard() {
           isDarkMode={isDarkMode}
           setShowPaymentModal={setShowPaymentModal}
           rentDue={rentDue}
-          user={user}
+          user={tenantData}
           stripePromise={getStripe()}
           paymentType={paymentType}
         />
@@ -444,7 +422,6 @@ export default function TenantDashboard() {
           t={t}
         />
       )}
-
     </TenantLayout>
   );
 }

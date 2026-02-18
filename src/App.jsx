@@ -1,32 +1,44 @@
-import { useEffect } from 'react'
-import Landing from './pages/Landing'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { Routes, Route, BrowserRouter } from 'react-router-dom'
-import LoginPage from './components/LoginPage'
-import Signup from './components/Signup';
-import ForgotPassword from './components/ForgotPassword';
-import VerifyOtp from './components/VerifyOtp';
-import ResetPassword from './components/ResetPassword';
-import ScrollToTop from './components/ScrollToTop';
 import './App.css'
-import LandlordDashboard from './pages/LandlordDashboard';
-import PropertyBrowse from './pages/PropertyBrowse';
-import PropertyDetails from './pages/PropertyDetails';
-import TenantDashboard from './pages/TenantDashboard';
-import View from './pages/View'
-import Forbidden403 from './pages/Forbidden403';
-import NotFound404 from './pages/NotFound404';
-import ProtectedRoute from './components/ProtectedRoute';
-import DashboardRedirect from './components/DashboardRedirect';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
-import Loader from './pages/Loader';
-import Adminpage from './pages/Adminpage';
-import ServiceProvider from './pages/ServiceProvider';
-import HomeServices from './pages/HomeServices';
-// import LandlordDashboard from './components/LandlordDashboard';
+import ScrollToTop from './components/ScrollToTop';
+import ProtectedRoute from './components/ProtectedRoute';
+import DashboardRedirect from './components/DashboardRedirect';
+import { RentEaseLoader } from './pages/Wel';
+const Landing = lazy(() => import('./pages/Landing'));
+const LoginPage = lazy(() => import('./components/LoginPage'));
+const Signup = lazy(() => import('./components/Signup'));
+const ForgotPassword = lazy(() => import('./components/ForgotPassword'));
+const VerifyOtp = lazy(() => import('./components/VerifyOtp'));
+const ResetPassword = lazy(() => import('./components/ResetPassword'));
+const LandlordDashboard = lazy(() => import('./pages/LandlordDashboard'));
+const PropertyBrowse = lazy(() => import('./pages/PropertyBrowse'));
+const PropertyDetails = lazy(() => import('./pages/PropertyDetails'));
+const TenantDashboard = lazy(() => import('./pages/TenantDashboard'));
+const Loader = lazy(() => import('./pages/Loader'));
+const Adminpage = lazy(() => import('./pages/Adminpage'));
+const ServiceProvider = lazy(() => import('./pages/ServiceProvider'));
+const HomeServices = lazy(() => import('./pages/HomeServices'));
+const Forbidden403 = lazy(() => import('./pages/Forbidden403'));
+const NotFound404 = lazy(() => import('./pages/NotFound404'));
+
+// Minimal loading fallback for Suspense
+const LoadingFallback = () => (
+  <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+    <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+  </div>
+);
+
 function App() {
+  const [showWelcome, setShowWelcome] = useState(() => {
+    // Check if welcome has been shown in this session
+    return !sessionStorage.getItem('welcomeShown');
+  });
+
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === "accessToken" || e.key === "user") {
@@ -41,61 +53,72 @@ function App() {
     };
   }, []);
 
+  const handleWelcomeComplete = () => {
+    sessionStorage.setItem('welcomeShown', 'true');
+    setShowWelcome(false);
+  };
+
+  if (showWelcome) {
+    return <RentEaseLoader onComplete={handleWelcomeComplete} />;
+  }
+
   return (
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
           <ScrollToTop />
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/loader" element={<Loader />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/verify-otp" element={<VerifyOtp />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/browse/properties" element={<PropertyBrowse />} />
-            <Route path="/properties/:id" element={<PropertyDetails />} />
-            {/* <Route path="/browse/properties" element={<View />} /> */}
-            <Route
-              path="/:userName/tenant/dashboard/*"
-              element={
-                <ProtectedRoute>
-                  <TenantDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/landlord/dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["landlord"]}>
-                  <DashboardRedirect />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/tenant/dashboard"
-              element={
-                <ProtectedRoute>
-                  <DashboardRedirect />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/:userName/landlord/dashboard/*"
-              element={
-                <ProtectedRoute allowedRoles={["landlord"]}>
-                  <LandlordDashboard />
-                </ProtectedRoute>
-              }
-            />
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/loader" element={<Loader />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/verify-otp" element={<VerifyOtp />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/browse/properties" element={<PropertyBrowse />} />
+              <Route path="/properties/:id" element={<PropertyDetails />} />
+              {/* <Route path="/browse/properties" element={<View />} /> */}
+              <Route
+                path="/:userName/tenant/dashboard/*"
+                element={
+                  <ProtectedRoute>
+                    <TenantDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/landlord/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={["landlord"]}>
+                    <DashboardRedirect />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tenant/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <DashboardRedirect />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/:userName/landlord/dashboard/*"
+                element={
+                  <ProtectedRoute allowedRoles={["landlord"]}>
+                    <LandlordDashboard />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route path="/403/forbidden" element={<Forbidden403 />} />
-            <Route path="*" element={<NotFound404 />} />
-            <Route path="/admin/dashboard" element={<Adminpage />} />
-            <Route path="/service-provider/dashboard" element={<ServiceProvider />} />
-            <Route path="/home-services" element={<HomeServices />} />
-          </Routes>
+              <Route path="/403/forbidden" element={<Forbidden403 />} />
+              <Route path="*" element={<NotFound404 />} />
+              <Route path="/admin/dashboard" element={<Adminpage />} />
+              <Route path="/service-provider/dashboard" element={<ServiceProvider />} />
+              <Route path="/home-services" element={<HomeServices />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </AuthProvider>
 

@@ -1,7 +1,7 @@
 const cron = require("node-cron");
 const db = require("../config/db");
-const sendMail = require("../utils/sendMail");
-const { rentReminderTemplate } = require("../utils/emailTemplates");
+const sendMail = require("../utils/email/sendMail");
+const { rentReminderTemplate } = require("../utils/email/emailTemplates");
 
 // Runs every day at 3:15 PM
 cron.schedule("25 15 * * *", async () => {

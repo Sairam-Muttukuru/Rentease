@@ -26,7 +26,7 @@ const TenantLayout = ({
     const isDarkMode = theme === 'dark';
 
     return (
-        <div className={`min-h-screen flex font-sans selection:bg-violet-500/30 transition-colors duration-500 ease-in-out ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+        <div className={`min-h-screen h-screen overflow-hidden flex font-sans selection:bg-violet-500/30 transition-colors duration-500 ease-in-out ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
 
             {/* Toast Notification */}
             {notification && (
@@ -54,6 +54,7 @@ const TenantLayout = ({
                 setIsSidebarOpen={setIsSidebarOpen}
                 userName={userName}
                 handleLogout={handleLogout}
+                user={user}
             />
 
             {/* Main Content */}

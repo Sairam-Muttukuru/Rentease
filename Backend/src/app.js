@@ -1,12 +1,12 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
-const authRoutes = require("./routes/AuthRoutes");
+const authRoutes = require("./routes/auth/AuthRoutes");
 const cors = require("cors");
-const PropertyRoutes = require("./routes/PropertyRoutes");
+const PropertyRoutes = require("./routes/landlord/PropertyRoutes");
 const app = express();
-const tenantRoutes = require("./routes/TenantRoutes");
-const tenantMemberRoutes = require("./routes/TenantMemberRoutes");
-const paymentRoutes = require("./routes/PaymentRoutes");
+const tenantRoutes = require("./routes/tenant/TenantRoutes");
+const tenantMemberRoutes = require("./routes/tenant/TenantMemberRoutes");
+const paymentRoutes = require("./routes/payment/PaymentRoutes");
 require("./script/RentReminderCron");
 const allowedOrigins =
     process.env.NODE_ENV === "production"
@@ -41,14 +41,15 @@ app.use("/api/auth", authRoutes);
 app.use("/api/properties", PropertyRoutes);
 app.use("/api/tenants", tenantRoutes);
 app.use("/api/tenant-members", tenantMemberRoutes);
-app.use("/api/complaints", require("./routes/ComplaintRoutes"));
-app.use("/api/notifications", require("./routes/NotificationRoutes"));
-app.use("/api/test", require("./routes/TestMailRoutes"));
-app.use("/api/payment", require("./routes/PaymentRoutes"));
-app.use("/api/admin", require("./routes/AdminRoutes"));
-app.use("/api/bookings", require("./routes/BookingRoutes"));
-app.use("/api/service-provider", require("./routes/ServiceProviderRoutes"));
-app.use("/api/service-provider/reviews", require("./routes/ReviewRoutes"));
+app.use("/api/complaints", require("./routes/complaint/ComplaintRoutes"));
+app.use("/api/notifications", require("./routes/common/NotificationRoutes"));
+app.use("/api/test", require("./routes/common/TestMailRoutes"));
+app.use("/api/payment", require("./routes/payment/PaymentRoutes"));
+app.use("/api/admin", require("./routes/admin/AdminRoutes"));
+app.use("/api/bookings", require("./routes/booking/BookingRoutes"));
+app.use("/api/service-provider", require("./routes/serviceProvider/ServiceProviderRoutes"));
+app.use("/api/service-provider/reviews", require("./routes/common/ReviewRoutes"));
+app.use("/api/announcement", require("./routes/common/AnnouncementRoutes"));
 
 
 module.exports = app;

@@ -33,7 +33,7 @@ const container = {
 
 const itemAnim = {
     hidden: { opacity: 0, y: 30 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 50 } }
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 50, damping: 20 } }
 };
 
 // --- COMPONENTS ---
@@ -204,9 +204,24 @@ const ServiceDetailsModal = ({ isOpen, onClose, service, onBook }) => {
 
                     <div className="p-8 overflow-y-auto custom-scrollbar">
                         <h3 className="text-lg font-black text-slate-900 dark:text-white mb-3">About this Service</h3>
-                        <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-8 text-lg">
-                            {service.description || "This service includes a comprehensive assessment and professional execution by verified experts. We ensure high-quality standards and customer satisfaction."}
-                        </p>
+                        <div className="text-slate-600 dark:text-slate-300 leading-relaxed mb-8 text-lg">
+                            {service.description ? (
+                                service.description.includes('•') ? (
+                                    <ul className="space-y-2">
+                                        {service.description.split('•').filter(p => p.trim()).map((point, i) => (
+                                            <li key={i} className="flex items-start gap-2">
+                                                <span className="text-indigo-500 mt-1.5">•</span>
+                                                <span>{point.trim()}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p>{service.description}</p>
+                                )
+                            ) : (
+                                <p>This service includes a comprehensive assessment and professional execution by verified experts. We ensure high-quality standards and customer satisfaction.</p>
+                            )}
+                        </div>
 
                         {service.features && service.features.length > 0 && (
                             <>
@@ -473,9 +488,6 @@ const HomeServices = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Debugging location state
-    console.log("HomeServices Location State:", location.state);
-
     const initialAddress = location.state?.address || '';
     const propertyImage = location.state?.property_image || null; // Get property image
     const [searchTerm, setSearchTerm] = useState('');
@@ -520,25 +532,33 @@ const HomeServices = () => {
     };
 
     const fetchTypes = async (categoryId) => {
+        setLoading(true);
         try {
-            // Using public endpoints now
             const res = await axios.get(`http://localhost:5000/api/tenants/catalog/types/${categoryId}`);
-            setTypes(res.data);
-            setIsTypeModalOpen(true); // Open modal after fetching
+            const fetchedTypes = res.data;
+            setTypes(fetchedTypes);
+
+            if (fetchedTypes.length > 0) {
+                // Automatically select the first type and fetch its services
+                handleTypeSelect(fetchedTypes[0]);
+            } else {
+                setServices([]);
+                setViewState('SERVICES');
+            }
         } catch (error) {
             console.error("Error fetching types:", error);
             toast.error("Failed to load service types.");
+        } finally {
+            setLoading(false);
         }
     };
 
     const fetchServices = async (typeId) => {
         setLoading(true);
         try {
-            // Using public endpoints now
             const res = await axios.get(`http://localhost:5000/api/tenants/catalog/services/${typeId}`);
             setServices(res.data);
             setViewState('SERVICES');
-            setIsTypeModalOpen(false); // Close modal
         } catch (error) {
             console.error("Error fetching services:", error);
             toast.error("Failed to load services.");
@@ -547,15 +567,15 @@ const HomeServices = () => {
         }
     };
 
+    // fetchServicesByCategory is no longer the primary entry point but kept for fallback if needed
     const fetchServicesByCategory = async (categoryId) => {
         setLoading(true);
         try {
             const res = await axios.get(`http://localhost:5000/api/tenants/catalog/category/${categoryId}/services`);
             setServices(res.data);
-            setViewState('SERVICES'); // Move to Services view directly
+            setViewState('SERVICES');
         } catch (error) {
             console.error("Error fetching services by category:", error);
-            toast.error("Failed to load services.");
         } finally {
             setLoading(false);
         }
@@ -563,33 +583,23 @@ const HomeServices = () => {
 
     const handleCategoryClick = (category) => {
         setSelectedCategory(category);
-        fetchServicesByCategory(category.id);
+        fetchTypes(category.id);
     };
 
-    const handleTypeSelect = (typeName) => {
-        setSelectedType(typeName);
-        setViewState('SUB_CATEGORIES'); // Move to Level 3
+    const handleTypeSelect = (type) => {
+        setSelectedType(type);
+        setViewState('SERVICES');
+        fetchServices(type.id);
     };
 
-    const handleSubCategorySelect = (serviceName) => {
-        setSelectedServiceDetails(serviceName); // Reusing this state to store selected sub-category name
-        setViewState('SERVICES'); // Move to Level 4
-    };
+    // handleSubCategorySelect is deprecated/removed in this flow
 
     const handleBack = () => {
-        if (viewState === 'SERVICES') {
-            if (selectedType) {
-                setViewState('TYPES'); // Go back to types if we came from there
-            } else {
-                setViewState('CATEGORIES'); // Go back to categories if we came directly
-                setSelectedCategory(null);
-            }
-        }
-        else if (viewState === 'SUB_CATEGORIES') setViewState('TYPES');
-        else if (viewState === 'TYPES') {
-            setViewState('CATEGORIES');
-            setSelectedCategory(null);
-        }
+        setViewState('CATEGORIES');
+        setSelectedCategory(null);
+        setSelectedType(null);
+        setServices([]);
+        setTypes([]);
     };
 
     const handleServiceClick = (service) => {
@@ -625,7 +635,6 @@ const HomeServices = () => {
             service_id: selectedService.id, // This is the Service ID
             provider_id: selectedService.provider_id, // This is the Provider ID
             amount: selectedService.price || selectedService.base_price,
-            amount: selectedService.price || selectedService.base_price,
             address: formData.address,
             contact_number: formData.contact_number,
             property_image: propertyImage, // Send property image to backend
@@ -655,43 +664,62 @@ const HomeServices = () => {
             <Navbar />
 
             {/* --- HERO SECTION --- */}
-            <div className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
-                <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+            <div className="relative pt-32 md:pt-40 pb-0 px-4 sm:px-6 lg:px-8 overflow-hidden">
+                <div className="absolute inset-0 -z-10 bg-slate-950">
                     <motion.div animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.3, 0.5, 0.3] }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} className="absolute -top-[20%] -right-[10%] w-[800px] h-[800px] bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full blur-3xl" />
                     <motion.div animate={{ scale: [1, 1.3, 1], x: [0, 100, 0], opacity: [0.2, 0.4, 0.2] }} transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }} className="absolute -bottom-[20%] -left-[10%] w-[600px] h-[600px] bg-gradient-to-tr from-emerald-500/20 to-cyan-500/20 rounded-full blur-3xl" />
                 </div>
 
                 <div className="max-w-5xl mx-auto text-center relative z-10">
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-                        <span className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider mb-8 shadow-sm">
+                    <div className="opacity-100 transform-none">
+                        <span className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-slate-100 dark:bg-slate-800/80 backdrop-blur-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider mb-8 shadow-sm">
                             <Star className="w-3 h-3 text-amber-500 fill-amber-500" /> Rated #1 Home Services in India
                         </span>
-                        <h1 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white mb-8 tracking-tight leading-tight">
+                        <h1 className="text-5xl md:text-8xl font-black text-slate-900 dark:text-white mb-8 tracking-tighter leading-[1.1]">
                             Your Home, <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 animate-gradient-x">Our Priority.</span>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600">Our Priority.</span>
                         </h1>
-                        <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-300 mb-12 max-w-3xl mx-auto leading-relaxed font-medium">
+                        <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed font-semibold">
                             Expert repairs, cleaning, and maintenance services at your doorstep.
                         </p>
-                    </motion.div>
+                    </div>
 
-                    {/* Search Bar */}
-                    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2, duration: 0.5 }} className="relative max-w-2xl mx-auto mb-16 group z-20">
-                        <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-                        <div className="relative flex items-center bg-white dark:bg-slate-900 rounded-2xl p-2 shadow-2xl">
-                            <div className="pl-4 text-slate-400"><Search className="h-6 w-6" /></div>
-                            <input type="text" placeholder="Search for 'AC Service', 'Cleaning'..." className="w-full px-4 py-4 md:py-5 bg-transparent border-0 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-0 text-lg font-bold" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                            <button className="hidden md:block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-bold transition-all transform hover:scale-105 active:scale-95">Search</button>
+                    {/* Search Bar - Premium Refined Version */}
+                    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2, duration: 0.5 }} className="relative max-w-2xl mx-auto mb-4 group z-20">
+                        {/* Premium Gradient Border Wrapper */}
+                        <div className="absolute -inset-[2px] bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 rounded-[22px] opacity-0 group-hover:opacity-100 transition duration-500 blur-[2px]"></div>
+                        <div className="absolute -inset-[1px] bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-500 rounded-[21px] opacity-70 group-hover:opacity-100 transition duration-500"></div>
+
+                        <div className="relative flex items-center bg-slate-50 dark:bg-slate-900/80 rounded-[20px] p-2 shadow-2xl backdrop-blur-md transition-all duration-300">
+                            <div className="pl-5 text-slate-400 group-focus-within:text-indigo-500 transition-colors"><Search className="h-6 w-6" /></div>
+                            <input
+                                type="text"
+                                placeholder="Search for 'AC Service', 'Cleaning'..."
+                                className="w-full px-4 py-4 md:py-5 bg-transparent border-0 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-0 text-lg md:text-xl font-bold outline-none"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                            {searchTerm && (
+                                <button
+                                    onClick={() => setSearchTerm('')}
+                                    className="p-2 mr-2 text-slate-400 hover:text-indigo-500 transition-colors"
+                                >
+                                    <X size={22} strokeWidth={3} />
+                                </button>
+                            )}
+                            <button className="hidden md:flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white px-8 py-3.5 rounded-xl font-black text-lg transition-all transform hover:scale-[1.03] active:scale-95 shadow-xl shadow-indigo-500/25">
+                                Search
+                            </button>
                         </div>
                     </motion.div>
                 </div>
             </div>
 
             {/* --- MAIN CONTENT --- */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pb-32 space-y-32">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0 pb-32 space-y-32">
 
                 {viewState !== 'CATEGORIES' && (
-                    <button onClick={handleBack} className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white mb-8 font-bold transition-all">
+                    <button onClick={handleBack} className="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full hover:bg-indigo-600 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white mt-8 mb-4 font-bold transition-all">
                         <ArrowLeft className="w-4 h-4" /> Back to Categories
                     </button>
                 )}
@@ -704,19 +732,19 @@ const HomeServices = () => {
                     <AnimatePresence mode="wait">
                         {/* CATEGORIES VIEW - GRID OF CARDS */}
                         {viewState === 'CATEGORIES' && (
-                            <motion.div key="categories" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-12">
-                                <div className="text-center mb-10">
+                            <motion.div key="categories" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
+                                <div className="text-center mb-6">
                                     <h2 className="text-4xl font-black text-slate-900 dark:text-white mb-4">Explore our Services</h2>
                                     <div className="h-1 w-20 bg-indigo-500 mx-auto rounded-full"></div>
                                 </div>
                                 {categories.length === 0 ? (
                                     <div className="text-center py-10 text-slate-500 font-bold">No services available at the moment.</div>
                                 ) : (
-                                    <motion.div variants={container} initial="hidden" whileInView="show" viewport={{ once: true }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                         {categories.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase())).map((cat) => (
                                             <CategoryCard key={cat.id} category={cat} onClick={handleCategoryClick} />
                                         ))}
-                                    </motion.div>
+                                    </div>
                                 )}
 
                                 {/* --- FEATURED SECTION: AC & Appliance --- */}
@@ -748,29 +776,73 @@ const HomeServices = () => {
 
                         {/* SERVICES VIEW - LIST OF CARDS */}
                         {viewState === 'SERVICES' && (
-                            <motion.div key="services" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-slate-50 dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800">
-                                    <div className="flex items-center gap-6">
-                                        <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-lg">
-                                            <img src={selectedType?.image_url || selectedCategory?.image_url} className="w-full h-full object-cover" />
+                            <motion.div key="services" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-2">
+                                <div className="flex flex-col gap-2 mb-2">
+                                    {/* Header & Types */}
+                                    <div className="flex flex-col gap-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-700">
+                                                <img src={selectedCategory?.image_url} className="w-full h-full object-cover" alt={selectedCategory?.name} />
+                                            </div>
+                                            <div>
+                                                <h2 className="text-3xl font-black text-slate-900 dark:text-white leading-none">{selectedCategory?.name}</h2>
+                                                <p className="text-slate-500 dark:text-slate-400 mt-2 font-bold text-sm">Select a service type below</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h2 className="text-3xl font-black text-slate-900 dark:text-white">{selectedType?.name || selectedCategory?.name}</h2>
-                                            <p className="text-slate-500 dark:text-slate-400 mt-1 font-bold">{selectedType ? selectedCategory?.name : 'All Services'}</p>
-                                        </div>
+
+                                        {/* Horizontal Types List */}
+                                        {types.length > 0 && (
+                                            <div className="flex gap-4 overflow-x-auto pb-4 pt-2 -mx-4 px-4 scrollbar-hide">
+                                                {types.filter(t => t.name.toLowerCase().includes(searchTerm.toLowerCase())).map((type) => (
+                                                    <div
+                                                        key={type.id}
+                                                        onClick={() => handleTypeSelect(type)}
+                                                        className={`flex-shrink-0 cursor-pointer group flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all duration-300 min-w-[120px] ${selectedType?.id === type.id
+                                                            ? 'bg-indigo-600 border-indigo-500 shadow-lg shadow-indigo-500/25 scale-105'
+                                                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-md'}`}
+                                                    >
+                                                        <div className={`w-14 h-14 rounded-xl overflow-hidden flex items-center justify-center transition-colors ${selectedType?.id === type.id ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-900'}`}>
+                                                            <img
+                                                                src={type.image_url || "https://images.unsplash.com/photo-1581578731117-104f2a41272c?q=80&w=2670&auto=format&fit=crop"}
+                                                                alt={type.name}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        </div>
+                                                        <span className={`text-xs font-bold text-center ${selectedType?.id === type.id ? 'text-white' : 'text-slate-700 dark:text-slate-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400'}`}>
+                                                            {type.name}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
-                                    <div className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-6 py-3 rounded-2xl font-black text-sm border border-slate-200 dark:border-slate-700 shadow-xl">
-                                        {services.length} Packages Available
+
+                                    {/* Services Count Banner */}
+                                    <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+                                        <h3 className="text-xl font-black text-slate-900 dark:text-white">Available Services</h3>
+                                        <span className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-2 rounded-xl font-black text-xs border border-slate-200 dark:border-slate-700 shadow-sm">
+                                            {services.length} Services
+                                        </span>
                                     </div>
                                 </div>
 
-                                {services.length === 0 ? (
+                                {services.filter(s => s.name?.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
                                     <div className="text-center py-20 bg-slate-50 dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700">
-                                        <p className="text-slate-500 font-bold">No services currently available in this category.</p>
+                                        <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+                                            <Search size={32} />
+                                        </div>
+                                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">No results for "{searchTerm}"</h3>
+                                        <p className="text-slate-500 font-medium max-w-sm mx-auto">Try a different search term or clear the search to see all available services in {selectedCategory?.name}.</p>
+                                        <button
+                                            onClick={() => setSearchTerm('')}
+                                            className="mt-6 px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors"
+                                        >
+                                            Clear Search
+                                        </button>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                        {services.map((service) => (
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-20">
+                                        {services.filter(s => s.name?.toLowerCase().includes(searchTerm.toLowerCase())).map((service) => (
                                             <ServiceListCard
                                                 key={service.id}
                                                 service={service}
@@ -786,14 +858,7 @@ const HomeServices = () => {
                 )}
             </div>
 
-            {/* Sub-Category (Types) Modal */}
-            <TypeSelectionModal
-                isOpen={isTypeModalOpen}
-                onClose={() => setIsTypeModalOpen(false)}
-                category={selectedCategory}
-                types={types}
-                onSelectType={handleTypeSelect}
-            />
+            {/* Sub-Category Modal Removed - Integrated into View */}
 
             {/* Booking Modal */}
             <BookingModal
