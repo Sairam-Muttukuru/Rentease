@@ -15,10 +15,16 @@ async function checkData() {
     let output = '';
     try {
         const queries = {
-            categories: "SELECT id, name, provider_id FROM service_categories",
-            types: "SELECT id, category_id, name FROM service_types",
-            sub_types: "SELECT id, type_id, name FROM service_sub_types",
-            services: "SELECT id, sub_type_id, name, provider_id FROM services LIMIT 20"
+            tenant_dates: `
+                SELECT 
+                t.id, 
+                t.start_date,
+                t.rent_due_date,
+                p.title as property_name
+                FROM tenants t
+                JOIN properties p ON p.id = t.property_id
+                LIMIT 5
+            `
         };
         for (const [key, q] of Object.entries(queries)) {
             output += `--- Data for ${key} ---\n`;

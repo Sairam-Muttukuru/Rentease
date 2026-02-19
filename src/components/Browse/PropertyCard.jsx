@@ -97,6 +97,13 @@ const PropertyCard = ({ property }) => {
                         <span className="text-sm font-medium text-gray-300 opacity-80">/mo</span>
                     </p>
                 </div>
+
+                {/* Image Counter */}
+                <div className="absolute bottom-5 right-6 z-10">
+                    <span className="bg-black/60 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-full border border-white/20">
+                        {currentImgIndex + 1} / {images.length}
+                    </span>
+                </div>
             </div>
 
             {/* Details */}

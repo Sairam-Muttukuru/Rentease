@@ -20,13 +20,15 @@ const TenantLayout = ({
     markAllNotesAsRead,
     isUserMenuOpen,
     setIsUserMenuOpen,
-    notification // passed from dashboard state for toast
+    notification, // passed from dashboard state for toast
+    allProperties,
+    handlePropertyChange
 }) => {
     const { theme } = useTheme();
     const isDarkMode = theme === 'dark';
 
     return (
-        <div className={`min-h-screen h-screen overflow-hidden flex font-sans selection:bg-violet-500/30 transition-colors duration-500 ease-in-out ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+        <div className={`min-h-screen h-screen overflow-hidden flex font-sans selection:bg-violet-500/30 transition-colors duration-500 ease-in-out ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-violet-50 text-slate-900'}`}>
 
             {/* Toast Notification */}
             {notification && (
@@ -73,6 +75,8 @@ const TenantLayout = ({
                     isUserMenuOpen={isUserMenuOpen}
                     setIsUserMenuOpen={setIsUserMenuOpen}
                     handleLogout={handleLogout}
+                    allProperties={allProperties}
+                    handlePropertyChange={handlePropertyChange}
                 />
 
                 {/* Scrollable Content Area */}

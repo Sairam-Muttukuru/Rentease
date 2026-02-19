@@ -27,23 +27,7 @@ const DashboardHome = ({
 }) => {
     return (
         <div className="space-y-8 fade-in-up">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h2 className={`text-4xl font-extrabold tracking-tight ${isDarkMode ? 'text-white' : 'text-black'}`}>
-                        Welcome back, Landlord!
-                    </h2>
-                    <p className={`mt-2 text-lg ${isDarkMode ? 'text-slate-400' : 'text-black'}`}>
-                        Here's what's happening with your properties
-                    </p>
-                </div>
-                <LandlordButton
-                    icon={PlusCircle}
-                    onClick={() => setActiveTab('add-property')}
-                >
-                    Add Property
-                </LandlordButton>
-            </div>
+            {/* Header Removed - Content moved to Topbar */}
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -18,24 +18,33 @@ exports.getPayments = async (requesterId, targetUserName = null) => {
     // Allow if searching for self
     if (targetUser.id !== requesterId) {
       // Verify landlord handles this tenant
-      const tenantRecord = await Tenant.getByUserId(targetUser.id);
-      if (!tenantRecord || tenantRecord.landlord_id != requesterId) {
+      const tenants = await Tenant.getByUserId(targetUser.id);
+      const isManaged = tenants?.some(t => t.landlord_id == requesterId);
+      if (!isManaged) {
         throw new Error("Access denied");
       }
     }
     userId = targetUser.id;
   }
 
-  const tenant = await Tenant.getByUserId(userId);
-  if (!tenant) return [];
+  const tenants = await Tenant.getByUserId(userId);
+  if (!tenants || tenants.length === 0) return [];
 
-  const payments = await Tenant.getPaymentsByTenantId(tenant.id);
+  const allPayments = [];
+  for (const tenant of tenants) {
+    const propertyPayments = await Tenant.getPaymentsByTenantId(tenant.id);
+    allPayments.push(...propertyPayments);
+  }
+
+  // Sort by date desc
+  allPayments.sort((a, b) => new Date(b.payment_date) - new Date(a.payment_date));
 
   // Map payment_date to date for frontend
-  return payments.map(p => ({
+  return allPayments.map(p => ({
     ...p,
     date: p.payment_date,
-    receipt_number: p.receipt_no // ensuring optional field mapping if needed
+    receipt_number: p.receipt_no,
+    method: p.payment_gateway || p.payment_method_ui || "Online"
   }));
 };
 
@@ -48,18 +57,25 @@ exports.getComplaints = async (requesterId, targetUserName = null) => {
 
     // Allow if searching for self
     if (targetUser.id !== requesterId) {
-      const tenantRecord = await Tenant.getByUserId(targetUser.id);
-      if (!tenantRecord || tenantRecord.landlord_id != requesterId) {
+      const tenants = await Tenant.getByUserId(targetUser.id);
+      const isManaged = tenants?.some(t => t.landlord_id == requesterId);
+      if (!isManaged) {
         throw new Error("Access denied");
       }
     }
     userId = targetUser.id;
   }
 
-  const tenant = await Tenant.getByUserId(userId);
-  if (!tenant) return [];
+  const tenants = await Tenant.getByUserId(userId);
+  if (!tenants || tenants.length === 0) return [];
 
-  return await Complaint.getByTenantId(tenant.id);
+  const allComplaints = [];
+  for (const tenant of tenants) {
+    const propertyComplaints = await Complaint.getByTenantId(tenant.id);
+    allComplaints.push(...propertyComplaints);
+  }
+
+  return allComplaints.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 };
 
 exports.addTenant = async (landlordId, propertyId, data) => {
@@ -181,24 +197,25 @@ exports.getDashboardData = async (requesterId, targetUserName = null) => {
     // Allow if searching for self
     if (targetUser.id !== requesterId) {
       // Verify landlord handles this tenant
-      const tenantRecord = await Tenant.getByUserId(targetUser.id);
-      if (!tenantRecord || tenantRecord.landlord_id != requesterId) {
+      const tenants = await Tenant.getByUserId(targetUser.id);
+      const isManaged = tenants?.some(t => t.landlord_id == requesterId);
+      if (!isManaged) {
         throw new Error("Access denied");
       }
     }
     userId = targetUser.id;
   }
 
-  // 1️⃣ Get tenant + property + images
-  const tenant = await Tenant.getByUserId(userId);
+  // 1️⃣ Get ALL tenant properties (returns array now)
+  const tenants = await Tenant.getByUserId(userId);
 
-  // 1.5 Get service requests
+  // 1.5 Get service requests (Global for user)
   const serviceRequests = await ServiceRequestModel.getByUser(userId);
 
   // 2️⃣ Get tenant user info
   const user = await UserModel.findUserById(userId);
 
-  if (!tenant) {
+  if (!tenants || tenants.length === 0) {
     // ⚠️ Fallback if user is not assigned to any property yet
     return {
       id: null,
@@ -220,73 +237,87 @@ exports.getDashboardData = async (requesterId, targetUserName = null) => {
       phone: user ? user.phone : "N/A",
 
       members: [],
-      familyMembers: 0
+      familyMembers: 0,
+      allProperties: []
     };
   }
 
-  // 3️⃣ Get family members
-  const members = await TenantMember.getByTenantId(tenant.id);
+  // Helper to process a single tenant property
+  const processProperty = async (tenant) => {
+    // 3️⃣ Get family members
+    const members = await TenantMember.getByTenantId(tenant.id);
 
-  // 4️⃣ Calculate Accumulated Rent
-  const payments = await Tenant.getPaymentsByTenantId(tenant.id);
-  const totalPaid = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+    // 4️⃣ Calculate Accumulated Rent
+    const payments = await Tenant.getPaymentsByTenantId(tenant.id);
+    const totalPaid = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
 
-  const currentDate = new Date();
-  const startDate = new Date(tenant.start_date);
+    const currentDate = new Date();
+    const startDate = new Date(tenant.start_date);
 
-  // Calculate months elapsed (including current month if start date passed)
-  const monthsElapsed = Math.max(1,
-    (currentDate.getFullYear() - startDate.getFullYear()) * 12 +
-    (currentDate.getMonth() - startDate.getMonth()) +
-    (currentDate.getDate() >= startDate.getDate() ? 1 : 0)
-  );
+    // Calculate months elapsed (including current month if start date passed)
+    const monthsElapsed = Math.max(1,
+      (currentDate.getFullYear() - startDate.getFullYear()) * 12 +
+      (currentDate.getMonth() - startDate.getMonth()) +
+      (currentDate.getDate() >= startDate.getDate() ? 1 : 0)
+    );
 
-  let expectedRent = monthsElapsed * parseFloat(tenant.monthly_rent);
-  let accumulatedDue = Math.max(0, expectedRent - totalPaid);
+    let expectedRent = monthsElapsed * parseFloat(tenant.monthly_rent);
+    let accumulatedDue = Math.max(0, expectedRent - totalPaid);
 
-  // 10-Day Policy Logic: 
-  // If there is an outstanding balance AND we are > 10 days past the current cycle's due date,
-  // we proactively add the NEXT month's rent to the "Accumulated Due".
-  if (accumulatedDue > 0) {
-    // Determine the "Current" Due Date (the one that triggered the current expectedRent)
-    // This is effectively StartDate + (monthsElapsed - 1) months
-    const currentDueDate = new Date(startDate);
-    currentDueDate.setMonth(startDate.getMonth() + (monthsElapsed - 1));
+    // 10-Day Policy Logic: 
+    // If there is an outstanding balance AND we are > 10 days past the current cycle's due date,
+    // we proactively add the NEXT month's rent to the "Accumulated Due".
+    if (accumulatedDue > 0) {
+      // Determine the "Current" Due Date (the one that triggered the current expectedRent)
+      // This is effectively StartDate + (monthsElapsed - 1) months
+      const currentDueDate = new Date(startDate);
+      currentDueDate.setMonth(startDate.getMonth() + (monthsElapsed - 1));
 
-    // Calculate days past this due date
-    const diffTime = Math.abs(currentDate - currentDueDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      // Calculate days past this due date
+      const diffTime = Math.abs(currentDate - currentDueDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    // If we are more than 10 days past the due date (e.g., Due Feb 1, Today Feb 12)
-    if (diffDays > 10) {
-      accumulatedDue += parseFloat(tenant.monthly_rent);
+      // If we are more than 10 days past the due date (e.g., Due Feb 1, Today Feb 12)
+      if (diffDays > 10) {
+        accumulatedDue += parseFloat(tenant.monthly_rent);
+      }
     }
-  }
 
-  // 5️⃣ Return merged response
+    // Return merged response for this property
+    return {
+      ...tenant,
+      // Map mismatched fields for frontend
+      name: `${user.first_name} ${user.last_name}`,
+      email: user.email,
+      propertyName: tenant.property_name,
+      landlord: tenant.landlord_name,
+      monthlyRent: tenant.monthly_rent,
+      propertyImages: tenant.images,
+
+      accumulated_due: accumulatedDue,
+      months_elapsed: monthsElapsed,
+      total_paid: totalPaid,
+
+      // Keep existing backend fields just in case
+      tenant_name: `${user.first_name} ${user.last_name}`,
+      tenant_email: user.email,
+      phone: user.phone,
+      avatar_url: user.avatar_url,
+
+      members,
+      familyMembers: members.length,
+      serviceRequests
+    };
+  };
+
+  // Process all properties
+  const allProperties = await Promise.all(tenants.map(processProperty));
+
+  // Return the first property as "current" for backward compatibility
+  // But include the full list for the frontend switcher
   return {
-    ...tenant,
-    // Map mismatched fields for frontend
-    name: `${user.first_name} ${user.last_name}`,
-    email: user.email,
-    propertyName: tenant.property_name,
-    landlord: tenant.landlord_name,
-    monthlyRent: tenant.monthly_rent,
-    propertyImages: tenant.images,
-
-    accumulated_due: accumulatedDue,
-    months_elapsed: monthsElapsed,
-    total_paid: totalPaid,
-
-    // Keep existing backend fields just in case
-    tenant_name: `${user.first_name} ${user.last_name}`,
-    tenant_email: user.email,
-    phone: user.phone,
-    avatar_url: user.avatar_url,
-
-    members,
-    familyMembers: members.length,
-    serviceRequests
+    ...allProperties[0],
+    allProperties
   };
 };
 

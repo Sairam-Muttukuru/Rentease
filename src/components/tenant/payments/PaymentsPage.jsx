@@ -58,11 +58,11 @@ const PaymentsPage = ({ payments }) => {
                             {payments.map((payment) => (
                                 <tr key={payment.id} className={`transition-colors duration-200 ${isDarkMode ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50'}`}>
                                     <td className={`px-6 py-4 transition-colors duration-500 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                        {new Date(payment.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        {new Date(payment.date || payment.payment_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                     </td>
                                     <td className={`px-6 py-4 font-medium transition-colors duration-500 ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}`}>Rent Payment</td>
                                     <td className="px-6 py-4 text-slate-500">{payment.method}</td>
-                                    <td className={`px-6 py-4 font-bold transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>${payment.amount.toLocaleString()}</td>
+                                    <td className={`px-6 py-4 font-bold transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>₹{payment.amount.toLocaleString()}</td>
                                     <td className="px-6 py-4">
                                         <StatusBadge status={payment.status} />
                                     </td>

@@ -25,7 +25,7 @@ const LandlordLayout = ({
     const isDarkMode = theme === 'dark';
 
     return (
-        <div className={`h-screen overflow-hidden flex font-sans selection:bg-violet-500/30 transition-colors duration-500 ease-in-out ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+        <div className={`h-screen overflow-hidden flex font-sans selection:bg-emerald-500/30 transition-colors duration-500 ease-in-out ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-emerald-50 text-slate-900'}`}>
 
             {/* Toast Notification */}
             {notificationToast && (
@@ -59,8 +59,8 @@ const LandlordLayout = ({
             <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
                 {/* Decorative Background Glows */}
                 <div className={`absolute top-0 left-0 w-full h-full pointer-events-none z-0 ${isDarkMode ? 'opacity-100' : 'opacity-0'}`}>
-                    <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-indigo-600/5 rounded-full blur-[120px]"></div>
-                    <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-violet-600/5 rounded-full blur-[150px]"></div>
+                    <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-emerald-600/5 rounded-full blur-[120px]"></div>
+                    <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-teal-600/5 rounded-full blur-[150px]"></div>
                 </div>
 
                 {/* Topbar */}

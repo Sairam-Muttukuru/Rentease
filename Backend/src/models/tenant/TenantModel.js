@@ -47,7 +47,12 @@ exports.getAllByLandlordId = async (landlordId) => {
     tm.phone,
     tm.tenant_emailid as email,
     (SELECT COUNT(*) FROM tenant_members WHERE tenant_id = t.id) as members,
-    u.avatar_url
+    u.avatar_url,
+    COALESCE(
+      (SELECT json_agg(pi.image_url)
+       FROM property_images pi
+       WHERE pi.property_id = p.id)
+    , '[]') as property_images
     FROM tenants t
     JOIN properties p ON p.id = t.property_id
     JOIN users u ON u.id = t.user_id 
@@ -142,7 +147,7 @@ exports.getByUserId = async (userId) => {
     WHERE t.user_id = $1
     `,
     [userId]
-  )).rows[0];
+  )).rows;
 };
 
 exports.getPaymentsByTenantId = async (tenantId) => {

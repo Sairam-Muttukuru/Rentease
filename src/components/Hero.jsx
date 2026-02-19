@@ -234,7 +234,7 @@ const Hero = () => {
   };
 
   return (
-    <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden min-h-screen flex flex-col justify-center">
+    <section className="relative pt-24 pb-16 lg:pt-32 lg:pb-24 overflow-hidden min-h-screen flex flex-col justify-center">
       {/* Background Gradients */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full z-0 pointer-events-none">
         <div className="absolute top-20 left-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-[100px] animate-pulse" />
@@ -243,14 +243,22 @@ const Hero = () => {
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
         <RevealOnScroll delay={200}>
-          <h1 className="text-5xl md:text-7xl dark:text-slate-200 font-extrabold tracking-tight mb-8 leading-tight text-slate-900">
+          <div className="relative w-40 h-40 md:w-64 md:h-64 mx-auto mb-6 group">
+            <div className="absolute inset-0 bg-indigo-500/30 rounded-full blur-3xl group-hover:bg-indigo-500/50 transition-all duration-700"></div>
+            <img
+              src="/favicon.png"
+              alt="RentEase Logo"
+              className="relative w-full h-full object-contain drop-shadow-2xl hover:scale-110 transition-transform duration-700 ease-in-out"
+            />
+          </div>
+          <h1 className="text-5xl md:text-7xl dark:text-slate-200 font-extrabold tracking-tight mb-4 leading-tight text-slate-900">
             Rental Management <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">Reimagined.</span>
           </h1>
         </RevealOnScroll>
 
         <RevealOnScroll delay={400}>
-          <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed">
+          <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-8 leading-relaxed">
             The all-in-one platform connecting Tenants, Landlords, and Admins.
           </p>
         </RevealOnScroll>
@@ -274,7 +282,7 @@ const Hero = () => {
         </RevealOnScroll>
 
         <RevealOnScroll delay={800}>
-          <div className="mt-20 relative max-w-5xl mx-auto rounded-2xl p-0 bg-gradient-to-b from-slate-200 to-transparent">
+          <div className="mt-12 relative max-w-5xl mx-auto rounded-2xl p-0 bg-gradient-to-b from-slate-200 to-transparent">
             <div className="bg-slate-100 rounded-xl overflow-hidden shadow-2xl border border-slate-200 aspect-[16/9] flex items-center justify-center relative group">
               <div className="absolute inset-0 opacity-5 pointer-events-none bg-grid-slate-200" />
               <div className="relative z-10 w-full h-full">

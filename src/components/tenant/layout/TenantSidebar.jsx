@@ -15,12 +15,15 @@ const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout
       ${isDarkMode ? 'bg-slate-950 border-white/5' : 'bg-white border-slate-200'}
     `}>
             {/* Logo Section */}
-            <div className={`p-8 flex items-center gap-4 ${isDarkMode ? 'border-b border-white/5' : 'border-b border-slate-100'}`}>
-                <div className="relative group">
-                    <div className={`absolute inset-0 bg-violet-500 blur-[20px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full`}></div>
-                    <img src="/favicon.png" alt="RentEase" className="min-w-12 min-h-12 object-contain relative z-10 drop-shadow-lg" />
+            <div className={`p-8 flex flex-col items-start gap-0 ${isDarkMode ? 'border-b border-white/5' : 'border-b border-slate-100'}`}>
+                <div className="flex items-center gap-4">
+                    <div className="relative group">
+                        <div className={`absolute inset-0 bg-violet-500 blur-[20px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full`}></div>
+                        <img src="/favicon.png" alt="RentEase" className="min-w-12 min-h-12 object-contain relative z-10 drop-shadow-lg" />
+                    </div>
+                    <span className={`text-3xl relative right-2 font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>RentEase</span>
                 </div>
-                <span className={`text-3xl relative right-8 font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>RentEase</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-500 relative left-16 bottom-1">Tenant Dashboard</span>
             </div>
 
             <nav className="flex-1 p-6 space-y-2 mt-2 overflow-y-auto">
@@ -29,8 +32,9 @@ const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout
                     { id: 'notices', path: `/${userName}/tenant/dashboard/notices`, icon: Bell, label: 'Notice Board' },
                     { id: 'my-property', path: `/${userName}/tenant/dashboard/my-property`, icon: Building, label: 'My Property' },
                     { id: 'services', path: `/${userName}/tenant/dashboard/services`, icon: Wrench, label: 'Home Services' },
+                    { id: 'messages', path: `/${userName}/tenant/dashboard/messages`, icon: MessageSquare, label: 'Messages' },
                     { id: 'payments', path: `/${userName}/tenant/dashboard/payments`, icon: CreditCard, label: 'Payments' },
-                    { id: 'complaints', path: `/${userName}/tenant/dashboard/complaints`, icon: MessageSquare, label: 'Complaints' },
+                    { id: 'complaints', path: `/${userName}/tenant/dashboard/complaints`, icon: FileText, label: 'Complaints' },
                     { id: 'settings', path: `/${userName}/tenant/dashboard/settings`, icon: Settings, label: 'Settings' },
                 ].map((item) => {
                     const isActive = item.id === 'dashboard'

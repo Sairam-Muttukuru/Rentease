@@ -1,0 +1,22 @@
+--- Data for tenant_dates ---
+[
+  {
+    "id": 3,
+    "start_date": "2025-12-30T18:30:00.000Z",
+    "rent_due_date": "2026-01-30T18:30:00.000Z",
+    "property_name": "Spacious 3BHK Apartment with City View"
+  },
+  {
+    "id": 13,
+    "start_date": "2026-01-19T18:30:00.000Z",
+    "rent_due_date": "2026-02-20T18:30:00.000Z",
+    "property_name": "Lakshmi Ladies PG – MVP Colony"
+  },
+  {
+    "id": 12,
+    "start_date": "2026-01-18T18:30:00.000Z",
+    "rent_due_date": "2026-01-19T18:30:00.000Z",
+    "property_name": "Working Men’s PG – Brodipet, Guntur"
+  }
+]
+

@@ -31,7 +31,7 @@ import LandlordAnnouncementsView from '../components/landlord/dashboard/Landlord
 import EditPropertyModal from '../components/landlord/modals/EditPropertyModal';
 import EditTenantModal from '../components/landlord/modals/EditTenantModal';
 import AddTenantModal from '../components/landlord/modals/AddTenantModal';
-import DeleteConfirmationModal from '../components/landlord/modals/DeleteConfirmationModal';
+
 import ImageGalleryModal from '../components/ui/ImageGalleryModal';
 import ChatWindow from '../components/chat/ChatWindow';
 import LandlordLoader from '../components/landlord/LandlordLoader';
@@ -103,8 +103,7 @@ export default function LandlordDashboard() {
   });
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [propertyToDelete, setPropertyToDelete] = useState(null);
+
   // const [tenantToDelete, setTenantToDelete] = useState(null); // Removed for SweetAlert
   // const [isDeleteTenantModalOpen, setIsDeleteTenantModalOpen] = useState(false); // Removed for SweetAlert
   const [isEditTenantModalOpen, setIsEditTenantModalOpen] = useState(false);
@@ -258,18 +257,46 @@ export default function LandlordDashboard() {
     }
   };
 
-  const confirmDeleteProperty = async () => {
-    if (!propertyToDelete) return;
-    try {
-      const token = localStorage.getItem("accessToken");
-      await axios.delete(`http://localhost:5000/api/properties/${propertyToDelete}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      toast.success("Property deleted");
-      setLandlordProperties(prev => prev.filter(p => p.id !== propertyToDelete));
-      setIsDeleteModalOpen(false);
-    } catch {
-      toast.error("Delete failed");
+  const handleDeleteProperty = async (propertyId) => {
+    const result = await Swal.fire({
+      title: 'Delete Property?',
+      text: "Are you sure you want to delete this property? This action cannot be undone.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#7c3aed',
+      cancelButtonColor: '#ef4444',
+      confirmButtonText: 'Yes, delete it!',
+      background: isDarkMode ? '#1e293b' : '#ffffff',
+      color: isDarkMode ? '#f8fafc' : '#0f172a',
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const token = localStorage.getItem("accessToken");
+        await axios.delete(`http://localhost:5000/api/properties/${propertyId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        Swal.fire({
+          title: "Deleted!",
+          text: "Property has been deleted.",
+          icon: "success",
+          background: isDarkMode ? '#1e293b' : '#ffffff',
+          color: isDarkMode ? '#f8fafc' : '#0f172a',
+          confirmButtonColor: '#7c3aed'
+        });
+
+        setLandlordProperties(prev => prev.filter(p => p.id !== propertyId));
+      } catch (error) {
+        Swal.fire({
+          title: "Error!",
+          text: error.response?.data?.error || "Failed to delete property.",
+          icon: "error",
+          background: isDarkMode ? '#1e293b' : '#ffffff',
+          color: isDarkMode ? '#f8fafc' : '#0f172a',
+          confirmButtonColor: '#7c3aed'
+        });
+      }
     }
   };
 
@@ -416,7 +443,7 @@ export default function LandlordDashboard() {
             loadingProperties={loadingProperties}
             setActiveTab={setActiveTab}
             onEditClick={(prop) => { setSelectedProperty(prop); setIsEditOpen(true); }}
-            onDeleteClick={(id) => { setPropertyToDelete(id); setIsDeleteModalOpen(true); }}
+            onDeleteClick={(id) => handleDeleteProperty(id)}
             onGalleryClick={(prop) => {
               const images = (prop.images && prop.images.length > 0)
                 ? prop.images.map(img => img.image_url)
@@ -528,14 +555,7 @@ export default function LandlordDashboard() {
         isDarkMode={isDarkMode}
       />
 
-      <DeleteConfirmationModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={confirmDeleteProperty}
-        isDarkMode={isDarkMode}
-        title="Delete Property?"
-        message="Are you sure you want to delete this property? This action cannot be undone."
-      />
+
 
       <EditTenantModal
         isOpen={isEditTenantModalOpen}

@@ -1281,8 +1281,8 @@ const Adminpage = () => {
     return (
         <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 flex overflow-hidden relative transition-colors duration-500">
             {/* Background Ambience Bubble */}
-            <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-indigo-100/50 dark:from-slate-900/50 to-transparent pointer-events-none z-0" />
-            <div className="absolute top-20 right-20 w-96 h-96 bg-purple-200/30 dark:bg-purple-900/20 rounded-full blur-[100px] pointer-events-none z-0 animate-pulse" />
+            <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-slate-200/50 dark:from-slate-900/50 to-transparent pointer-events-none z-0" />
+            <div className="absolute top-20 right-20 w-96 h-96 bg-indigo-200/30 dark:bg-indigo-900/20 rounded-full blur-[100px] pointer-events-none z-0 animate-pulse" />
             <div className="absolute top-40 left-60 w-72 h-72 bg-blue-200/30 dark:bg-blue-900/20 rounded-full blur-[80px] pointer-events-none z-0 animate-pulse delay-1000" />
             {/* Sidebar - Glassmorphism */}
             <aside className="w-72 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl h-screen fixed left-0 top-0 flex flex-col text-slate-600 dark:text-slate-300 z-50 border-r border-slate-200 dark:border-white/10 shadow-2xl transition-all duration-300">
@@ -1338,7 +1338,7 @@ const Adminpage = () => {
                 <header className="h-20 px-8 flex items-center justify-between bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800 sticky top-0 z-30 shadow-sm transition-colors duration-500">
                     {/* Left: Section Title or Welcome */}
                     <div>
-                        <h2 className="text-xl font-extrabold text-slate-800 dark:text-white tracking-tight">Admin Dashboard</h2>
+                        <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-700 to-indigo-600 dark:from-slate-200 dark:to-indigo-400 tracking-tight">Admin Console</h2>
                         <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Welcome back, <span className="text-indigo-600 dark:text-indigo-400">{adminProfile.name.split(' ')[0]}</span></p>
                     </div>
 

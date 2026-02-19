@@ -113,18 +113,42 @@ const TenantDetailView = ({ tenants, selectedTenantId, isDarkMode, setActiveTab,
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Left Column - Profile & Lease */}
                 <div className="space-y-6">
-                    <Card isDarkMode={isDarkMode} className="p-8 text-center relative overflow-hidden">
-                        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-violet-600 to-indigo-600" />
-                        <div className="relative w-32 h-32 mx-auto mb-6">
-                            <div className="absolute -inset-2 bg-gradient-to-tr from-violet-600 to-indigo-600 rounded-full blur opacity-20" />
-                            <div className="relative w-full h-full rounded-full border-4 border-slate-900 shadow-2xl flex items-center justify-center bg-slate-800">
-                                <span className="text-3xl font-black text-white">{tenant.name?.charAt(0)}</span>
+                    <Card isDarkMode={isDarkMode} className="overflow-hidden p-0 relative group">
+                        {/* Property Image Header */}
+                        <div className="h-48 w-full relative">
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10" />
+                            <img
+                                src={tenant.property_images?.[0] || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1073&q=80"}
+                                alt="Property"
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            />
+                            <div className="absolute bottom-4 left-4 z-20 text-white">
+                                <div className="flex items-center gap-2 mb-1 opacity-90">
+                                    <Home size={14} />
+                                    <span className="text-xs font-bold uppercase tracking-wider">Residing At</span>
+                                </div>
+                                <h3 className="text-2xl font-black leading-tight">{tenant.property_name}</h3>
                             </div>
                         </div>
-                        <h3 className={`text-2xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{tenant.name}</h3>
-                        <div className="flex items-center justify-center gap-2 mb-6 text-violet-400">
-                            <Home size={16} />
-                            <p className="text-sm font-bold">{tenant.property_name}</p>
+
+                        {/* Tenant Info Overlay */}
+                        <div className="p-6 relative">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <h2 className={`text-2xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{tenant.name}</h2>
+                                    <p className="text-sm text-slate-500 font-medium mt-1">{tenant.email}</p>
+                                    <p className="text-sm text-slate-500 font-medium">{tenant.phone}</p>
+                                </div>
+                                <div className="relative -mt-16 z-20">
+                                    <div className="w-20 h-20 rounded-2xl shadow-xl border-4 border-white dark:border-slate-800 bg-slate-100 dark:bg-slate-700 flex items-center justify-center overflow-hidden">
+                                        {tenant.avatar_url ? (
+                                            <img src={tenant.avatar_url} alt={tenant.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <span className="text-2xl font-black text-slate-400">{tenant.name?.charAt(0)}</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </Card>
 

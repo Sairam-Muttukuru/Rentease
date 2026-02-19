@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, Calendar, Clock } from 'lucide-react';
+import { Menu, Calendar, Clock, Building } from 'lucide-react';
 import { useTheme } from '../../../context/ThemeContext';
 import TenantAnnouncementsWidget from './TenantAnnouncementsWidget';
 import QuickActions from './QuickActions';
@@ -53,27 +53,8 @@ const DashboardHome = ({
             {/* ... existing header code ... */}
 
             {/* Header with Gradient Text & Notification Bell */}
-            <div className="flex justify-between items-start">
-                <div className="flex items-center gap-4">
-                    {/* Sidebar Toggle Button */}
-                    <button
-                        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                        className={`p-2 rounded-lg transition-colors md:hidden ${isDarkMode ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-600'}`}
-                    >
-                        <Menu size={24} />
-                    </button>
-
-                    <div className="relative">
-                        <h1 className={`text-3xl font-bold tracking-tight mb-2 transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                            Welcome back, <span className={`${isDarkMode ? 'text-violet-400' : 'text-violet-600'}`}>{(user.name || "User").split(' ')[0]}</span>!
-                        </h1>
-                        <p className={`text-base transition-colors duration-500 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                            Here's your rental overview
-                        </p>
-                    </div>
-
-                </div>
-
+            {/* Header Notifications Only */}
+            <div className="flex justify-end items-center mb-6">
                 {/* Notifications Section */}
                 <div className="flex items-center gap-4">
                     {/* Next Due Date Widget */}
@@ -112,6 +93,7 @@ const DashboardHome = ({
                 user={user}
                 isPaid={isPaid}
                 activeComplaintsCount={activeComplaintsCount}
+                serviceRequests={serviceRequests}
             />
 
             {/* Main Content Grid */}

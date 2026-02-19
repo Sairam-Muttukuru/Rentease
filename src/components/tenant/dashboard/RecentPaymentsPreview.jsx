@@ -32,7 +32,7 @@ const RecentPaymentsPreview = ({ payments, navigate }) => {
                         </div>
 
                         <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                            ${payment.amount.toLocaleString()}
+                            ₹{payment.amount.toLocaleString()}
                         </span>
                     </div>
                 ))}

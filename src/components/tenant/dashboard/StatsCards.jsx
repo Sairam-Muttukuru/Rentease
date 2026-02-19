@@ -1,9 +1,9 @@
 import React from 'react';
-import { Home, DollarSign, MessageSquare, Users } from 'lucide-react';
+import { Home, IndianRupee, MessageSquare, Users, Wrench } from 'lucide-react';
 import Card from '../ui/Card';
 import { useTheme } from "../../../context/ThemeContext";
 
-const StatsCards = ({ user, isPaid, activeComplaintsCount }) => {
+const StatsCards = ({ user, isPaid, activeComplaintsCount, serviceRequests }) => {
     const { theme } = useTheme();
     const isDarkMode = theme === 'dark';
 
@@ -21,21 +21,23 @@ const StatsCards = ({ user, isPaid, activeComplaintsCount }) => {
           ${isDarkMode
                         ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 shadow-emerald-900/20'
                         : 'bg-emerald-100 text-emerald-600 border-emerald-200 shadow-emerald-100'}`}>
-                    <DollarSign size={28} className="stroke-[2.5]" />
+                    <IndianRupee size={28} className="stroke-[2.5]" />
                 </div>
             </Card>
 
-            {/* Property Count Card */}
+            {/* Active Services Card */}
             <Card className="p-6 flex justify-between items-center group hover:border-violet-500/50 hover:shadow-lg transition-all duration-300">
                 <div>
-                    <p className={`text-sm font-medium mb-1 transition-colors duration-500 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Property</p>
-                    <h3 className={`text-2xl font-bold transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{user.propertiesCount}</h3>
+                    <p className={`text-sm font-medium mb-1 transition-colors duration-500 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Active Services</p>
+                    <h3 className={`text-2xl font-bold transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                        {serviceRequests ? serviceRequests.filter(req => req.status !== 'Completed' && req.status !== 'Cancelled').length : 0}
+                    </h3>
                 </div>
                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 transition-all duration-500 group-hover:scale-110 shadow-lg
           ${isDarkMode
-                        ? 'bg-blue-500/20 text-blue-400 border-blue-500/30 shadow-blue-900/20'
-                        : 'bg-blue-100 text-blue-600 border-blue-200 shadow-blue-100'}`}>
-                    <Home size={28} className="stroke-[2.5]" />
+                        ? 'bg-amber-500/20 text-amber-400 border-amber-500/30 shadow-amber-900/20'
+                        : 'bg-amber-100 text-amber-600 border-amber-200 shadow-amber-100'}`}>
+                    <Wrench size={28} className="stroke-[2.5]" />
                 </div>
             </Card>
 

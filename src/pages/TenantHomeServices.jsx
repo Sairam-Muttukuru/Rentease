@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
     Search, Shield, Star, Clock, CheckCircle2,
     PaintBucket, Hammer, Truck, Zap, Droplets,
     Sofa, Sparkles, ChevronRight, X, Calendar,
-    CreditCard, ArrowRight, Home, Menu, LayoutGrid, ChevronLeft, Loader2
+    CreditCard, ArrowRight, Home, Menu, LayoutGrid, ChevronLeft, Loader2, MessageSquare
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useTheme } from '../context/ThemeContext';
@@ -31,6 +31,7 @@ export default function TenantHomeServices({ toggleSidebar }) {
     const { theme } = useTheme();
     const isDarkMode = theme === 'dark';
     const location = useLocation();
+    const navigate = useNavigate();
 
     // State
     const [viewState, setViewState] = useState('CATEGORIES'); // CATEGORIES, TYPES, SUB_TYPES, SERVICES
@@ -427,7 +428,7 @@ export default function TenantHomeServices({ toggleSidebar }) {
                                             <div className="flex justify-between items-center pt-4 border-t border-dashed border-slate-200 dark:border-slate-700 mt-auto">
                                                 <div>
                                                     <p className={`text-xs uppercase font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Price</p>
-                                                    <p className={`text-2xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>${service.base_price}</p>
+                                                    <p className={`text-2xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>₹{service.base_price}</p>
                                                 </div>
                                                 <button
                                                     onClick={() => handleBookNow(service)}
@@ -436,6 +437,12 @@ export default function TenantHomeServices({ toggleSidebar }) {
                                                     Book <ArrowRight size={16} />
                                                 </button>
                                             </div>
+                                            <button
+                                                onClick={() => navigate('../messages')}
+                                                className={`w-full mt-3 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-colors border ${isDarkMode ? 'border-slate-600 text-slate-300 hover:bg-slate-700' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                                            >
+                                                <MessageSquare size={16} /> Chat with Provider
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
@@ -473,15 +480,15 @@ export default function TenantHomeServices({ toggleSidebar }) {
                                     <div className={`p-4 rounded-xl text-left mb-8 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-50'}`}>
                                         <div className="flex justify-between mb-2">
                                             <span className="text-sm text-slate-500">Service Cost</span>
-                                            <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>${selectedService.base_price}</span>
+                                            <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>₹{selectedService.base_price}</span>
                                         </div>
                                         <div className="flex justify-between mb-2">
                                             <span className="text-sm text-slate-500">Service Fee</span>
-                                            <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>$5.00</span>
+                                            <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>₹50.00</span>
                                         </div>
                                         <div className="flex justify-between pt-2 border-t border-dashed border-slate-300 dark:border-slate-700">
                                             <span className="font-bold text-slate-500">Total</span>
-                                            <span className="font-black text-xl text-violet-600">${parseFloat(selectedService.base_price) + 5}</span>
+                                            <span className="font-black text-xl text-violet-600">₹{parseFloat(selectedService.base_price) + 50}</span>
                                         </div>
                                     </div>
 

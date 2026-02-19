@@ -15,14 +15,22 @@ const LandlordTopbar = ({
     setIsMobileMenuOpen
 }) => {
     return (
-        <header className="w-full h-20 flex items-center justify-between md:justify-end px-4 md:px-8 z-20 shrink-0">
-            <button
-                onClick={() => setIsMobileMenuOpen(true)}
-                className={`md:hidden p-2 rounded-xl border ${isDarkMode ? 'border-slate-800 text-slate-400' : 'border-slate-200 text-slate-500'}`}
-            >
-                <Menu size={20} />
-            </button>
+        <header className={`w-full h-20 flex items-center justify-between px-4 md:px-8 z-20 shrink-0 sticky top-0 transition-colors duration-500 backdrop-blur-md border-b ${isDarkMode ? 'bg-slate-900/80 border-slate-800' : 'bg-white/80 border-slate-200'}`}>
+            {/* Left: Mobile Menu & Branding */}
+            <div className="flex items-center gap-4">
+                <button
+                    onClick={() => setIsMobileMenuOpen(true)}
+                    className={`md:hidden p-2 rounded-xl border ${isDarkMode ? 'border-slate-800 text-slate-400' : 'border-slate-200 text-slate-500'}`}
+                >
+                    <Menu size={20} />
+                </button>
+                <div className="hidden md:block">
+                    <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-400 dark:to-teal-500 tracking-tight">Landlord Dashboard</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Welcome back, <span className="text-emerald-600 dark:text-emerald-400 font-bold">{user.name?.split(' ')[0] || "Landlord"}</span></p>
+                </div>
+            </div>
 
+            {/* Right: Actions */}
             <div className="flex items-center gap-4 md:gap-6">
                 <div className="relative" onClick={(e) => e.stopPropagation()}>
                     <button
@@ -53,7 +61,7 @@ const LandlordTopbar = ({
                         <p className={`text-sm font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{user.name}</p>
                         <p className="text-[10px] lowercase font-bold text-slate-500">{user.email}</p>
                     </div>
-                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-violet-600 to-fuchsia-600 flex items-center justify-center text-white font-black shadow-lg">
+                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-600 flex items-center justify-center text-white font-black shadow-lg">
                         {user.name?.charAt(0)}
                     </div>
                 </div>

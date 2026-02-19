@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
-import { MapPin, Bed, Bath, Maximize, ArrowLeft, Star, Heart, Share2, CheckCircle, AlertCircle, MessageCircle, X } from 'lucide-react';
+import { MapPin, Bed, Bath, Maximize, ArrowLeft, Star, Heart, Share2, CheckCircle, AlertCircle, MessageCircle, X, Users, Briefcase, Building, Car, Utensils, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import ChatWindow from '../components/chat/ChatWindow';
@@ -170,21 +170,108 @@ const PropertyDetails = () => {
                     {/* Left Column: Details */}
                     <div className="lg:col-span-2 space-y-12">
                         {/* Key Features */}
+                        {/* Key Features */}
                         <div className="flex gap-4 md:gap-8 py-8 border-y border-gray-200 dark:border-white/10 overflow-x-auto no-scrollbar">
-                            <div className="flex items-center gap-4 min-w-max">
-                                <div className="p-3 bg-violet-500/10 text-violet-600 dark:text-violet-400 rounded-2xl border border-violet-500/20"><Bed size={28} /></div>
-                                <div><p className="text-sm text-gray-500 dark:text-gray-400">Bedrooms</p><p className="font-bold text-xl">{property.bedrooms}</p></div>
-                            </div>
-                            <div className="w-px bg-gray-200 dark:bg-white/10 h-12 my-auto" />
-                            <div className="flex items-center gap-4 min-w-max">
-                                <div className="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-2xl border border-blue-500/20"><Bath size={28} /></div>
-                                <div><p className="text-sm text-gray-500 dark:text-gray-400">Bathrooms</p><p className="font-bold text-xl">{property.bathrooms}</p></div>
-                            </div>
-                            <div className="w-px bg-gray-200 dark:bg-white/10 h-12 my-auto" />
-                            <div className="flex items-center gap-4 min-w-max">
-                                <div className="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl border border-emerald-500/20"><Maximize size={28} /></div>
-                                <div><p className="text-sm text-gray-500 dark:text-gray-400">Area</p><p className="font-bold text-xl">{property.area_sqft} sqft</p></div>
-                            </div>
+                            {[
+                                // Standard Residential
+                                {
+                                    value: property.bedrooms,
+                                    label: "Bedrooms",
+                                    icon: <Bed size={28} />,
+                                    color: "violet",
+                                    show: property.bedrooms > 0
+                                },
+                                {
+                                    value: property.bathrooms,
+                                    label: "Bathrooms",
+                                    icon: <Bath size={28} />,
+                                    color: "blue",
+                                    show: property.bathrooms > 0
+                                },
+                                {
+                                    value: `${property.area_sqft} sqft`,
+                                    label: "Area",
+                                    icon: <Maximize size={28} />,
+                                    color: "emerald",
+                                    show: property.area_sqft > 0
+                                },
+                                // Commercial / Office
+                                {
+                                    value: property.seating_capacity,
+                                    label: "Seating",
+                                    icon: <Users size={28} />,
+                                    color: "orange",
+                                    show: property.seating_capacity > 0
+                                },
+                                {
+                                    value: property.cabins_available,
+                                    label: "Cabins",
+                                    icon: <Briefcase size={28} />,
+                                    color: "amber",
+                                    show: property.cabins_available > 0
+                                },
+                                {
+                                    value: property.conference_room ? "Available" : null,
+                                    label: "Conf. Room",
+                                    icon: <Users size={28} />,
+                                    color: "indigo",
+                                    show: property.conference_room
+                                },
+                                // General
+                                {
+                                    value: property.floor_number,
+                                    label: "Floor",
+                                    icon: <Building size={28} />,
+                                    color: "cyan",
+                                    show: property.floor_number !== null && property.floor_number !== undefined
+                                },
+                                {
+                                    value: property.private_parking_slots,
+                                    label: "Parking",
+                                    icon: <Car size={28} />,
+                                    color: "rose",
+                                    show: property.private_parking_slots > 0 || property.parking_type
+                                },
+                                // PG / Hostel
+                                {
+                                    value: property.food_included ? "Included" : null,
+                                    label: "Food",
+                                    icon: <Utensils size={28} />,
+                                    color: "lime",
+                                    show: property.food_included
+                                },
+                                {
+                                    value: property.power_backup ? "Backup" : null,
+                                    label: "Power",
+                                    icon: <Zap size={28} />,
+                                    color: "yellow",
+                                    show: property.power_backup
+                                }
+                            ].filter(item => item.show).slice(0, 4).map((item, index, arr) => (
+                                <React.Fragment key={item.label}>
+                                    <div className="flex items-center gap-4 min-w-max">
+                                        <div className={`p-3 bg-${item.color}-500/10 text-${item.color}-600 dark:text-${item.color}-400 rounded-2xl border border-${item.color}-500/20`}>
+                                            {item.icon}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">{item.label}</p>
+                                            <p className="font-bold text-xl">{item.value === true ? "Yes" : item.value}</p>
+                                        </div>
+                                    </div>
+                                    {index < arr.length - 1 && (
+                                        <div className="w-px bg-gray-200 dark:bg-white/10 h-12 my-auto" />
+                                    )}
+                                </React.Fragment>
+                            ))}
+                            {[
+                                { show: property.bedrooms > 0 },
+                                { show: property.bathrooms > 0 },
+                                { show: property.area_sqft > 0 },
+                                { show: property.seating_capacity > 0 },
+                                { show: property.cabins_available > 0 },
+                                { show: property.floor_number !== null },
+                                { show: property.private_parking_slots > 0 },
+                            ].every(item => !item.show) && <p className="text-gray-500 italic">No specific property details available.</p>}
                         </div>
 
                         {/* Description */}
@@ -276,8 +363,8 @@ const PropertyDetails = () => {
                                                     type="date"
                                                     value={visitDate}
                                                     onChange={(e) => setVisitDate(e.target.value)}
-                                                    min={new Date().toISOString().split('T')[0]}
-                                                    className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-xl p-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 outline-none transition-all"
+                                                    min={new Date().toLocaleDateString('en-CA')}
+                                                    className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 outline-none transition-all dark:[color-scheme:dark]"
                                                 />
                                             </div>
                                             <div>
@@ -288,7 +375,7 @@ const PropertyDetails = () => {
                                                     type="time"
                                                     value={visitTime}
                                                     onChange={(e) => setVisitTime(e.target.value)}
-                                                    className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-xl p-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 outline-none transition-all"
+                                                    className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 outline-none transition-all dark:[color-scheme:dark]"
                                                 />
                                             </div>
                                         </div>

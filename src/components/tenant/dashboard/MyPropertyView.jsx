@@ -399,6 +399,31 @@ const MyPropertyView = ({
                                         <span className={`text-2xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{user.rentEscalation || "5"}%</span>
                                         <span className="text-[10px] font-bold text-slate-500">p.a.</span>
                                     </div>
+                                    <p className={`text-[10px] mt-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                                        Next Increase: <span className={`font-semibold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                                            {(() => {
+                                                const startDateStr = user.start_date || user.startDate;
+                                                if (!startDateStr) return "N/A";
+
+                                                const dateParts = new Date(startDateStr);
+                                                // Create date using local year, month, day to avoid timezone shifts
+                                                const start = new Date(dateParts.getFullYear(), dateParts.getMonth(), dateParts.getDate());
+
+                                                const now = new Date();
+                                                // Normalize 'now' to start of day for accurate comparison
+                                                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+                                                let next = new Date(start);
+                                                next.setFullYear(next.getFullYear() + 1); // First escalation is after 1 year
+
+                                                // If the calculated next date is in the past or today, move to next year
+                                                while (next <= today) {
+                                                    next.setFullYear(next.getFullYear() + 1);
+                                                }
+                                                return next.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                                            })()}
+                                        </span>
+                                    </p>
                                 </div>
                             </div>
                         </div>

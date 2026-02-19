@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, Menu, User, LogOut } from 'lucide-react';
+import { Bell, Menu, User, LogOut, Building } from 'lucide-react';
 import ThemeToggle from '../ui/ThemeToggle';
 import { useTheme } from "../../../context/ThemeContext";
 
@@ -16,7 +16,9 @@ const TenantTopbar = ({
     markAllNotesAsRead,
     isUserMenuOpen,
     setIsUserMenuOpen,
-    handleLogout
+    handleLogout,
+    allProperties,
+    handlePropertyChange
 }) => {
     const { theme } = useTheme();
     const isDarkMode = theme === 'dark';
@@ -24,7 +26,37 @@ const TenantTopbar = ({
     return (
         <>
             {/* Desktop Header */}
-            <header className="hidden md:flex w-full h-20 items-center justify-end px-8 z-20 shrink-0">
+            <header className={`hidden md:flex w-full h-20 items-center justify-between px-8 z-20 shrink-0 sticky top-0 transition-colors duration-500 backdrop-blur-md border-b ${isDarkMode ? 'bg-slate-900/80 border-slate-800' : 'bg-white/80 border-slate-200'}`}>
+                {/* Left: Title & Welcome */}
+                <div className="flex items-center gap-6">
+                    <div>
+                        <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-500 tracking-tight">Tenant Dashboard</h2>
+                        <div className="flex items-center gap-3">
+                            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Welcome back, <span className="text-violet-600 dark:text-violet-400 font-bold">{user.name?.split(' ')[0] || "User"}</span></p>
+
+                            {/* Property Selector */}
+                            {allProperties && allProperties.length > 1 && (
+                                <div className={`flex items-center gap-2 px-2 py-0.5 rounded-lg border ml-2 transition-all ${isDarkMode ? 'bg-slate-800 border-slate-700 hover:border-violet-500' : 'bg-white border-slate-200 hover:border-violet-300'}`}>
+                                    <Building size={12} className={isDarkMode ? 'text-violet-400' : 'text-violet-600'} />
+                                    <select
+                                        value={user.id}
+                                        onChange={(e) => handlePropertyChange(e.target.value)}
+                                        className={`bg-transparent text-xs font-bold outline-none cursor-pointer ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}
+                                        title="Switch Property"
+                                    >
+                                        {allProperties.map(p => (
+                                            <option key={p.id} value={p.id} className={isDarkMode ? 'bg-slate-800' : 'bg-white'}>
+                                                {p.property_name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right: Actions */}
                 <div className="flex items-center gap-6">
                     <div className="relative">
                         <button

@@ -27,9 +27,12 @@ const LANDLORD_MENU = [
 const LandlordSidebar = ({ activeTab, setActiveTab, handleLogout, isDarkMode, isMobileMenuOpen, setIsMobileMenuOpen, user }) => {
     return (
         <aside className={`fixed inset-y-0 left-0 z-30 w-72 backdrop-blur-xl border-r transform transition-transform duration-500 ease-in-out flex flex-col ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static ${isDarkMode ? 'bg-slate-900/80 border-slate-900' : 'bg-white/90 border-slate-200'}`}>
-            <div className={`p-8 border-b flex items-center gap-3 ${isDarkMode ? 'border-slate-900' : 'border-slate-100'}`}>
-                <img src="/favicon.png" alt="RentEase Logo" className="w-17 h-12 object-contain" />
-                <span className={`text-3xl relative right-5 bottom-0.5 font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>RentEase</span>
+            <div className={`p-8 border-b flex flex-col items-start gap-0 ${isDarkMode ? 'border-slate-900' : 'border-slate-100'}`}>
+                <div className="flex items-center gap-3">
+                    <img src="/favicon.png" alt="RentEase Logo" className="w-17 h-12 object-contain" />
+                    <span className={`text-3xl relative right-5 bottom-0.5 font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>RentEase</span>
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-500 relative left-14 bottom-2">Landlord Portal</span>
             </div>
             <nav className="flex-1 p-4 space-y-2 mt-4 overflow-y-auto scrollbar-hide">
                 {LANDLORD_MENU.map((item) => (
@@ -40,9 +43,9 @@ const LandlordSidebar = ({ activeTab, setActiveTab, handleLogout, isDarkMode, is
                             setActiveTab(item.id);
                             setIsMobileMenuOpen(false);
                         }}
-                        className={`relative z-50 w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all duration-300 cursor-pointer ${activeTab === item.id ? 'bg-gradient-to-r from-violet-600/20 to-indigo-600/20 text-violet-400 border border-violet-500/20 shadow-xl shadow-violet-500/5' : `${isDarkMode ? 'text-slate-400 hover:text-white hover:bg-slate-900' : 'text-black hover:bg-slate-100 hover:text-black'}`}`}
+                        className={`relative z-50 w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all duration-300 cursor-pointer ${activeTab === item.id ? 'bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-xl shadow-emerald-500/5' : `${isDarkMode ? 'text-slate-400 hover:text-white hover:bg-slate-900' : 'text-black hover:bg-slate-100 hover:text-black'}`}`}
                     >
-                        <item.icon size={20} className={activeTab === item.id ? 'text-violet-500' : ''} />
+                        <item.icon size={20} className={activeTab === item.id ? 'text-emerald-500' : ''} />
                         {item.label}
                     </button>
                 ))}

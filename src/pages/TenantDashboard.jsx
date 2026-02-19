@@ -21,6 +21,7 @@ import ComplaintDetail from '../components/tenant/complaints/ComplaintDetail';
 import TenantSettings from '../components/tenant/settings/TenantSettings';
 import TenantHomeServices from './TenantHomeServices';
 import NoticeBoardPage from '../components/tenant/community/NoticeBoardPage';
+import TenantMessages from './TenantMessages';
 
 // Modals
 import ChangePasswordModal from '../components/tenant/modals/ChangePasswordModal';
@@ -69,7 +70,8 @@ export default function TenantDashboard() {
       propertiesCount: 0,
       rentDueDay: 5,
       latePenaltyAmount: 500,
-      avatar_url: ""
+      avatar_url: "",
+      allProperties: []
     };
     return initialValue;
   });
@@ -119,6 +121,21 @@ export default function TenantDashboard() {
     fetchTenantData();
   }, [userName]); // Re-fetch if userName param changes
 
+  const handlePropertyChange = (propertyId) => {
+    const selectedProperty = tenantData.allProperties?.find(p => p.id === parseInt(propertyId));
+    if (selectedProperty) {
+      setTenantData(prev => ({
+        ...prev,
+        ...selectedProperty,
+        allProperties: prev.allProperties // Ensure list persists
+      }));
+      // Reset dependent states
+      setRentDue(selectedProperty.accumulated_due > 0 ? (selectedProperty.monthlyRent + selectedProperty.accumulated_due) : 0);
+      setPropertyImages(selectedProperty.propertyImages || []);
+      toast.success(`Switched to ${selectedProperty.property_name}`);
+    }
+  };
+
   const fetchTenantData = async () => {
     setIsLoading(true);
     try {
@@ -139,7 +156,8 @@ export default function TenantDashboard() {
 
       setTenantData({
         ...userRes.data,
-        rentDueDate: userRes.data.rentDueDate || 0
+        rentDueDate: userRes.data.rentDueDate || 0,
+        allProperties: userRes.data.allProperties || []
       });
 
       // Only overwrite the "user" session if the logged-in person IS the tenant
@@ -313,6 +331,8 @@ export default function TenantDashboard() {
       setIsNotificationsOpen={setIsNotificationsOpen}
       dashboardNotifications={dashboardNotifications}
       location={location}
+      allProperties={tenantData.allProperties}
+      handlePropertyChange={handlePropertyChange}
     >
       <Routes>
         <Route path="/" element={
@@ -335,6 +355,8 @@ export default function TenantDashboard() {
             complaints={complaints}
             serviceRequests={tenantData.serviceRequests || []}
             fetchTenantData={fetchTenantData}
+            allProperties={tenantData.allProperties}
+            handlePropertyChange={handlePropertyChange}
           />
         } />
         <Route path="/my-property" element={
@@ -385,6 +407,7 @@ export default function TenantDashboard() {
           />
         } />
         <Route path="/services" element={<TenantHomeServices />} />
+        <Route path="/messages" element={<TenantMessages />} />
       </Routes>
 
       {showChangePasswordModal && (

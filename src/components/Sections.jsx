@@ -1,5 +1,5 @@
 import React from "react";
-import { Layout, CreditCard, ShieldCheck, Users, Key, CheckCircle, Code, Server, Database } from "lucide-react";
+import { Layout, CreditCard, ShieldCheck, Users, Key, CheckCircle, Code, Server, Database, Mail, ArrowRight } from "lucide-react";
 
 /* FeatureCard, RoleCard, TechItem - section-local helpers */
 const FeatureCard = ({ icon, title, desc }) => (
@@ -90,6 +90,41 @@ const Sections = () => {
             <RoleCard title="Tenant" desc="Search properties, sign leases digitally, and pay rent in seconds." icon={<Users className="w-6 h-6 text-blue-500" />} color="blue" features={["One-click applications", "Maintenance requests", "Rent history"]} />
             <RoleCard title="Landlord" desc="List properties, screen tenants, and manage your portfolio effortlessly." icon={<Key className="w-6 h-6 text-emerald-500" />} color="emerald" features={["Property analytics", "Tenant screening", "Automated reminders"]} />
             <RoleCard title="Admin" desc="Oversee the entire platform with powerful moderation and oversight tools." icon={<ShieldCheck className="w-6 h-6 text-purple-500" />} color="purple" features={["User verification", "Dispute resolution", "System logs"]} />
+          </div>
+        </div>
+      </section>
+
+      {/* Become a Partner CTA */}
+      <section className="py-24 bg-slate-900 text-white relative overflow-hidden">
+        {/* Background Gradients */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-orange-500/20 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-500/20 rounded-full blur-[80px] pointer-events-none" />
+
+        <div className="max-w-4xl mx-auto px-6 relative z-10 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 font-bold text-xs uppercase tracking-widest mb-6">
+            <Users size={14} /> Join Our Network
+          </div>
+          <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tight">
+            Are you a Service Professional?
+          </h2>
+          <p className="text-lg text-slate-300 mb-10 leading-relaxed max-w-2xl mx-auto">
+            Expand your business with RentEase. Connect with thousands of tenants and landlords looking for quality maintenance services.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a
+              href="https://mail.google.com/mail/?view=cm&fs=1&to=bhavanimuttukuru@gmail.com&su=Service%20Provider%20Application&body=Hi%20RentEase%20Team%2C%0A%0AI%20am%20interested%20in%20becoming%20a%20service%20provider%20on%20your%20platform.%0A%0ACompany%20Name%3A%0AService%20Type%3A%0AContact%20Number%3A%0A%0AThank%20you!"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-8 py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-bold flex items-center gap-3 transition-all hover:scale-105 shadow-lg shadow-orange-600/30 group"
+            >
+              <Mail size={20} />
+              Join as Partner
+              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            </a>
+            <p className="text-sm text-slate-500 mt-4 sm:mt-0">
+              *Verification required
+            </p>
           </div>
         </div>
       </section>

@@ -13,8 +13,15 @@ const LandlordBookingsView = ({ isDarkMode, bookings, onUpdateStatus }) => {
         setSelectedBooking(booking);
         if (booking.visit_slot) {
             const date = new Date(booking.visit_slot);
-            setVisitDate(date.toISOString().split('T')[0]);
-            setVisitTime(date.toTimeString().slice(0, 5));
+            // Use local time components to avoid UTC shift
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            setVisitDate(`${year}-${month}-${day}`);
+
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            setVisitTime(`${hours}:${minutes}`);
         }
         setIsApproveModalOpen(true);
     };
