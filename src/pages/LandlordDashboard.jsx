@@ -26,12 +26,12 @@ import LandlordBookingsView from '../components/landlord/dashboard/LandlordBooki
 import LandlordFinanceView from '../components/landlord/dashboard/LandlordFinanceView';
 import SettingsView from '../components/landlord/dashboard/SettingsView';
 import LandlordAnnouncementsView from '../components/landlord/dashboard/LandlordAnnouncementsView.jsx';
+import LandlordMessagesView from '../components/landlord/dashboard/LandlordMessagesView';
 
 // Modals
 import EditPropertyModal from '../components/landlord/modals/EditPropertyModal';
 import EditTenantModal from '../components/landlord/modals/EditTenantModal';
 import AddTenantModal from '../components/landlord/modals/AddTenantModal';
-
 import ImageGalleryModal from '../components/ui/ImageGalleryModal';
 import ChatWindow from '../components/chat/ChatWindow';
 import LandlordLoader from '../components/landlord/LandlordLoader';
@@ -58,6 +58,7 @@ export default function LandlordDashboard() {
   const [loadingProperties, setLoadingProperties] = useState(true);
   const [tenants, setTenants] = useState([]);
   const [complaints, setComplaints] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -118,7 +119,7 @@ export default function LandlordDashboard() {
   // Tab management
   const pathParts = location.pathname.split('/').filter(Boolean);
   const lastSegment = pathParts[pathParts.length - 1];
-  const knownTabs = ['properties', 'add-property', 'tenants', 'requests', 'request-details', 'finance', 'settings', 'tenant-details', 'bookings', 'announcements'];
+  const knownTabs = ['properties', 'add-property', 'tenants', 'messages', 'requests', 'request-details', 'finance', 'settings', 'tenant-details', 'bookings', 'announcements'];
   const activeTab = knownTabs.includes(lastSegment) ? lastSegment : 'dashboard';
 
   const setActiveTab = (tab) => {
@@ -146,6 +147,7 @@ export default function LandlordDashboard() {
     fetchComplaints();
     fetchNotifications();
     fetchBookings();
+    fetchPayments();
     // Poll for notifications
     const interval = setInterval(() => {
       fetchNotifications();
@@ -231,6 +233,19 @@ export default function LandlordDashboard() {
       setBookings(res.data);
     } catch (error) {
       console.error("Failed to fetch bookings", error);
+    }
+  };
+
+  const fetchPayments = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
+      const res = await axios.get("http://localhost:5000/api/payment/landlord-payments", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPayments(res.data);
+    } catch (error) {
+      console.error("Failed to fetch payments", error);
     }
   };
 
@@ -433,6 +448,8 @@ export default function LandlordDashboard() {
             isDarkMode={isDarkMode}
             setActiveTab={setActiveTab}
             tenants={tenants}
+            complaints={complaints}
+            payments={payments}
           />
         )}
 
@@ -480,6 +497,12 @@ export default function LandlordDashboard() {
               setChatRecipient(tenant);
               setIsChatOpen(true);
             }}
+          />
+        )}
+
+        {activeTab === 'messages' && (
+          <LandlordMessagesView
+            isDarkMode={isDarkMode}
           />
         )}
 

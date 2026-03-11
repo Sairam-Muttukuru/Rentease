@@ -18,7 +18,6 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
 import logo from "/favicon.png";
-
 // --- THEME TOGGLE (Reused) ---
 const ThemeToggle = ({ theme, toggleTheme }) => (
     <button
@@ -44,11 +43,9 @@ const getAuthConfig = () => {
 const StatCard = ({ label, value, icon: Icon, color, sub }) => (
     <div className="relative overflow-hidden group p-6 rounded-2xl bg-white/70 dark:bg-slate-800/50 backdrop-blur-xl border border-white/20 dark:border-slate-700 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex items-center gap-6">
         <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-${color}-500/10 to-transparent rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110`} />
-
         <div className={`relative z-10 p-4 rounded-2xl bg-gradient-to-br from-${color}-500/10 to-${color}-500/5 text-${color}-600 dark:text-${color}-400 shadow-inner shrink-0`}>
             <Icon size={32} strokeWidth={2} />
         </div>
-
         <div className="relative z-10">
             <h3 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight leading-none">{value}</h3>
             <p className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mt-1">{label}</p>
@@ -98,6 +95,8 @@ const Modal = ({ isOpen, onClose, title, children }) => {
 };
 // --- SECTIONS ---
 const Overview = ({ stats }) => {
+    const { theme } = useTheme();
+    const isDarkMode = theme === 'dark';
     if (!stats) return <div className="p-10 text-center text-slate-500">Loading dashboard data...</div>;
     const data = stats;
     // Ensure we have the chart structures even if API returns partial data
@@ -122,7 +121,7 @@ const Overview = ({ stats }) => {
             {/* 2. MIDDLE ROW: 4 CORE CHARTS (2x2 Grid) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Chart 1: Property Occupancy (Sleek Donut) */}
-                <div className="bg-white/70 dark:bg-slate-800/50 backdrop-blur-xl p-6 rounded-3xl border border-white/50 dark:border-slate-700 shadow-xl flex flex-col">
+                <div className="bg-white/70 dark:bg-slate-800/50 backdrop-blur-xl p-6 rounded-3xl shadow-xl flex flex-col hover:shadow-2xl transition-all duration-300">
                     <h3 className="font-bold text-lg text-slate-800 dark:text-white mb-4 flex items-center gap-2">
                         <PieChartIcon className="w-5 h-5 text-indigo-500" /> Occupancy Status
                     </h3>
@@ -156,19 +155,14 @@ const Overview = ({ stats }) => {
                 </div>
 
                 {/* Chart 2: User Growth Trend (Premium Wave) */}
-                <div className="bg-white/70 dark:bg-slate-800/50 backdrop-blur-xl p-6 rounded-3xl border border-white/50 dark:border-slate-700 shadow-xl flex flex-col">
+                <div className="bg-white/70 dark:bg-slate-800/50 backdrop-blur-xl p-6 rounded-3xl shadow-xl flex flex-col hover:shadow-2xl transition-all duration-300">
                     <h3 className="font-bold text-lg text-slate-800 dark:text-white mb-4 flex items-center gap-2">
                         <Users className="w-5 h-5 text-cyan-500" /> User Growth
                     </h3>
                     <div className="flex-1 min-h-[350px]">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={data?.user_growth_chart && data.user_growth_chart.length > 1 ? data.user_growth_chart : [
-                                { name: 'Aug', value: 12, prev: 8 },
-                                { name: 'Sep', value: 19, prev: 15 },
-                                { name: 'Oct', value: 25, prev: 22 },
-                                { name: 'Nov', value: 42, prev: 30 },
-                                { name: 'Dec', value: 58, prev: 45 },
-                                { name: 'Jan', value: 85, prev: 60 }
+                            <AreaChart data={data?.user_growth_chart && data.user_growth_chart.length > 0 ? data.user_growth_chart : [
+                                { name: 'No Data', value: 0, prev: 0 }
                             ]}>
                                 <defs>
                                     <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
@@ -187,25 +181,19 @@ const Overview = ({ stats }) => {
                                     contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
                                     itemStyle={{ fontWeight: 'bold' }}
                                 />
-                                <Area type="monotone" dataKey="prev" stroke="#94a3b8" strokeWidth={2} fillOpacity={1} fill="url(#colorPrev)" strokeDasharray="5 5" />
                                 <Area type="monotone" dataKey="value" stroke="#06b6d4" strokeWidth={4} fillOpacity={1} fill="url(#colorUsers)" activeDot={{ r: 8, strokeWidth: 0, fill: '#06b6d4' }} />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
-
                 {/* Chart 3: Revenue Trend (Gradient Bars) */}
-                <div className="bg-white/70 dark:bg-slate-800/50 backdrop-blur-xl p-6 rounded-3xl border border-white/50 dark:border-slate-700 shadow-xl flex flex-col">
+                <div className="bg-white/70 dark:bg-slate-800/50 backdrop-blur-xl p-6 rounded-3xl shadow-xl flex flex-col hover:shadow-2xl transition-all duration-300">
                     <h3 className="font-bold text-lg text-slate-800 dark:text-white mb-4 flex items-center gap-2">
                         <BarChartIcon className="w-5 h-5 text-indigo-500" /> Revenue Trend (6 Mo)
                     </h3>
                     <div className="flex-1 min-h-[350px]">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={revenueChart.length > 0 ? revenueChart : [
-                                { month: 'Aug', rent: 45000, service: 12000 }, { month: 'Sep', rent: 52000, service: 15000 },
-                                { month: 'Oct', rent: 48000, service: 11000 }, { month: 'Nov', rent: 61000, service: 22000 },
-                                { month: 'Dec', rent: 55000, service: 18000 }, { month: 'Jan', rent: 75000, service: 25000 }
-                            ]} barSize={20}>
+                            <BarChart data={revenueChart} barSize={32} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                                 <defs>
                                     <linearGradient id="rentGradient" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="0%" stopColor="#6366f1" stopOpacity={1} />
@@ -216,11 +204,16 @@ const Overview = ({ stats }) => {
                                         <stop offset="100%" stopColor="#fbbf24" stopOpacity={0.6} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" strokeOpacity={0.5} />
-                                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} dy={10} />
-                                <Tooltip cursor={{ fill: '#f1f5f9', opacity: 0.2 }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }} />
-                                <Bar dataKey="rent" stackId="a" fill="url(#rentGradient)" radius={[0, 0, 4, 4]} />
-                                <Bar dataKey="service" stackId="a" fill="url(#serviceGradient)" radius={[4, 4, 0, 0]} />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? "#334155" : "#e2e8f0"} strokeOpacity={0.5} />
+                                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 'bold' }} dy={10} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                                <Tooltip
+                                    cursor={{ fill: isDarkMode ? '#1e293b' : '#f1f5f9', opacity: 0.4 }}
+                                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', backgroundColor: isDarkMode ? '#1e293b' : '#fff' }}
+                                    itemStyle={{ fontWeight: 'bold' }}
+                                />
+                                <Bar dataKey="rent" name="Rent" stackId="a" fill="url(#rentGradient)" radius={[0, 0, 4, 4]} />
+                                <Bar dataKey="service" name="Service" stackId="a" fill="url(#serviceGradient)" radius={[4, 4, 0, 0]} />
                                 <Legend wrapperStyle={{ paddingTop: '20px' }} />
                             </BarChart>
                         </ResponsiveContainer>
@@ -228,7 +221,7 @@ const Overview = ({ stats }) => {
                 </div>
 
                 {/* Chart 4: Complaint Status (Sleek Donut) */}
-                <div className="bg-white/70 dark:bg-slate-800/50 backdrop-blur-xl p-6 rounded-3xl border border-white/50 dark:border-slate-700 shadow-xl flex flex-col">
+                <div className="bg-white/70 dark:bg-slate-800/50 backdrop-blur-xl p-6 rounded-3xl shadow-xl flex flex-col hover:shadow-2xl transition-all duration-300">
                     <h3 className="font-bold text-lg text-slate-800 dark:text-white mb-4 flex items-center gap-2">
                         <AlertCircle className="w-5 h-5 text-rose-500" /> Issue Resolution
                     </h3>
@@ -236,7 +229,7 @@ const Overview = ({ stats }) => {
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
-                                    data={complaintChart}
+                                    data={complaintChart.some(c => c.value > 0) ? complaintChart : [{ name: 'No Data', value: 1 }]}
                                     innerRadius={80}
                                     outerRadius={100}
                                     paddingAngle={5}
@@ -245,15 +238,19 @@ const Overview = ({ stats }) => {
                                     startAngle={90}
                                     endAngle={-270}
                                 >
-                                    {complaintChart.map((entry, index) => {
+                                    {complaintChart.some(c => c.value > 0) ? complaintChart.map((entry, index) => {
                                         let color = '#ef4444'; // Open
                                         if (entry.name === 'Resolved') color = '#10b981';
                                         else if (entry.name === 'In Progress') color = '#f59e0b';
                                         return <Cell key={`cell-${index}`} fill={color} strokeWidth={0} />;
-                                    })}
+                                    }) : (
+                                        <Cell fill={isDarkMode ? "#334155" : "#e2e8f0"} strokeWidth={0} />
+                                    )}
                                 </Pie>
-                                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                                <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                                <Tooltip
+                                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                                    itemStyle={{ fontWeight: 'bold' }}
+                                />
                             </PieChart>
                         </ResponsiveContainer>
                         {/* Center Text Overlay */}
@@ -275,7 +272,7 @@ const Overview = ({ stats }) => {
                         </div>
                         <div className="text-center">
                             <p className="text-xl font-black text-rose-500">{complaintChart.find(c => c.name === 'Open')?.value || 0}</p>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase">Pending</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase">Open</p>
                         </div>
                     </div>
                 </div>
@@ -1012,14 +1009,18 @@ const LiveServiceTracker = () => {
     const isDarkMode = theme === 'dark';
 
     useEffect(() => {
-        // Simulating fetching live jobs - in real app, use fetch or websockets
-        setJobs([
-            { id: 101, tenant: "Amit Sharma", issue: "Kitchen Sink Leak", provider: "Sairam Plumbing", status: "In Progress", priority: "High", time: "25m ago" },
-            { id: 102, tenant: "Priya Das", issue: "AC Not Cooling", provider: "CoolFix Services", status: "Dispatched", priority: "Critical", time: "10m ago" },
-            { id: 103, tenant: "Rahul V", issue: "Fuse Blown", provider: "ElectroHelp", status: "In Progress", priority: "Medium", time: "1h ago" },
-            { id: 104, tenant: "Sneha K", issue: "Water Heater Repair", provider: "HomeCare Pro", status: "Pending", priority: "High", time: "Just now" },
-        ]);
-        setStats({ active: 8, pending: 3, completed: 15 });
+        const fetchTrackerData = async () => {
+            try {
+                const res = await axios.get(`${API_URL}/tracker`, getAuthConfig());
+                setJobs(res.data.jobs);
+                setStats(res.data.stats);
+            } catch (err) {
+                console.error("Failed to fetch tracker data", err);
+            }
+        };
+        fetchTrackerData();
+        const interval = setInterval(fetchTrackerData, 30000); // Polling every 30s
+        return () => clearInterval(interval);
     }, []);
 
     return (
@@ -1066,14 +1067,14 @@ const LiveServiceTracker = () => {
                                     <Wrench size={20} />
                                 </div>
                                 <div>
-                                    <h5 className="font-bold text-slate-900 dark:text-white">{job.issue}</h5>
-                                    <p className="text-xs text-slate-500 font-medium">Tenant: {job.tenant} • <span className="text-indigo-500">{job.time}</span></p>
+                                    <h5 className="font-bold text-slate-900 dark:text-white">{job.issue || job.service_type || 'Maintenance Request'}</h5>
+                                    <p className="text-xs text-slate-500 font-medium">Tenant: {job.tenant} • <span className="text-indigo-500">{new Date(job.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-8">
                                 <div className="text-right">
                                     <p className="text-[10px] font-black text-slate-400 uppercase">Provider</p>
-                                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{job.provider}</p>
+                                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{job.provider || 'Unassigned'}</p>
                                 </div>
                                 <div className="min-w-[120px]">
                                     <Badge variant={job.status === 'In Progress' ? 'blue' : job.status === 'Dispatched' ? 'warning' : 'default'}>{job.status}</Badge>
@@ -1338,7 +1339,7 @@ const Adminpage = () => {
                 <header className="h-20 px-8 flex items-center justify-between bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800 sticky top-0 z-30 shadow-sm transition-colors duration-500">
                     {/* Left: Section Title or Welcome */}
                     <div>
-                        <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-700 to-indigo-600 dark:from-slate-200 dark:to-indigo-400 tracking-tight">Admin Console</h2>
+                        <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-700 to-indigo-600 dark:from-slate-200 dark:to-indigo-400 tracking-tight">Admin Dashboard</h2>
                         <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Welcome back, <span className="text-indigo-600 dark:text-indigo-400">{adminProfile.name.split(' ')[0]}</span></p>
                     </div>
 

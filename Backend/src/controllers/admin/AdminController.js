@@ -60,3 +60,6 @@ exports.getPayments = async (req, res) =>
 
 exports.getLogs = async (req, res) =>
   res.json(await service.getLogs());
+
+exports.getServiceTracker = async (req, res) =>
+  res.json(await service.getServiceTracker());

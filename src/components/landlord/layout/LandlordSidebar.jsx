@@ -9,7 +9,8 @@ import {
     TrendingUp,
     PlusCircle,
     Home,
-    Megaphone
+    Megaphone,
+    MessageSquare
 } from 'lucide-react';
 
 const LANDLORD_MENU = [
@@ -17,6 +18,7 @@ const LANDLORD_MENU = [
     { id: 'properties', icon: Building, label: 'Properties' },
     { id: 'add-property', icon: PlusCircle, label: 'Add Property' },
     { id: 'tenants', icon: Users, label: 'Tenants' },
+    { id: 'messages', icon: MessageSquare, label: 'Messages' },
     { id: 'requests', icon: Wrench, label: 'Issues at Property' },
     { id: 'finance', icon: IndianRupee, label: 'Financials' },
     { id: 'bookings', icon: Calendar, label: 'Bookings' },

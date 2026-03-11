@@ -6,8 +6,8 @@ import { useTheme } from "../../../context/ThemeContext";
 
 const MyPropertyCard = ({ user, propertyImages, currentImageIndex, navigate, isDarkMode }) => {
     return (
-        <Card className="p-0 overflow-hidden flex flex-col hover:shadow-[0_0_30px_rgba(0,0,0,0.1)] transition-shadow duration-500">
-            <div className="relative h-80 overflow-hidden group">
+        <Card className="p-0 overflow-hidden flex flex-col h-full hover:shadow-[0_0_30px_rgba(0,0,0,0.1)] transition-shadow duration-500">
+            <div className="relative h-48 sm:h-56 w-full shrink-0 overflow-hidden group">
                 <img
                     key={currentImageIndex} // Key added to trigger animation on index change
                     src={propertyImages[currentImageIndex] || "https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2671&auto=format&fit=crop"}

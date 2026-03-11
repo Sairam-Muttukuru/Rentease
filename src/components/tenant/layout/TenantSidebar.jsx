@@ -19,9 +19,9 @@ const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout
                 <div className="flex items-center gap-4">
                     <div className="relative group">
                         <div className={`absolute inset-0 bg-violet-500 blur-[20px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full`}></div>
-                        <img src="/favicon.png" alt="RentEase" className="min-w-12 min-h-12 object-contain relative z-10 drop-shadow-lg" />
+                        <img src="/favicon.png" alt="RentEase" className="min-w-12 min-h-12 object-contain relative top-0.5 z-10 drop-shadow-lg" />
                     </div>
-                    <span className={`text-3xl relative right-2 font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>RentEase</span>
+                    <span className={`text-3xl relative right-7 font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>RentEase</span>
                 </div>
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-500 relative left-16 bottom-1">Tenant Dashboard</span>
             </div>
@@ -32,7 +32,6 @@ const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout
                     { id: 'notices', path: `/${userName}/tenant/dashboard/notices`, icon: Bell, label: 'Notice Board' },
                     { id: 'my-property', path: `/${userName}/tenant/dashboard/my-property`, icon: Building, label: 'My Property' },
                     { id: 'services', path: `/${userName}/tenant/dashboard/services`, icon: Wrench, label: 'Home Services' },
-                    { id: 'messages', path: `/${userName}/tenant/dashboard/messages`, icon: MessageSquare, label: 'Messages' },
                     { id: 'payments', path: `/${userName}/tenant/dashboard/payments`, icon: CreditCard, label: 'Payments' },
                     { id: 'complaints', path: `/${userName}/tenant/dashboard/complaints`, icon: FileText, label: 'Complaints' },
                     { id: 'settings', path: `/${userName}/tenant/dashboard/settings`, icon: Settings, label: 'Settings' },

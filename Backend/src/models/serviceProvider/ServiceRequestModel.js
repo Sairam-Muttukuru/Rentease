@@ -93,7 +93,7 @@ exports.getByUser = async (userId) => {
          LEFT JOIN services s ON sr.service_id = s.id
          LEFT JOIN service_providers sp ON sr.assigned_provider_id = sp.id
          LEFT JOIN reviews r ON sr.id = r.request_id
-         WHERE sr.user_id = $1 OR sr.tenant_id = (SELECT id FROM tenants WHERE user_id = $1)
+         WHERE sr.user_id = $1 OR sr.tenant_id IN (SELECT id FROM tenants WHERE user_id = $1)
          ORDER BY sr.created_at DESC`,
         [userId]
     );

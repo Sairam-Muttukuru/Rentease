@@ -54,25 +54,24 @@ const LandlordLoader = ({ onComplete, isDarkMode }) => {
                 <div className="relative mb-12">
                     {/* Multi-layered Halo */}
                     <motion.div
-                        animate={{ scale: [1, 1.4, 1], opacity: [0.2, 0.4, 0.2] }}
-                        transition={{ duration: 3, repeat: Infinity }}
-                        className="absolute inset-0 bg-indigo-500/20 rounded-full blur-3xl"
+                        animate={{ scale: [1, 1.3, 1], opacity: [0.1, 0.3, 0.1] }}
+                        transition={{ duration: 4, repeat: Infinity }}
+                        className="absolute inset-0 bg-indigo-500/20 rounded-full blur-[80px]"
                     />
-                    <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                        className="absolute -inset-4 border border-dashed border-indigo-500/30 rounded-full"
-                    />
-
                     <motion.div
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="relative bg-white/5 backdrop-blur-2xl p-6 rounded-[2.5rem] border border-white/10 shadow-2xl"
+                        className="relative z-20"
                     >
-                        <img
+                        <motion.img
+                            animate={{
+                                y: [0, -20, 0],
+                                filter: ["drop-shadow(0 0 25px rgba(79,70,229,0.4))", "drop-shadow(0 0 60px rgba(79,70,229,0.8))", "drop-shadow(0 0 25px rgba(79,70,229,0.4))"]
+                            }}
+                            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                             src={logo}
                             alt="RentEase"
-                            className="w-24 h-24 object-contain drop-shadow-[0_0_15px_rgba(79,70,229,0.5)]"
+                            className="w-64 h-64 object-contain"
                         />
                     </motion.div>
                 </div>
@@ -82,21 +81,21 @@ const LandlordLoader = ({ onComplete, isDarkMode }) => {
                     <motion.h2
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        className={`text-2xl font-black tracking-widest uppercase ${isDarkMode ? 'text-white' : 'text-slate-900'}`}
+                        className={`text-4xl font-black tracking-[0.4em] uppercase ${isDarkMode ? 'text-white' : 'text-slate-900'} drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]`}
                     >
-                        LANDLORD<span className="text-indigo-500">PORTAL</span>
+                        LANDLORD<span className="text-indigo-400 drop-shadow-[0_0_15px_rgba(129,140,248,0.6)]">PORTAL</span>
                     </motion.h2>
 
-                    <div className="h-6 flex items-center justify-center">
+                    <div className="h-8 flex items-center justify-center">
                         <AnimatePresence mode="wait">
                             <motion.div
                                 key={statusIndex}
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -10 }}
-                                className="flex items-center gap-2 text-indigo-500/80 font-bold text-[10px] tracking-[0.2em] uppercase"
+                                className="flex items-center gap-3 text-indigo-300 font-black text-sm tracking-[0.25em] uppercase"
                             >
-                                {statuses[statusIndex].icon}
+                                <span className="p-1.5 bg-indigo-500/20 rounded-lg">{statuses[statusIndex].icon}</span>
                                 <span>{statuses[statusIndex].text}</span>
                             </motion.div>
                         </AnimatePresence>
@@ -121,9 +120,9 @@ const LandlordLoader = ({ onComplete, isDarkMode }) => {
                         />
                     </div>
 
-                    <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-mono text-slate-500 tracking-tighter">ESTABLISHING CONNECTION</span>
-                        <span className="text-[10px] font-mono text-indigo-500 font-bold">{progress}%</span>
+                    <div className="flex justify-between items-center px-1">
+                        <span className="text-xs font-black text-slate-400 tracking-widest uppercase">ESTABLISHING CONNECTION</span>
+                        <span className="text-sm font-black text-indigo-400 tracking-tighter">{progress}%</span>
                     </div>
                 </div>
             </div>
@@ -133,12 +132,14 @@ const LandlordLoader = ({ onComplete, isDarkMode }) => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1 }}
-                className="absolute bottom-12 flex items-center gap-2 text-slate-500/50"
+                className="absolute bottom-12 flex flex-col items-center gap-3"
             >
-                <div className="w-4 h-4 bg-indigo-500/10 rounded-sm flex items-center justify-center border border-indigo-500/20">
-                    <img src={logo} className="w-2.5 h-2.5 opacity-50 grayscale" />
+                <div className="flex items-center gap-3 text-slate-400">
+                    <div className="w-6 h-6 bg-indigo-500/20 rounded-lg flex items-center justify-center border border-indigo-500/30">
+                        <img src={logo} className="w-4 h-4" />
+                    </div>
+                    <span className="text-[10px] font-black tracking-[0.6em] uppercase text-slate-300">RentEase Intelligence</span>
                 </div>
-                <span className="text-[8px] font-black tracking-[0.5em] uppercase">RentEase Intelligence</span>
             </motion.div>
         </div>
     );

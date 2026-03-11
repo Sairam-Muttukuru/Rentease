@@ -110,3 +110,9 @@ exports.toggleProviderStatus = async (id, adminId) => {
 
 exports.getPayments = () => model.getPayments();
 exports.getLogs = () => model.getLogs();
+
+exports.getServiceTracker = async () => {
+  const jobs = await model.getServiceTrackerJobs();
+  const stats = await model.getServiceTrackerStats();
+  return { jobs, stats };
+};

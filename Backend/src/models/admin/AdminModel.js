@@ -12,22 +12,55 @@ exports.countOccupied = async () =>
 exports.countOpenComplaints = async () =>
   (await db.query("SELECT COUNT(*)::integer FROM complaints WHERE status!='Resolved'")).rows[0].count;
 
-exports.getMonthlyRevenue = async () =>
-  (await db.query("SELECT COALESCE(SUM(amount),0)::integer FROM rent_payments WHERE date_trunc('month', payment_date)=date_trunc('month', CURRENT_DATE)")).rows[0].coalesce;
+exports.getMonthlyRevenue = async () => {
+  const rent = (await db.query("SELECT COALESCE(SUM(amount),0)::integer FROM rent_payments WHERE date_trunc('month', payment_date)=date_trunc('month', CURRENT_DATE)")).rows[0].coalesce;
+  const service = (await db.query("SELECT COALESCE(SUM(amount),0)::integer FROM service_requests WHERE date_trunc('month', created_at)=date_trunc('month', CURRENT_DATE) AND status='Paid'")).rows[0].coalesce;
+  return Number(rent) + Number(service);
+};
 
 exports.revenueChart = async () =>
   (await db.query(`
-    SELECT to_char(payment_date,'Mon') as month,
-    SUM(amount)::integer as rent,
-    0 as service
-    FROM rent_payments 
-    WHERE payment_date > current_date - interval '6 months'
-    GROUP BY to_char(payment_date,'Mon'), EXTRACT(MONTH FROM payment_date) 
-    ORDER BY EXTRACT(MONTH FROM payment_date)
+    WITH months AS (
+        SELECT to_char(m, 'Mon') as month,
+               EXTRACT(MONTH FROM m) as month_num,
+               date_trunc('month', m) as month_start
+        FROM generate_series(
+            date_trunc('month', current_date - interval '5 months'),
+            date_trunc('month', current_date),
+            interval '1 month'
+        ) m
+    ),
+    rent_stats AS (
+        SELECT date_trunc('month', payment_date) as month_start,
+               SUM(amount)::integer as rent
+        FROM rent_payments
+        WHERE payment_date > current_date - interval '6 months'
+        GROUP BY 1
+    ),
+    service_stats AS (
+        SELECT date_trunc('month', created_at) as month_start,
+               SUM(amount)::integer as service
+        FROM service_requests
+        WHERE created_at > current_date - interval '6 months'
+          AND status = 'Paid'
+        GROUP BY 1
+    )
+    SELECT m.month, 
+           COALESCE(rs.rent, 0) as rent, 
+           COALESCE(ss.service, 0) as service
+    FROM months m
+    LEFT JOIN rent_stats rs ON m.month_start = rs.month_start
+    LEFT JOIN service_stats ss ON m.month_start = ss.month_start
+    ORDER BY m.month_start ASC
   `)).rows;
 
 exports.complaintChart = async () =>
-  (await db.query(`SELECT status as name, COUNT(*)::integer as value FROM complaints GROUP BY status`)).rows;
+  (await db.query(`
+    SELECT s.status as name, COALESCE(COUNT(c.id), 0)::integer as value
+    FROM (SELECT unnest(ARRAY['Open', 'In Progress', 'Resolved']) as status) s
+    LEFT JOIN complaints c ON c.status = s.status
+    GROUP BY s.status
+  `)).rows;
 
 exports.recentActivity = async () =>
   (await db.query(`
@@ -40,12 +73,29 @@ exports.recentActivity = async () =>
 
 exports.userGrowthChart = async () =>
   (await db.query(`
-    SELECT to_char(created_at,'Mon') as name,
-    COUNT(*)::integer as value
-    FROM users
-    WHERE created_at > current_date - interval '6 months'
-    GROUP BY to_char(created_at,'Mon'), EXTRACT(MONTH FROM created_at) 
-    ORDER BY EXTRACT(MONTH FROM created_at)
+    WITH months AS (
+        SELECT to_char(m, 'Mon') as name,
+               EXTRACT(MONTH FROM m) as month_num,
+               date_trunc('month', m) as month_start
+        FROM generate_series(
+            date_trunc('month', current_date - interval '5 months'),
+            date_trunc('month', current_date),
+            interval '1 month'
+        ) m
+    ),
+    user_stats AS (
+        SELECT date_trunc('month', created_at) as month_start,
+               COUNT(*)::integer as value
+        FROM users
+        WHERE created_at > current_date - interval '6 months'
+        GROUP BY 1
+    )
+    SELECT m.name, 
+           COALESCE(us.value, 0) as value,
+           0 as prev
+    FROM months m
+    LEFT JOIN user_stats us ON m.month_start = us.month_start
+    ORDER BY m.month_start ASC
   `)).rows;
 
 exports.getUsers = async (adminId) =>
@@ -144,6 +194,25 @@ exports.getLogs = async () =>
     LEFT JOIN users u ON l.admin_id = u.id
     ORDER BY l.created_at DESC
   `)).rows;
+
+exports.getServiceTrackerJobs = async () =>
+  (await db.query(`
+    SELECT sr.*, 
+           u.first_name || ' ' || u.last_name as tenant,
+           sp.company_name as provider
+    FROM service_requests sr
+    LEFT JOIN users u ON sr.user_id = u.id
+    LEFT JOIN service_providers sp ON sr.assigned_provider_id = sp.id
+    WHERE sr.status IN ('Pending', 'Dispatched', 'In Progress', 'Assigned')
+    ORDER BY sr.created_at DESC
+  `)).rows;
+
+exports.getServiceTrackerStats = async () => {
+  const active = (await db.query("SELECT COUNT(*)::integer FROM service_requests WHERE status IN ('In Progress', 'Dispatched', 'Assigned')")).rows[0].count;
+  const pending = (await db.query("SELECT COUNT(*)::integer FROM service_requests WHERE status = 'Pending'")).rows[0].count;
+  const completed = (await db.query("SELECT COUNT(*)::integer FROM service_requests WHERE status = 'Completed' AND created_at::date = CURRENT_DATE")).rows[0].count;
+  return { active, pending, completed };
+};
 
 exports.logAction = async (userId, action) => {
   try {

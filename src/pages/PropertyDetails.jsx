@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
-import { MapPin, Bed, Bath, Maximize, ArrowLeft, Star, Heart, Share2, CheckCircle, AlertCircle, MessageCircle, X, Users, Briefcase, Building, Car, Utensils, Zap } from 'lucide-react';
+import { MapPin, Bed, Bath, Maximize, ArrowLeft, Star, Heart, Share2, CheckCircle, AlertCircle, MessageCircle, X, Users, Briefcase, Building, Car, Utensils, Zap, GraduationCap, HeartPulse, Train, ShoppingBag, Store, ChevronDown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 import ChatWindow from '../components/chat/ChatWindow';
+import FreeMap from '../components/common/FreeMap';
 
 const PropertyDetails = () => {
     const { id } = useParams();
@@ -17,6 +18,52 @@ const PropertyDetails = () => {
     const [isBooking, setIsBooking] = useState(false);
     const [showAllImages, setShowAllImages] = useState(false);
     const [isChatOpen, setIsChatOpen] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState('education');
+
+    const NEIGHBOURHOOD_CATEGORIES = [
+        { id: 'education', name: 'Education', icon: GraduationCap, color: 'violet', label: 'Schools & Colleges' },
+        { id: 'healthcare', name: 'Healthcare', icon: HeartPulse, color: 'rose', label: 'Hospitals & Clinics' },
+        { id: 'commute', name: 'Commute', icon: Train, color: 'blue', label: 'Metro & Bus' },
+        { id: 'food', name: 'Food & Drinks', icon: Utensils, color: 'orange', label: 'Restaurants' },
+        { id: 'shopping', name: 'Shopping', icon: ShoppingBag, color: 'emerald', label: 'Malls & Stores' },
+    ];
+
+    const getMockPOIs = (category, lat, lng) => {
+        // Simple deterministic "random" based on lat/lng to keep it consistent
+        const seed = (lat + lng) * 1000;
+        const pseudoRandom = (offset) => Math.abs(Math.sin(seed + offset));
+
+        const pois = {
+            education: [
+                { name: "Royal Global School", distance: "450m", latitude: lat + 0.002, longitude: lng + 0.003, category: 'education' },
+                { name: "City Institute of Tech", distance: "1.2km", latitude: lat - 0.005, longitude: lng + 0.004, category: 'education' },
+                { name: "Sunshine Preschool", distance: "800m", latitude: lat + 0.004, longitude: lng - 0.002, category: 'education' },
+            ],
+            healthcare: [
+                { name: "Apollo Specialty Clinics", distance: "300m", latitude: lat + 0.001, longitude: lng - 0.002, category: 'healthcare' },
+                { name: "General Medical Center", distance: "2.5km", latitude: lat - 0.008, longitude: lng - 0.005, category: 'healthcare' },
+                { name: "24/7 Wellness Pharmacy", distance: "150m", latitude: lat + 0.0005, longitude: lng + 0.001, category: 'healthcare' },
+            ],
+            commute: [
+                { name: "Central Metro Station", distance: "600m", latitude: lat + 0.003, longitude: lng + 0.005, category: 'commute' },
+                { name: "City Transit Bus Hub", distance: "1.1km", latitude: lat - 0.004, longitude: lng + 0.006, category: 'commute' },
+            ],
+            food: [
+                { name: "The Spice Garden", distance: "200m", latitude: lat - 0.001, longitude: lng - 0.001, category: 'food' },
+                { name: "Urban Brew Coffee", distance: "500m", latitude: lat + 0.002, longitude: lng - 0.003, category: 'food' },
+                { name: "Quick Bites Pizzeria", distance: "850m", latitude: lat - 0.003, longitude: lng + 0.002, category: 'food' },
+            ],
+            shopping: [
+                { name: "Grand Plaza Mall", distance: "1.5km", latitude: lat + 0.007, longitude: lng + 0.008, category: 'shopping' },
+                { name: "Fresh Mart Grocery", distance: "400m", latitude: lat - 0.002, longitude: lng + 0.003, category: 'shopping' },
+                { name: "Trendz Fashion Street", distance: "900m", latitude: lat + 0.005, longitude: lng - 0.001, category: 'shopping' },
+            ]
+        };
+        return pois[category] || [];
+    };
+
+    const activePOIs = property ? getMockPOIs(selectedCategory, parseFloat(property.latitude), parseFloat(property.longitude)) : [];
+
 
     const handleChat = () => {
         if (!user) {
@@ -278,6 +325,62 @@ const PropertyDetails = () => {
                         <div>
                             <h3 className="text-2xl font-bold mb-6 flex items-center gap-2"> About this place</h3>
                             <p className="text-gray-600 dark:text-gray-300 leading-8 text-lg font-light">{property.description}</p>
+                        </div>
+
+                        {/* Map Section */}
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-2xl font-bold flex items-center gap-2"> Explore Neighbourhood</h3>
+                                <div className="text-sm font-medium text-gray-500 bg-gray-100 dark:bg-white/5 px-4 py-2 rounded-full border border-gray-200 dark:border-white/10">
+                                    Map View
+                                </div>
+                            </div>
+
+                            <div className="relative h-[450px] rounded-[2.5rem] overflow-hidden border border-gray-200 dark:border-white/10 shadow-2xl group">
+                                <FreeMap
+                                    properties={[property]}
+                                    pois={activePOIs}
+                                    singleProperty={true}
+                                    zoom={15}
+                                />
+
+                                {/* Floating Neighbourhood Dashboard Overlay */}
+                                <div className="absolute bottom-6 left-6 right-6 z-[400] bg-white/95 dark:bg-black/90 backdrop-blur-xl p-4 rounded-3xl border border-white/20 dark:border-white/5 shadow-2xl transition-all duration-500 translate-y-0 group-hover:-translate-y-2">
+                                    <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`p-3 bg-${NEIGHBOURHOOD_CATEGORIES.find(c => c.id === selectedCategory)?.color}-500/20 text-${NEIGHBOURHOOD_CATEGORIES.find(c => c.id === selectedCategory)?.color}-600 dark:text-${NEIGHBOURHOOD_CATEGORIES.find(c => c.id === selectedCategory)?.color}-400 rounded-2xl`}>
+                                                {React.createElement(NEIGHBOURHOOD_CATEGORIES.find(c => c.id === selectedCategory)?.icon, { size: 24 })}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">
+                                                    {activePOIs.length} {NEIGHBOURHOOD_CATEGORIES.find(c => c.id === selectedCategory)?.label}
+                                                </p>
+                                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Available around your home</p>
+                                            </div>
+                                        </div>
+                                        <button className="flex items-center gap-2 text-violet-600 dark:text-violet-400 font-bold text-sm bg-violet-600/10 px-4 py-2 rounded-xl group/btn">
+                                            Locality Guide <ChevronDown size={14} className="group-hover/btn:translate-y-0.5 transition-transform" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Category Selectors */}
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                                {NEIGHBOURHOOD_CATEGORIES.map((cat) => (
+                                    <button
+                                        key={cat.id}
+                                        onClick={() => setSelectedCategory(cat.id)}
+                                        className={`flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all duration-300 ${selectedCategory === cat.id
+                                                ? `bg-${cat.color}-500 text-white border-transparent shadow-lg shadow-${cat.color}-500/30 scale-[1.05]`
+                                                : 'bg-white dark:bg-white/5 border-gray-100 dark:border-white/5 text-gray-500 hover:border-gray-200 dark:hover:border-white/10'
+                                            }`}
+                                    >
+                                        <cat.icon size={20} className={selectedCategory === cat.id ? 'animate-bounce' : ''} />
+                                        <span className="text-[10px] font-black uppercase tracking-wider">{cat.name}</span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
                         {/* Additional Property Details */}

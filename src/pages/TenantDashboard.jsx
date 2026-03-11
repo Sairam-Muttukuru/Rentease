@@ -21,7 +21,6 @@ import ComplaintDetail from '../components/tenant/complaints/ComplaintDetail';
 import TenantSettings from '../components/tenant/settings/TenantSettings';
 import TenantHomeServices from './TenantHomeServices';
 import NoticeBoardPage from '../components/tenant/community/NoticeBoardPage';
-import TenantMessages from './TenantMessages';
 
 // Modals
 import ChangePasswordModal from '../components/tenant/modals/ChangePasswordModal';
@@ -138,6 +137,7 @@ export default function TenantDashboard() {
 
   const fetchTenantData = async () => {
     setIsLoading(true);
+    const startTime = Date.now();
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) {
@@ -190,7 +190,15 @@ export default function TenantDashboard() {
         navigate("/");
       }
     } finally {
-      setIsLoading(false);
+      const elapsedTime = Date.now() - startTime;
+      const minWaitTime = 5000;
+      if (elapsedTime < minWaitTime) {
+        setTimeout(() => {
+          setIsLoading(false);
+        }, minWaitTime - elapsedTime);
+      } else {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -407,7 +415,6 @@ export default function TenantDashboard() {
           />
         } />
         <Route path="/services" element={<TenantHomeServices />} />
-        <Route path="/messages" element={<TenantMessages />} />
       </Routes>
 
       {showChangePasswordModal && (

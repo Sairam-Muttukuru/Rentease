@@ -1,32 +1,37 @@
+# Dependency directories
 node_modules/
+
+# Environment files
 .env
+.env.*
+!.env.example
+
+# Build/output directories
 dist/
-# Debug files
-debug_*
-*.log
-*.cjs
-#test files
-test_*
-*.log
-*.cjs
-# Local scripts
-check_db.js
-db_update.js
-add_tenant_deposit_status.js
-# Debug scripts
-Backend/check_*
-Backend/fix_*
-Backend/migrate_*
-Backend/seed_*
-Backend/debug_*
-Backend/inspect*
-Backend/list*
-Backend/schema_*
-Backend/migration_log.txt
+build/
 
 # Logs
+logs
 *.log
 *.txt
+npm-debug.log*
+migration_log.txt
 
-# # Environment
-# .env
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+
+# Scripts and temporary debug files
+debug_*
+test_*
+check_*
+fix_*
+migrate_*
+seed_*
+inspect*
+list*
+schema_*
+*.cjs
+db_update.js
+add_tenant_deposit_status.js

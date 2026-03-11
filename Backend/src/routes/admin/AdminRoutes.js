@@ -32,5 +32,6 @@ router.put("/providers/:id/status", ctrl.toggleProviderStatus);
 // Payments & Logs
 router.get("/payments", ctrl.getPayments);
 router.get("/logs", ctrl.getLogs);
+router.get("/tracker", ctrl.getServiceTracker);
 
 module.exports = router;

@@ -16,8 +16,8 @@ exports.createProperty = async (data) => {
      shop_use_type, water_available,
      office_type, seating_capacity, cabins_available, conference_room,
      security_deposit, rent_escalation_desc, bank_account, ifsc_code, upi_id,
-     late_penalty_amount, rent_due_day, guidelines)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43)
+     late_penalty_amount, rent_due_day, guidelines, latitude, longitude)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45)
     RETURNING *;
   `;
 
@@ -71,7 +71,9 @@ exports.createProperty = async (data) => {
     data.upi_id || null,
     data.late_penalty_amount || 0,
     data.rent_due_day || 5, // Default to 5th
-    data.guidelines || null
+    data.guidelines || null,
+    data.latitude || null,
+    data.longitude || null
   ];
 
   return (await db.query(query, values)).rows[0];
@@ -404,8 +406,10 @@ exports.updateProperty = async (id, landlordId, data) => {
       late_penalty_amount = $39,
       rent_due_day = $40,
       guidelines = $41,
+      latitude = $42,
+      longitude = $43,
       updated_at = NOW()
-    WHERE id = $42 AND landlord_id = $43
+    WHERE id = $44 AND landlord_id = $45
     RETURNING *;
   `;
 

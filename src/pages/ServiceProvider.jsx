@@ -96,11 +96,11 @@ const MOCK_WEEKLY_ACTIVITY = [
 ];
 
 const MOCK_STOCK_DATA = [
-    { name: 'Pipes', stock: 45 },
-    { name: 'Wiring', stock: 28 },
-    { name: 'Paint', stock: 15 },
-    { name: 'Tools', stock: 60 },
-    { name: 'Filters', stock: 32 },
+    { name: 'Pipes', available: 45 },
+    { name: 'Wiring', available: 28 },
+    { name: 'Paint', available: 15 },
+    { name: 'Tools', available: 60 },
+    { name: 'Filters', available: 32 },
 ];
 
 const MOCK_REVIEWS = [
@@ -147,7 +147,7 @@ const ThemeToggle = () => {
 const StatCard = ({ label, value, icon: Icon, color, sub, trend, trendUp }) => (
     <div className="relative overflow-hidden group p-6 rounded-2xl bg-white/70 dark:bg-slate-800/50 backdrop-blur-xl border border-white/20 dark:border-slate-700 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
         <div className="flex justify-between items-start">
-            <div>
+            <div className="relative z-10">
                 <p className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">{label}</p>
                 <h3 className="text-3xl font-extrabold text-slate-800 dark:text-white tracking-tight leading-none">{value}</h3>
                 <div className="flex items-center gap-2 mt-2">
@@ -156,12 +156,14 @@ const StatCard = ({ label, value, icon: Icon, color, sub, trend, trendUp }) => (
                             {trendUp ? <TrendingUp size={10} /> : <TrendingDown size={10} />} {trend}
                         </div>
                     )}
-                    {sub && <p className={`text-xs font-bold ${sub.includes('Action') ? 'text-amber-500' : 'text-orange-500'}`}>{sub}</p>}
+                    {sub && <p className={`text-xs font-bold ${sub.includes('Action') ? 'text-sky-500' : 'text-indigo-500'}`}>{sub}</p>}
                 </div>
             </div>
-            <div className={`p-4 rounded-2xl bg-${color}-500 text-white shadow-lg shadow-${color}-500/30 transform group-hover:scale-110 transition-transform duration-300`}>
+            <div className={`p-4 rounded-2xl bg-${color}-500 text-white shadow-lg shadow-${color}-500/30 transform group-hover:scale-110 transition-transform duration-300 relative z-10`}>
                 <Icon size={24} strokeWidth={2.5} />
             </div>
+            {/* Background Glow */}
+            <div className={`absolute -right-4 -bottom-4 w-24 h-24 bg-${color}-500/10 blur-2xl rounded-full transition-opacity group-hover:opacity-100 opacity-50`} />
         </div>
     </div>
 );
@@ -170,7 +172,7 @@ const SectionHeader = ({ title, action }) => (
     <div className="flex justify-between items-center mb-8 animate-in fade-in slide-in-from-left-4 duration-500">
         <div>
             <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">{title}</h2>
-            <div className="h-1 w-20 bg-gradient-to-r from-orange-500 to-amber-400 rounded-full mt-2" />
+            <div className="h-1 w-20 bg-gradient-to-r from-sky-500 to-indigo-600 rounded-full mt-2" />
         </div>
         {action}
     </div>
@@ -274,7 +276,7 @@ const ProfileView = ({ user, profile, onUpdate }) => {
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <SectionHeader title="MY PROFILE" action={
                 !isEditing ? (
-                    <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 px-6 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-xl font-bold tracking-widest text-xs uppercase shadow-[0_0_20px_rgba(234,88,12,0.3)] transition-all">
+                    <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold tracking-widest text-xs uppercase shadow-[0_0_20px_rgba(79,70,229,0.3)] transition-all">
                         <Edit2 size={16} /> Edit Profile
                     </button>
                 ) : (
@@ -290,23 +292,23 @@ const ProfileView = ({ user, profile, onUpdate }) => {
             <div className="grid lg:grid-cols-3 gap-8">
                 {/* Visual Identity Card */}
                 <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl flex flex-col items-center text-center relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-orange-900/50 to-amber-900/50 opacity-40" />
-                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-orange-500/20 rounded-full blur-3xl" />
+                    <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-indigo-900/50 to-blue-900/50 opacity-40" />
+                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/20 rounded-full blur-3xl" />
 
                     {/* Avatar */}
-                    <div className="relative z-10 w-48 h-48 rounded-full p-1.5 bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 mb-8 shadow-lg group/avatar hover:scale-105 transition-all duration-500">
+                    <div className="relative z-10 w-48 h-48 rounded-full p-1.5 bg-gradient-to-br from-indigo-500 via-blue-500 to-cyan-500 mb-8 shadow-lg group/avatar hover:scale-105 transition-all duration-500">
                         <div className="w-full h-full rounded-full bg-white dark:bg-slate-900 flex items-center justify-center overflow-hidden border-4 border-white dark:border-slate-800 relative">
                             {formData.avatar_url ? (
                                 <img src={formData.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                             ) : (
-                                <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-orange-500 to-amber-500">
+                                <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-indigo-500 to-blue-500">
                                     {(formData.company_name?.[0] || user?.first_name?.[0] || 'P').toUpperCase()}
                                 </div>
                             )}
                         </div>
 
                         {/* Upload Trigger */}
-                        <label className={`absolute bottom-2 right-2 w-12 h-12 bg-orange-600 text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg border-4 border-slate-950 hover:bg-orange-500 transition-all hover:scale-110 z-20 ${!isEditing && 'hidden'}`}>
+                        <label className={`absolute bottom-2 right-2 w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg border-4 border-slate-950 hover:bg-indigo-500 transition-all hover:scale-110 z-20 ${!isEditing && 'hidden'}`}>
                             <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading || !isEditing} />
                             {isUploading ? <Loader size={20} className="animate-spin" /> : <Camera size={20} />}
                         </label>
@@ -334,7 +336,7 @@ const ProfileView = ({ user, profile, onUpdate }) => {
                         </div>
 
                         <div className="mt-8 pt-8 border-t border-slate-800 flex justify-center gap-4">
-                            <span className="px-4 py-2 bg-orange-900/30 text-orange-400 rounded-lg text-[10px] font-black border border-orange-500/20 uppercase tracking-widest">
+                            <span className="px-4 py-2 bg-indigo-900/30 text-indigo-400 rounded-lg text-[10px] font-black border border-indigo-500/20 uppercase tracking-widest">
                                 {formData.service_type || 'General'}
                             </span>
                             <span className="px-4 py-2 bg-emerald-900/30 text-emerald-400 rounded-lg text-[10px] font-black border border-emerald-500/20 uppercase tracking-widest">
@@ -356,7 +358,7 @@ const ProfileView = ({ user, profile, onUpdate }) => {
                                 disabled={!isEditing}
                                 value={formData.company_name}
                                 onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
-                                className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none font-bold text-slate-900 dark:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                                className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none font-bold text-slate-900 dark:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                                 placeholder="Enter company name"
                             />
                         </div>
@@ -488,7 +490,7 @@ const ProfileView = ({ user, profile, onUpdate }) => {
                             </p>
                         )}
                     </div>
-                    <button onClick={handlePasswordUpdate} className="px-8 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-xl transition-all font-bold shadow-lg shadow-orange-500/20 tracking-widest text-xs uppercase">
+                    <button onClick={handlePasswordUpdate} className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-all font-bold shadow-lg shadow-indigo-500/20 tracking-widest text-xs uppercase">
                         Update Password
                     </button>
                 </div>
@@ -505,7 +507,7 @@ const CategoryCard = ({ category }) => {
         emerald: "bg-emerald-500",
         amber: "bg-amber-500",
         purple: "bg-purple-500",
-        indigo: "bg-orange-500"
+        indigo: "bg-indigo-500"
     };
 
     return (
@@ -532,7 +534,7 @@ const LevelTitle = ({ title, onBack, breadcrumbs }) => (
         <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest">
             {breadcrumbs.map((b, i) => (
                 <React.Fragment key={i}>
-                    <span className={i === breadcrumbs.length - 1 ? "text-orange-500" : "cursor-pointer hover:text-slate-600"} onClick={b.onClick}>
+                    <span className={i === breadcrumbs.length - 1 ? "text-indigo-500" : "cursor-pointer hover:text-slate-600"} onClick={b.onClick}>
                         {b.label}
                     </span>
                     {i < breadcrumbs.length - 1 && <ChevronRight size={12} />}
@@ -553,12 +555,12 @@ const LevelTitle = ({ title, onBack, breadcrumbs }) => (
 const AddEntityCard = ({ label, onClick, icon: Icon = Plus }) => (
     <button
         onClick={onClick}
-        className="group relative flex flex-col items-center justify-center p-8 bg-dashed border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-3xl hover:border-orange-500 dark:hover:border-orange-500 hover:bg-orange-50/30 dark:hover:bg-orange-900/10 transition-all duration-300 h-full min-h-[220px]"
+        className="group relative flex flex-col items-center justify-center p-8 bg-dashed border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-3xl hover:border-indigo-500 dark:hover:border-indigo-500 hover:bg-indigo-50/30 dark:hover:bg-indigo-900/10 transition-all duration-300 h-full min-h-[220px]"
     >
-        <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-orange-600 group-hover:text-white transition-all duration-300 shadow-sm">
+        <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300 shadow-sm">
             <Icon size={32} />
         </div>
-        <span className="text-slate-600 dark:text-slate-400 font-bold group-hover:text-orange-600 transition-colors uppercase tracking-widest text-xs">{label}</span>
+        <span className="text-slate-600 dark:text-slate-400 font-bold group-hover:text-indigo-600 transition-colors uppercase tracking-widest text-xs">{label}</span>
     </button>
 );
 
@@ -570,7 +572,7 @@ const EntityCard = ({ item, onClick, onDelete, onEdit, type = "category" }) => {
             className="group relative bg-white dark:bg-slate-800 rounded-3xl p-0 border border-slate-200 dark:border-white/10 shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden cursor-pointer hover:-translate-y-2 h-full"
         >
             {/* Background Accent */}
-            <div className={`absolute -right-12 -top-12 w-40 h-40 bg-orange-500/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700`} />
+            <div className={`absolute -right-12 -top-12 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700`} />
 
             <div className="h-64 overflow-hidden relative">
                 {item.image_url ? (
@@ -809,7 +811,7 @@ const AddEntityForm = ({ type, label, onSave, onCancel, parentId, initialData })
                             <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3 block">Cover Image</label>
                             <div className="flex-1 relative group cursor-pointer">
                                 <div className={`w-full h-full min-h-[300px] rounded-2xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center overflow-hidden relative
-                                    ${formData.preview ? 'border-orange-500/50 bg-slate-50 dark:bg-slate-900' : 'border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:border-orange-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                                    ${formData.preview ? 'border-indigo-500/50 bg-slate-50 dark:bg-slate-900' : 'border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:border-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
                                 >
                                     <input
                                         type="file"
@@ -822,13 +824,13 @@ const AddEntityForm = ({ type, label, onSave, onCancel, parentId, initialData })
                                         <>
                                             <img src={formData.preview} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-40 transition-opacity duration-300" />
                                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all transform scale-90 group-hover:scale-100">
-                                                <div className="bg-black/80 backdrop-blur-md px-6 py-3 rounded-full text-orange-400 font-bold border border-orange-500/30 flex items-center gap-2 shadow-[0_0_20px_rgba(249,115,22,0.3)]">
+                                                <div className="bg-black/80 backdrop-blur-md px-6 py-3 rounded-full text-indigo-400 font-bold border border-indigo-500/30 flex items-center gap-2 shadow-[0_0_20px_rgba(99,102,241,0.3)]">
                                                     <Camera size={18} /> Change Cover
                                                 </div>
                                             </div>
                                         </>
                                     ) : (
-                                        <div className="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 group-hover:text-orange-500 transition-colors">
+                                        <div className="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 group-hover:text-indigo-500 transition-colors">
                                             <div className="w-20 h-20 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center mb-4 shadow-sm border border-slate-100 dark:border-slate-700 group-hover:scale-110 transition-transform duration-300">
                                                 <Plus size={32} />
                                             </div>
@@ -853,7 +855,7 @@ const AddEntityForm = ({ type, label, onSave, onCancel, parentId, initialData })
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="px-8 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-xl font-bold text-xs tracking-widest uppercase shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 active:scale-95 transition-all flex items-center gap-2"
+                            className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xs tracking-widest uppercase shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 active:scale-95 transition-all flex items-center gap-2"
                         >
                             {isLoading ? <Loader className="animate-spin" size={16} /> : <Plus size={18} />}
                             {initialData ? `Save ${label || type}` : `Create ${label || type}`}
@@ -873,7 +875,7 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
         switch (status) {
             case 'New Request': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
             case 'Accepted': return 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300';
-            case 'In Progress': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300';
+            case 'In Progress': return 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300';
             case 'Completed': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300';
             case 'Rejected': return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300';
             default: return 'bg-slate-100 text-slate-700';
@@ -889,7 +891,7 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
                         {/* Status Glow Background (Smaller) */}
                         <div className={`absolute -right-10 -top-10 w-48 h-48 rounded-full blur-[60px] opacity-15 pointer-events-none 
                             ${job.status === 'Accepted' || job.status === 'Completed' ? 'bg-emerald-500' :
-                                job.status === 'Rejected' ? 'bg-rose-500' : 'bg-orange-500'}`} />
+                                job.status === 'Rejected' ? 'bg-rose-500' : 'bg-indigo-500'}`} />
 
                         <div className="flex flex-col lg:flex-row justify-between gap-6 relative z-10">
                             <div className="flex flex-col md:flex-row items-center md:items-start gap-6 flex-1">
@@ -904,7 +906,7 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
                                     </div>
                                     <div className={`absolute -bottom-1 -right-1 w-8 h-8 rounded-xl flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-md 
-                                        ${job.priority === 'Critical' ? 'bg-rose-500 text-white' : 'bg-orange-600 text-white'}`}>
+                                        ${job.priority === 'Critical' ? 'bg-rose-500 text-white' : 'bg-indigo-600 text-white'}`}>
                                         {job.priority === 'Critical' ? <AlertCircle size={16} /> : <CalendarCheck size={16} />}
                                     </div>
                                 </div>
@@ -931,7 +933,7 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
                                             <div className="flex flex-col gap-0.5">
                                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Scheduled Time</span>
                                                 <p className="text-slate-800 dark:text-slate-200 font-bold text-[13px] flex items-center gap-2">
-                                                    <Calendar size={14} className="text-orange-500 shrink-0" />
+                                                    <Calendar size={14} className="text-indigo-500 shrink-0" />
                                                     <span className="truncate">
                                                         {job.booking_date ? new Date(job.booking_date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }) : 'Date N/A'}
                                                         {job.booking_time ? <span className="text-slate-400 font-medium ml-1">at {job.booking_time}</span> : ''}
@@ -945,7 +947,7 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
                                             <div className="flex flex-col gap-0.5">
                                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Service Type</span>
                                                 <div className="flex items-center gap-2 mt-0.5">
-                                                    <div className="p-1.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-lg shadow-sm">
+                                                    <div className="p-1.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg shadow-sm">
                                                         <Zap size={14} className="fill-current" />
                                                     </div>
                                                     <p className="text-slate-800 dark:text-slate-200 font-bold text-sm truncate uppercase tracking-tight">
@@ -956,7 +958,7 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
                                             <div className="flex flex-col gap-0.5">
                                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Category</span>
                                                 <div className="mt-0.5 inline-flex">
-                                                    <span className="px-2.5 py-1 bg-white dark:bg-slate-700/50 text-orange-600 dark:text-orange-300 rounded-full border border-orange-100 dark:border-orange-900/50 text-[10px] font-black uppercase tracking-wider shadow-sm">
+                                                    <span className="px-2.5 py-1 bg-white dark:bg-slate-700/50 text-indigo-600 dark:text-indigo-300 rounded-full border border-indigo-100 dark:border-indigo-900/50 text-[10px] font-black uppercase tracking-wider shadow-sm">
                                                         {job.type_name || "Standard"}
                                                     </span>
                                                 </div>
@@ -979,7 +981,7 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
                                 <div className="text-center lg:text-right">
                                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Payout</p>
                                     <div className="flex items-baseline justify-center lg:justify-end gap-0.5">
-                                        <span className="text-lg font-black text-orange-600 dark:text-orange-400">{'\u20B9'}</span>
+                                        <span className="text-lg font-black text-indigo-600 dark:text-indigo-400">{'\u20B9'}</span>
                                         <span className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">{job.amount}</span>
                                     </div>
                                 </div>
@@ -990,7 +992,7 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
                                             <button onClick={() => onUpdateStatus(job.id, 'Rejected')} className="px-4 py-2 text-slate-400 hover:text-rose-600 font-black text-[10px] uppercase tracking-widest transition-all rounded-xl hover:bg-rose-50 dark:hover:bg-rose-900/10">
                                                 Reject
                                             </button>
-                                            <button onClick={() => onUpdateStatus(job.id, 'Accepted')} className="flex-1 lg:flex-none px-6 py-2.5 bg-orange-600 text-white hover:bg-orange-700 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-orange-500/20 active:scale-95 transition-all">
+                                            <button onClick={() => onUpdateStatus(job.id, 'Accepted')} className="flex-1 lg:flex-none px-6 py-2.5 bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-indigo-500/20 active:scale-95 transition-all">
                                                 Accept Job
                                             </button>
                                         </>
@@ -1031,7 +1033,7 @@ const EarningsView = ({ stats, bookings }) => {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatCard label="Total Earnings" value={`\u20B9${stats.totalEarnings}`} icon={Wallet} color="orange" trend="+5%" trendUp={true} />
+                <StatCard label="Total Earnings" value={`\u20B9${stats.totalEarnings}`} icon={Wallet} color="indigo" trend="+5%" trendUp={true} />
                 <StatCard label="Pending Jobs" value={stats.pendingJobs} icon={CreditCard} color="blue" sub="Upcoming" />
                 <StatCard label="Total Services" value={stats.totalServices} icon={CheckCircle2} color="blue" />
             </div>
@@ -1092,7 +1094,7 @@ const CustomerReviews = ({ reviews }) => {
                     <div key={review.id} className="bg-slate-50 dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50 hover:border-indigo-100 dark:hover:border-indigo-900/50 transition-colors">
                         <div className="flex justify-between items-start mb-2">
                             <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-orange-400 to-amber-400 flex items-center justify-center text-white font-bold text-xs overflow-hidden">
+                                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-400 to-blue-400 flex items-center justify-center text-white font-bold text-xs overflow-hidden">
                                     {review.avatar && review.avatar.startsWith('http') ? (
                                         <img src={review.avatar} alt={review.user} className="w-full h-full object-cover" />
                                     ) : (
@@ -1116,7 +1118,7 @@ const CustomerReviews = ({ reviews }) => {
                     </div>
                 ))}
             </div>
-            <button className="w-full mt-4 py-3 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold text-sm hover:border-orange-400 dark:hover:border-orange-500 hover:text-orange-500 transition-all">
+            <button className="w-full mt-4 py-3 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold text-sm hover:border-indigo-400 dark:hover:border-indigo-500 hover:text-indigo-500 transition-all">
                 View All Reviews
             </button>
         </div>
@@ -1130,7 +1132,7 @@ const UpcomingSchedule = ({ bookings }) => {
         <div className="bg-white/70 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl p-6 h-full">
             <div className="flex justify-between items-center mb-6">
                 <h3 className="font-bold text-xl text-slate-800 dark:text-white">Upcoming Schedule</h3>
-                <button className="p-2 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 rounded-lg hover:bg-orange-100 transition-colors">
+                <button className="p-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-100 transition-colors">
                     <Calendar size={18} />
                 </button>
             </div>
@@ -1142,12 +1144,12 @@ const UpcomingSchedule = ({ bookings }) => {
                     <div className="relative pl-6 group">
                         {/* Timeline Dot */}
                         <span className={`absolute left-0 top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-slate-800 shadow-sm z-10 
-                                ${index === 0 ? 'bg-orange-500 ring-4 ring-orange-100 dark:ring-orange-900/30' : 'bg-slate-300 dark:bg-slate-600'}`}
+                                ${index === 0 ? 'bg-indigo-500 ring-4 ring-indigo-100 dark:ring-indigo-900/30' : 'bg-slate-300 dark:bg-slate-600'}`}
                         />
 
-                        <div className="bg-white dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all hover:bg-orange-50/50 dark:hover:bg-orange-900/10 hover:border-orange-100 group-hover:translate-x-1">
+                        <div className="bg-white dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 hover:border-indigo-100 group-hover:translate-x-1">
                             <div className="flex justify-between items-start mb-2">
-                                <span className="font-extrabold text-orange-600 dark:text-orange-400 text-xs uppercase tracking-wider">{item.date}</span>
+                                <span className="font-extrabold text-indigo-600 dark:text-indigo-400 text-xs uppercase tracking-wider">{item.date}</span>
                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${item.status === 'Accepted' || item.status === 'In Progress' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-700'}`}>
                                     {item.status}
                                 </span>
@@ -1234,7 +1236,7 @@ const MessagesView = () => {
                         <input
                             type="text"
                             placeholder="Search chats..."
-                            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-slate-700 dark:text-slate-200"
+                            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-700 dark:text-slate-200"
                         />
                     </div>
                 </div>
@@ -1244,7 +1246,7 @@ const MessagesView = () => {
                         <div
                             key={chat.id}
                             onClick={() => setActiveChat(chat)}
-                            className={`p-4 flex items-center gap-3 cursor-pointer transition-colors border-b border-slate-50 dark:border-slate-700/50 hover:bg-orange-50 dark:hover:bg-orange-900/10 ${activeChat?.id === chat.id ? 'bg-orange-50 dark:bg-orange-900/20' : ''}`}
+                            className={`p-4 flex items-center gap-3 cursor-pointer transition-colors border-b border-slate-50 dark:border-slate-700/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/10 ${activeChat?.id === chat.id ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}
                         >
                             <div className="relative">
                                 <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500 font-bold overflow-hidden">
@@ -1254,7 +1256,7 @@ const MessagesView = () => {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex justify-between items-baseline mb-0.5">
-                                    <h4 className={`font-bold text-sm truncate ${activeChat?.id === chat.id ? 'text-orange-900 dark:text-orange-100' : 'text-slate-800 dark:text-slate-200'}`}>{chat.name}</h4>
+                                    <h4 className={`font-bold text-sm truncate ${activeChat?.id === chat.id ? 'text-indigo-900 dark:text-indigo-100' : 'text-slate-800 dark:text-slate-200'}`}>{chat.name}</h4>
                                     <span className="text-[10px] text-slate-400">{chat.time}</span>
                                 </div>
                                 <p className={`text-xs truncate ${chat.unread > 0 ? 'font-bold text-slate-800 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
@@ -1262,7 +1264,7 @@ const MessagesView = () => {
                                 </p>
                             </div>
                             {chat.unread > 0 && (
-                                <div className="w-5 h-5 bg-orange-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full">
+                                <div className="w-5 h-5 bg-indigo-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full">
                                     {chat.unread}
                                 </div>
                             )}
@@ -1288,7 +1290,7 @@ const MessagesView = () => {
                                     </p>
                                 </div>
                             </div>
-                            <button className="p-2 text-slate-400 hover:text-orange-500 transition-colors rounded-full hover:bg-orange-50 dark:hover:bg-orange-900/20">
+                            <button className="p-2 text-slate-400 hover:text-indigo-500 transition-colors rounded-full hover:bg-indigo-50 dark:hover:bg-indigo-900/20">
                                 <MoreVertical size={20} />
                             </button>
                         </div>
@@ -1299,7 +1301,7 @@ const MessagesView = () => {
                             {messages.map((msg) => (
                                 <div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
                                     <div className={`max-w-[70%] rounded-2xl p-3 shadow-md border ${msg.sender === 'me'
-                                        ? 'bg-gradient-to-br from-orange-500 to-amber-600 text-white rounded-br-none border-orange-600'
+                                        ? 'bg-gradient-to-br from-indigo-500 to-blue-600 text-white rounded-br-none border-indigo-600'
                                         : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-bl-none border-slate-200 dark:border-slate-700'
                                         }`}>
                                         <p className="text-sm leading-relaxed">{msg.text}</p>
@@ -1314,8 +1316,8 @@ const MessagesView = () => {
 
                         {/* Input Area */}
                         <form onSubmit={handleSendMessage} className="p-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700">
-                            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/80 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 focus-within:ring-2 focus-within:ring-orange-500/20 focus-within:border-orange-500 transition-all shadow-inner">
-                                <button type="button" className="p-2 text-slate-400 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-slate-700 rounded-xl transition-colors">
+                            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/80 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 transition-all shadow-inner">
+                                <button type="button" className="p-2 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-slate-700 rounded-xl transition-colors">
                                     <Paperclip size={18} />
                                 </button>
                                 <input
@@ -1328,7 +1330,7 @@ const MessagesView = () => {
                                 <button
                                     type="submit"
                                     disabled={!messageInput.trim()}
-                                    className="p-2 bg-orange-600 text-white rounded-xl shadow-lg shadow-orange-600/20 hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
+                                    className="p-2 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95"
                                 >
                                     <Send size={18} />
                                 </button>
@@ -1369,7 +1371,7 @@ const ReviewsFullView = ({ reviews }) => (
                     <div key={review.id} className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm hover:shadow-md transition-all">
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center text-white font-bold text-lg overflow-hidden">
+                                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-indigo-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg overflow-hidden">
                                     {review.avatar && review.avatar.startsWith('http') ? (
                                         <img src={review.avatar} alt={review.user} className="w-full h-full object-cover" />
                                     ) : (
@@ -1398,15 +1400,15 @@ const ReviewsFullView = ({ reviews }) => (
 
 const SupportView = () => (
     <div className="grid md:grid-cols-2 gap-6 animate-in slide-in-from-bottom-4 duration-500">
-        <div className="bg-gradient-to-br from-orange-600 to-amber-700 rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden">
+        <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-16 -mt-16 blur-3xl" />
             <h2 className="text-3xl font-black mb-4 relative z-10">Need Help?</h2>
-            <p className="text-orange-100 mb-8 max-w-sm relative z-10 font-medium">Our support team is available 24/7 to assist you with any issues.</p>
+            <p className="text-indigo-100 mb-8 max-w-sm relative z-10 font-medium">Our support team is available 24/7 to assist you with any issues.</p>
             <div className="flex flex-col gap-4 relative z-10">
-                <button className="flex items-center gap-3 bg-white text-orange-600 px-6 py-3 rounded-xl font-bold hover:bg-orange-50 transition-colors">
+                <button className="flex items-center gap-3 bg-white text-indigo-600 px-6 py-3 rounded-xl font-bold hover:bg-indigo-50 transition-colors">
                     <Phone size={20} /> Call Support
                 </button>
-                <button className="flex items-center gap-3 bg-orange-500/50 backdrop-blur-md border border-orange-400/30 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-500/70 transition-colors">
+                <button className="flex items-center gap-3 bg-indigo-500/50 backdrop-blur-md border border-indigo-400/30 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-500/70 transition-colors">
                     <Mail size={20} /> Email Us
                 </button>
             </div>
@@ -1420,7 +1422,7 @@ const SupportView = () => (
                     "How can I change my availability?",
                     "What happens if a customer cancels?"
                 ].map((q, i) => (
-                    <div key={i} className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700/50 hover:border-orange-200 dark:hover:border-orange-800 cursor-pointer transition-all">
+                    <div key={i} className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700/50 hover:border-indigo-200 dark:hover:border-indigo-800 cursor-pointer transition-all">
                         <div className="flex justify-between items-center">
                             <span className="font-bold text-slate-700 dark:text-slate-300 text-sm">{q}</span>
                             <ChevronRight size={16} className="text-slate-400" />
@@ -1627,7 +1629,7 @@ const HierarchicalServiceManager = ({
                                     No services added yet. Browse Service Types to add services.
                                 </div>
                             ) : services.map(svc => (
-                                <div key={svc.id} className="flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-md transition-all hover:border-orange-500/30 group cursor-pointer" onClick={() => onEditService(svc)}>
+                                <div key={svc.id} className="flex items-center gap-4 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm hover:shadow-md transition-all hover:border-indigo-500/30 group cursor-pointer" onClick={() => onEditService(svc)}>
                                     <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 shrink-0 shadow-inner relative group-hover:scale-105 transition-transform">
                                         {svc.image_url ? (
                                             <img src={svc.image_url} alt={svc.name} className="w-full h-full object-cover" />
@@ -1637,7 +1639,7 @@ const HierarchicalServiceManager = ({
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex justify-between items-start mb-1">
-                                            <h4 className="font-bold text-lg text-slate-900 dark:text-white truncate group-hover:text-orange-600 transition-colors">{svc.name}</h4>
+                                            <h4 className="font-bold text-lg text-slate-900 dark:text-white truncate group-hover:text-indigo-600 transition-colors">{svc.name}</h4>
                                             <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest ${svc.is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-100 text-slate-500'}`}>
                                                 {svc.is_active ? 'Active' : 'Hidden'}
                                             </span>
@@ -1654,7 +1656,7 @@ const HierarchicalServiceManager = ({
                                                 "No description available."
                                             )}
                                         </div>
-                                        <div className="flex items-center gap-1 font-black text-orange-600 dark:text-orange-400 text-lg leading-none">
+                                        <div className="flex items-center gap-1 font-black text-indigo-600 dark:text-indigo-400 text-lg leading-none">
                                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1">Cost:</span>
                                             {'\u20B9'}{svc.base_price || svc.price || 0}
                                         </div>
@@ -1752,7 +1754,7 @@ const HierarchicalServiceManager = ({
                         <h3 className="font-bold text-slate-800 dark:text-white">Services</h3>
                         <button
                             onClick={() => setIsAdding(true)}
-                            className="flex items-center gap-2 bg-orange-600 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-orange-500/20 hover:bg-orange-700 transition-all"
+                            className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all"
                         >
                             <Plus size={18} /> Add Specific Service
                         </button>
@@ -1816,9 +1818,9 @@ const HierarchicalServiceManager = ({
                                             )}
                                         </div>
                                         <div className="text-slate-600 dark:text-slate-400 text-sm font-medium mb-3 min-h-[4.5em]">
-                                            <span className="font-bold text-orange-600 dark:text-orange-400 block mb-1 text-xs uppercase tracking-wider">Description:</span>
+                                            <span className="font-bold text-indigo-600 dark:text-indigo-400 block mb-1 text-xs uppercase tracking-wider">Description:</span>
                                             {svc.description ? (
-                                                <ul className="list-disc pl-4 space-y-1 marker:text-orange-500">
+                                                <ul className="list-disc pl-4 space-y-1 marker:text-indigo-500">
                                                     {svc.description.split('\n').map((point, i) => (
                                                         <li key={i} className="leading-snug">{point.replace(/^[•\s-\*]+/, '')}</li>
                                                     ))}
@@ -1828,7 +1830,7 @@ const HierarchicalServiceManager = ({
                                             )}
                                         </div>
                                         <p className="text-slate-900 dark:text-white font-black text-lg">
-                                            Price: <span className="text-orange-600 dark:text-orange-400">{'\u20B9'}{clientSideMatch?.price || svc.my_price || svc.base_price || svc.price || 0}</span>
+                                            Price: <span className="text-indigo-600 dark:text-indigo-400">{'\u20B9'}{clientSideMatch?.price || svc.my_price || svc.base_price || svc.price || 0}</span>
                                         </p>
 
                                         <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-100 dark:border-slate-700/50">
@@ -1874,7 +1876,7 @@ const HierarchicalServiceManager = ({
                                                             features: svc.features
                                                         });
                                                     }}
-                                                    className="w-full flex items-center justify-center gap-2 py-3 bg-orange-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-orange-700 transition-all shadow-lg shadow-orange-500/20 group/add"
+                                                    className="w-full flex items-center justify-center gap-2 py-3 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 group/add"
                                                 >
                                                     <Plus size={18} className="group-hover/add:rotate-90 transition-transform" /> Add to My Services
                                                 </button>
@@ -2141,27 +2143,17 @@ const ServiceProvider = () => {
                     <div className="space-y-8 animate-in fade-in duration-500">
                         {/* Stats */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <StatCard label="Total Services" value={stats.totalServices} icon={Briefcase} color="orange" />
+                            <StatCard label="Total Services" value={stats.totalServices} icon={Briefcase} color="indigo" />
                             <StatCard label="Active Services" value={stats.activeServices} icon={Zap} color="emerald" sub="Online" />
                             <StatCard label="Pending Jobs" value={stats.pendingJobs} icon={Hourglass} color="blue" sub="Action Needed" />
-                            <StatCard label="Total Earnings" value={`\u20B9${stats.totalEarnings}`} icon={IndianRupee} color="amber" trend="+5%" trendUp={true} sub="Total" />
+                            <StatCard label="Total Earnings" value={`\u20B9${stats.totalEarnings}`} icon={IndianRupee} color="indigo" trend="+5%" trendUp={true} sub="Total" />
                         </div>
 
-                        {/* Service Categories Grid */}
-                        <div>
-                            <SectionHeader title="Service Domains" />
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                                {categories.map((cat, idx) => (
-                                    <CategoryCard key={cat.id || idx} category={cat} />
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Graphs Section (Moved to Top) */}
+                        {/* Graphs Section */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Stock Level Graph */}
                             <div className="bg-white/70 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl p-6 overflow-hidden flex flex-col">
-                                <h3 className="font-bold text-xl text-slate-800 dark:text-white mb-6">Stock Levels</h3>
+                                <h3 className="font-bold text-xl text-slate-800 dark:text-white mb-6">Essential Supplies</h3>
                                 <div className="w-full flex-1" style={{ height: '300px', minHeight: '300px' }}>
                                     <LazyChart>
                                         <ResponsiveContainer width="100%" height="100%">
@@ -2171,11 +2163,20 @@ const ServiceProvider = () => {
                                                 <YAxis dataKey="name" type="category" width={100} axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12, fontWeight: 'bold' }} />
                                                 <Tooltip
                                                     contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
-                                                    cursor={{ fill: 'rgba(249, 115, 22, 0.05)' }}
+                                                    cursor={{ fill: 'rgba(14, 165, 233, 0.05)' }}
                                                 />
-                                                <Bar dataKey="stock" fill="#f97316" radius={[0, 4, 4, 0]} barSize={20} isAnimationActive={false}>
+                                                <Bar
+                                                    dataKey="available"
+                                                    name="Available"
+                                                    fill="#6366f1"
+                                                    radius={[0, 4, 4, 0]}
+                                                    barSize={20}
+                                                    isAnimationActive={true}
+                                                    animationDuration={1500}
+                                                    animationBegin={200}
+                                                >
                                                     {MOCK_STOCK_DATA.map((entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={['#f97316', '#f59e0b', '#ec4899', '#10b981', '#6366f1'][index % 5]} />
+                                                        <Cell key={`cell-${index}`} fill={['#0ea5e9', '#6366f1', '#3b82f6', '#10b981', '#4f46e5'][index % 5]} />
                                                     ))}
                                                 </Bar>
                                             </BarChart>
@@ -2195,15 +2196,43 @@ const ServiceProvider = () => {
                                                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} dy={10} />
                                                 <Tooltip
                                                     contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
-                                                    cursor={{ fill: 'rgba(249, 115, 22, 0.05)' }}
+                                                    cursor={{ fill: 'rgba(14, 165, 233, 0.05)' }}
                                                 />
                                                 <Legend verticalAlign="top" height={36} iconType="circle" />
-                                                <Bar dataKey="completed" name="Completed" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} isAnimationActive={false} />
-                                                <Bar dataKey="pending" name="Pending" fill="#fbbf24" radius={[4, 4, 0, 0]} barSize={20} isAnimationActive={false} />
+                                                <Bar
+                                                    dataKey="completed"
+                                                    name="Completed"
+                                                    fill="#10b981"
+                                                    radius={[4, 4, 0, 0]}
+                                                    barSize={20}
+                                                    isAnimationActive={true}
+                                                    animationDuration={1500}
+                                                    animationBegin={300}
+                                                />
+                                                <Bar
+                                                    dataKey="pending"
+                                                    name="Pending"
+                                                    fill="#6366f1"
+                                                    radius={[4, 4, 0, 0]}
+                                                    barSize={20}
+                                                    isAnimationActive={true}
+                                                    animationDuration={1500}
+                                                    animationBegin={500}
+                                                />
                                             </BarChart>
                                         </ResponsiveContainer>
                                     </LazyChart>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Service Categories Grid */}
+                        <div>
+                            <SectionHeader title="Service Domains" />
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                                {categories.map((cat, idx) => (
+                                    <CategoryCard key={cat.id || idx} category={cat} />
+                                ))}
                             </div>
                         </div>
 
@@ -2222,7 +2251,7 @@ const ServiceProvider = () => {
                             <div className="w-full bg-white/70 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl p-6">
                                 <div className="flex justify-between items-center mb-6">
                                     <h3 className="font-bold text-xl text-slate-800 dark:text-white">Recent Activity</h3>
-                                    <button onClick={() => setActiveTab('requests')} className="text-orange-600 font-bold text-sm hover:underline">View All</button>
+                                    <button onClick={() => setActiveTab('requests')} className="text-indigo-600 font-bold text-sm hover:underline">View All</button>
                                 </div>
                                 <div className="space-y-4">
                                     {bookings.slice(0, 4).map(job => (
@@ -2287,8 +2316,6 @@ const ServiceProvider = () => {
                 return <BookingsView bookings={bookings} onUpdateStatus={handleUpdateBookingStatus} />;
             case 'earnings':
                 return <EarningsView stats={stats} bookings={bookings} />;
-            case 'messages':
-                return <MessagesView />;
             case 'reviews':
                 return <ReviewsFullView reviews={reviews} />;
             case 'support':
@@ -2299,7 +2326,7 @@ const ServiceProvider = () => {
     };
 
     return (
-        <div className="min-h-screen bg-orange-50 dark:bg-slate-950 transition-colors duration-500 flex font-sans selection:bg-orange-200 dark:selection:bg-orange-900/30 text-slate-900 dark:text-slate-100">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-500 flex font-sans selection:bg-indigo-200 dark:selection:bg-indigo-900/30 text-slate-900 dark:text-slate-100">
             {/* Edit Service Modal */}
             {editingService && (
                 <AddEntityForm
@@ -2356,22 +2383,24 @@ const ServiceProvider = () => {
 
             {/* Background Ambience */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-orange-200/40 via-slate-50/0 to-slate-50/0 dark:from-orange-900/20 dark:via-slate-900/0 dark:to-slate-900/0" />
-                <div className="absolute -top-40 -right-40 w-96 h-96 bg-amber-200/30 dark:bg-amber-900/20 rounded-full blur-[100px] pointer-events-none z-0" />
-                <div className="absolute top-40 left-60 w-72 h-72 bg-orange-200/30 dark:bg-orange-900/20 rounded-full blur-[80px] pointer-events-none z-0 animate-pulse delay-1000" />
+                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-200/40 via-slate-50/0 to-slate-50/0 dark:from-indigo-900/20 dark:via-slate-900/0 dark:to-slate-900/0" />
+                <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-sky-600/10 rounded-full blur-[120px] animate-pulse" />
+                <div className="absolute bottom-[-10%] left-[-10%] w-[800px] h-[800px] bg-indigo-600/10 rounded-full blur-[150px] animate-pulse" style={{ animationDelay: '2s' }} />
             </div>
 
             {/* SIDEBAR */}
             <aside className={`w-72 bg-white/95  dark:bg-slate-900/95 backdrop-blur-xl h-screen fixed left-0 top-0 flex flex-col text-slate-600 dark:text-slate-300 z-50 border-r border-slate-200 dark:border-white/10 shadow-2xl transition-all duration-300 transform lg:translate-x-0 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
-                <div className="p-6 border-b mb-5 border-slate-200 dark:border-white/10 flex items-center justify-between">
-                    <div className="flex items-center gap-3 h-25 relative bottom-4">
-                        <img src="/favicon.png" alt="RentEase" className="h-14 w-15 relative left-1 top-4 object-contain" />
-                        <div>
-                            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter relative top-3 right-5">RentEase</h1>
-                            {/* <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-500 dark:text-orange-400 block relative bottom-1 top-10 right-14 ">Service Provider Dashboard</span> */}
+                <div className="p-8 border-b border-slate-200 dark:border-white/10">
+                    <div className="flex flex-col items-start gap-1">
+                        <div className="flex items-center gap-4">
+                            <div className="relative group">
+                                <div className="absolute inset-0 bg-sky-500 blur-[20px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full"></div>
+                                <img src="/favicon.png" alt="RentEase" className="min-w-15 min-h-15 object-contain relative right-2 top-0.5 z-10 drop-shadow-lg" />
+                            </div>
+                            <span className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter relative right-9">RentEase</span>
                         </div>
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-indigo-600 dark:from-sky-400 dark:to-indigo-400 block relative left-14 bottom-1">Service Provider Dashboard</span>
                     </div>
-                    <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 text-slate-400 hover:text-indigo-500"><XCircle /></button>
                 </div>
 
                 {/* Partner Status Card - REMOVED */}
@@ -2383,20 +2412,24 @@ const ServiceProvider = () => {
                         { id: 'services', label: 'Manage Services', icon: LayoutGrid },
                         { id: 'requests', label: 'Service Jobs', icon: ClipboardList },
                         { id: 'earnings', label: 'Earnings', icon: Wallet },
-                        { id: 'messages', label: 'Messages', icon: MessageCircle },
                         { id: 'reviews', label: 'My Reviews', icon: Star },
                         { id: 'support', label: 'Help & Support', icon: LifeBuoy },
                     ].map((item) => (
                         <button
                             key={item.id}
                             onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); if (item.id === 'services') setIsAddingService(false); }}
-                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden ${activeTab === item.id
-                                ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white font-bold shadow-lg shadow-orange-500/30'
-                                : 'hover:bg-orange-50 dark:hover:bg-white/5 hover:text-orange-600 dark:hover:text-amber-400 font-medium text-slate-500 dark:text-slate-400'}`}
+                            className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 group relative overflow-hidden text-sm font-bold ${activeTab === item.id
+                                ? 'text-white shadow-[0_8px_20px_-6px_rgba(14,165,233,0.5)] scale-[1.02]'
+                                : 'text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-sky-400 hover:bg-slate-50 dark:hover:bg-white/5'}`}
                         >
-                            <item.icon size={18} className={`transition-transform duration-300 ${activeTab === item.id ? "scale-110 text-white" : "group-hover:scale-110"}`} />
-                            <span className="relative z-10 text-sm">{item.label}</span>
-                            {activeTab === item.id && <ChevronRight size={14} className="ml-auto opacity-70" />}
+                            {activeTab === item.id && (
+                                <div className="absolute inset-0 bg-gradient-to-r from-sky-500 to-indigo-600 animate-in fade-in duration-300"></div>
+                            )}
+                            <item.icon size={20} className={`relative z-10 transition-transform duration-300 group-hover:scale-110 ${activeTab === item.id ? "text-white" : ""}`} />
+                            <span className="relative z-10">{item.label}</span>
+                            {activeTab === item.id && (
+                                <span className="absolute right-4 w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_10px_white] relative z-20"></span>
+                            )}
                         </button>
                     ))}
                 </nav>
@@ -2419,14 +2452,22 @@ const ServiceProvider = () => {
                     {/* Left: Check for Mobile Menu + Title */}
                     <div className="flex items-center gap-4">
                         <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg"><Menu size={20} /></button>
-                        <div>
-                            <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-600 dark:from-orange-400 dark:to-amber-500 tracking-tight">Service Provider Dashboard</h2>
-                            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Welcome back, <span className="text-orange-600 dark:text-orange-400 font-bold">{profile?.company_name || user?.company_name || user?.name || user?.first_name || user?.email?.split('@')[0] || 'Partner'}</span></p>
+                        <div className="flex flex-col">
+                            <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-indigo-600 dark:from-sky-400 dark:to-indigo-500 tracking-tight leading-tight">Service Provider Dashboard</h2>
+                            <div className="flex items-center gap-2">
+                                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Welcome back, <span className="text-sky-500 dark:text-sky-400 font-bold">{profile?.company_name || user?.company_name || user?.name || user?.first_name || user?.email?.split('@')[0] || 'Partner'}</span></p>
+                            </div>
                         </div>
                     </div>
 
                     {/* Right: Actions */}
                     <div className="flex items-center gap-6">
+                        <div className="relative">
+                            <button className="p-2 rounded-full text-slate-400 hover:text-sky-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-all">
+                                <Bell size={20} />
+                                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse" />
+                            </button>
+                        </div>
                         <div className="scale-90"><ThemeToggle /></div>
                         <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" />
 
@@ -2437,7 +2478,7 @@ const ServiceProvider = () => {
                                 <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-1">{user?.email}</p>
                             </div>
                             <div className="relative group cursor-pointer">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-amber-600 text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-orange-500/20 ring-2 ring-offset-2 ring-transparent dark:ring-slate-900 group-hover:ring-orange-500/20 transition-all overflow-hidden border border-white/20">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-indigo-500/20 ring-2 ring-offset-2 ring-transparent dark:ring-slate-900 group-hover:ring-indigo-500/20 transition-all overflow-hidden border border-white/20">
                                     {profile?.avatar_url ? (
                                         <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
                                     ) : (

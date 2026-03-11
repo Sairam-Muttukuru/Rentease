@@ -11,8 +11,10 @@ import {
     Bell,
     Check
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Card } from '../../ui/card';
 import LandlordButton from '../common/LandlordButton';
+import PropertyRules from './PropertyRules';
 import RevenueTrendsChart from './charts/RevenueTrendsChart';
 import ComplaintsDistributionChart from './charts/ComplaintsDistributionChart';
 
@@ -23,7 +25,9 @@ const DashboardHome = ({
     loadingProperties,
     isDarkMode,
     setActiveTab,
-    tenants
+    tenants,
+    complaints = [],
+    payments = []
 }) => {
     return (
         <div className="space-y-8 fade-in-up">
@@ -52,8 +56,8 @@ const DashboardHome = ({
                 <div className="lg:col-span-2 space-y-6">
                     {/* Charts Section */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[320px]">
-                        <RevenueTrendsChart isDarkMode={isDarkMode} />
-                        <ComplaintsDistributionChart isDarkMode={isDarkMode} />
+                        <RevenueTrendsChart isDarkMode={isDarkMode} payments={payments} />
+                        <ComplaintsDistributionChart isDarkMode={isDarkMode} complaints={complaints} />
                     </div>
 
                     <div className="space-y-6">
@@ -80,44 +84,6 @@ const DashboardHome = ({
                                 ))
                             )}
                         </Card>
-
-                        {/* Properties List */}
-                        <div className="space-y-6">
-                            <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>My Properties</h3>
-                            {landlordProperties.length === 0 ? (
-                                <Card isDarkMode={isDarkMode} className="p-8 text-center border-dashed border-2 border-slate-700 bg-transparent">
-                                    <div className="w-16 h-16 mx-auto bg-slate-800/50 rounded-full flex items-center justify-center mb-4">
-                                        <Building size={32} className="text-slate-500" />
-                                    </div>
-                                    <h3 className="text-lg font-bold mb-2 text-slate-400">No Properties Found</h3>
-                                    <p className="text-slate-500 mb-4 text-sm">You haven't added any properties yet.</p>
-                                    <LandlordButton onClick={() => setActiveTab('add-property')} icon={Plus}>Add First Property</LandlordButton>
-                                </Card>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {landlordProperties.map((property) => (
-                                        <Card key={property.id} isDarkMode={isDarkMode} className="group overflow-hidden hover:border-violet-500/50 transition-all">
-                                            <div className="relative h-40">
-                                                <img src={property.image} alt={property.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                                                <div className="absolute top-3 right-3 flex gap-2">
-                                                    <span className={`px-2 py-1 rounded-md text-[10px] uppercase font-bold bg-black/50 backdrop-blur-md text-white border border-white/10`}>
-                                                        {property.status}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div className="p-4">
-                                                <h4 className={`text-lg font-bold mb-1 truncate ${isDarkMode ? 'text-white' : 'text-black'}`}>{property.name}</h4>
-                                                <p className="text-sm text-slate-500 mb-3 flex items-center gap-1"><MapPin size={12} /> {property.address}</p>
-                                                <div className="flex items-center justify-between pt-3 border-t border-slate-800/50">
-                                                    <span className={`font-black text-lg ${isDarkMode ? 'text-white' : 'text-black'}`}>₹{property.rent}<span className="text-xs font-medium text-slate-500">/mo</span></span>
-                                                    <LandlordButton variant="outline" className="h-8 text-xs" onClick={() => setActiveTab('properties')}>View Details</LandlordButton>
-                                                </div>
-                                            </div>
-                                        </Card>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
                     </div>
                 </div>
 
@@ -133,15 +99,18 @@ const DashboardHome = ({
                         <div className="relative h-48 w-48 mx-auto mb-4">
                             <svg viewBox="0 0 100 100" className="transform -rotate-90 w-full h-full">
                                 <circle cx="50" cy="50" r="40" fill="transparent" stroke={isDarkMode ? "#1e293b" : "#f1f5f9"} strokeWidth="12" />
-                                <circle
+                                <motion.circle
                                     cx="50"
                                     cy="50"
                                     r="40"
                                     fill="transparent"
                                     stroke="#10b981"
                                     strokeWidth="12"
-                                    strokeDasharray={`${((tenants.filter(t => t.status === 'PAID').length || 0) / (tenants.length || 1)) * 251.2} 251.2`}
-                                    className="transition-all duration-1000 ease-out"
+                                    strokeDasharray="251.2"
+                                    initial={{ strokeDashoffset: 251.2 }}
+                                    animate={{ strokeDashoffset: 251.2 - ((tenants.filter(t => t.status === 'PAID').length || 0) / (tenants.length || 1)) * 251.2 }}
+                                    transition={{ duration: 2, delay: 0.5, ease: "easeOut" }}
+                                    className="drop-shadow-[0_0_8px_rgba(16,185,129,0.3)]"
                                 />
                             </svg>
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -188,6 +157,48 @@ const DashboardHome = ({
                             </button>
                         ))}
                     </Card>
+                </div>
+
+                <div className="lg:col-span-3">
+                    <PropertyRules properties={landlordProperties} isDarkMode={isDarkMode} />
+                </div>
+
+                {/* Properties List */}
+                <div className="lg:col-span-3 space-y-6">
+                    <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>My Properties</h3>
+                    {landlordProperties.length === 0 ? (
+                        <Card isDarkMode={isDarkMode} className="p-8 text-center border-dashed border-2 border-slate-700 bg-transparent">
+                            <div className="w-16 h-16 mx-auto bg-slate-800/50 rounded-full flex items-center justify-center mb-4">
+                                <Building size={32} className="text-slate-500" />
+                            </div>
+                            <h3 className="text-lg font-bold mb-2 text-slate-400">No Properties Found</h3>
+                            <p className="text-slate-500 mb-4 text-sm">You haven't added any properties yet.</p>
+                            <LandlordButton onClick={() => setActiveTab('add-property')} icon={Plus}>Add First Property</LandlordButton>
+                        </Card>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {landlordProperties.map((property) => (
+                                <Card key={property.id} isDarkMode={isDarkMode} className="group overflow-hidden hover:border-violet-500/50 transition-all">
+                                    <div className="relative h-48">
+                                        <img src={property.image} alt={property.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                        <div className="absolute top-3 right-3 flex gap-2">
+                                            <span className={`px-2 py-1 rounded-md text-[10px] uppercase font-bold bg-black/50 backdrop-blur-md text-white border border-white/10`}>
+                                                {property.status}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="p-4">
+                                        <h4 className={`text-lg font-bold mb-1 truncate ${isDarkMode ? 'text-white' : 'text-black'}`}>{property.name}</h4>
+                                        <p className="text-sm text-slate-500 mb-3 flex items-center gap-1"><MapPin size={12} /> {property.address}</p>
+                                        <div className="flex items-center justify-between pt-3 border-t border-slate-800/50">
+                                            <span className={`font-black text-lg ${isDarkMode ? 'text-white' : 'text-black'}`}>₹{property.rent}<span className="text-xs font-medium text-slate-500">/mo</span></span>
+                                            <LandlordButton variant="outline" className="h-8 text-xs" onClick={() => setActiveTab('properties')}>View Details</LandlordButton>
+                                        </div>
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

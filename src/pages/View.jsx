@@ -82,7 +82,15 @@ import {
 
   Tv,
 
-  Bell
+  Bell,
+
+  BookOpen,
+
+  Activity,
+
+  Train,
+
+  ShoppingBag
 
 } from 'lucide-react';
 
@@ -91,6 +99,7 @@ import logo from "/favicon.png";
 import RevealOnScroll from '../components/RevealOnScroll';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import FreeMap from '../components/common/FreeMap';
 
 // --- Global Styles for Animation ---
 
@@ -1184,11 +1193,46 @@ const PropertyDetailsPage = ({ property, isLoggedIn, onLogin }) => {
 
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
 
-
+  const [activeCategory, setActiveCategory] = useState(null);
+  const [pois, setPois] = useState([]);
 
   if (!property) return null;
 
+  const generateMockPOIs = (category, lat, lng) => {
+    const categories = {
+      education: ['High School', 'Public Library', 'University Campus', 'Primary School'],
+      healthcare: ['City Hospital', 'Dental Clinic', 'Pharmacy', 'Medical Center'],
+      commute: ['Metro Station', 'Bus Stop', 'Train Station', 'Taxi Stand'],
+      food: ['Cafe', 'Restaurant', 'Bakery', 'Local Bistro'],
+      shopping: ['Supermarket', 'Shopping Mall', 'Convenience Store', 'Boutique']
+    };
+    
+    const names = categories[category] || categories.food;
+    const baseLat = parseFloat(lat) || 13.6288;
+    const baseLng = parseFloat(lng) || 79.4192;
+    
+    return names.map((name, i) => {
+      const latOffset = (Math.random() - 0.5) * 0.02;
+      const lngOffset = (Math.random() - 0.5) * 0.02;
+      return {
+        name: name,
+        category: category,
+        latitude: baseLat + latOffset,
+        longitude: baseLng + lngOffset,
+        distance: `${(Math.random() * 2 + 0.5).toFixed(1)} km`
+      };
+    });
+  };
 
+  const handleCategoryClick = (category) => {
+    if (activeCategory === category) {
+      setActiveCategory(null);
+      setPois([]);
+    } else {
+      setActiveCategory(category);
+      setPois(generateMockPOIs(category, property.latitude, property.longitude));
+    }
+  };
 
   const nextImage = () => setCurrentImgIndex((prev) => (prev + 1) % property.images.length);
 
@@ -1428,30 +1472,37 @@ const PropertyDetailsPage = ({ property, isLoggedIn, onLogin }) => {
 
             {/* MAP CARD */}
 
-            <div className="h-96 rounded-3xl bg-gray-200 dark:bg-[#111] relative overflow-hidden group shadow-lg">
+            <div className="h-96 rounded-3xl bg-gray-200 dark:bg-[#111] relative overflow-hidden group shadow-lg mb-4">
 
-              <iframe
+              <FreeMap properties={[property]} pois={pois} singleProperty={true} center={[parseFloat(property.latitude) || 13.6288, parseFloat(property.longitude) || 79.4192]} zoom={13} />
 
-                title="map"
+            </div>
 
-                width="100%"
-
-                height="100%"
-
-                frameBorder="0"
-
-                scrolling="no"
-
-                marginHeight="0"
-
-                marginWidth="0"
-
-                src={`https://maps.google.com/maps?q=${encodeURIComponent(property.location)}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
-
-                className="w-full h-full filter grayscale hover:grayscale-0 transition-all duration-700"
-
-              ></iframe>
-
+            {/* CATEGORY EXPLORE BUTTONS */}
+            <div className="bg-white dark:bg-[#111] rounded-3xl p-6 border border-gray-100 dark:border-white/5 shadow-sm">
+              <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Explore Neighbourhood</h4>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  { id: 'education', label: 'Education', icon: BookOpen, color: 'text-violet-500' },
+                  { id: 'healthcare', label: 'Healthcare', icon: Activity, color: 'text-rose-500' },
+                  { id: 'commute', label: 'Commute', icon: Train, color: 'text-blue-500' },
+                  { id: 'food', label: 'Food and Drinks', icon: Coffee, color: 'text-orange-500' },
+                  { id: 'shopping', label: 'Shopping', icon: ShoppingBag, color: 'text-emerald-500' }
+                ].map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => handleCategoryClick(cat.id)}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-2xl border transition-all ${
+                      activeCategory === cat.id
+                        ? 'border-violet-500 bg-violet-50 dark:bg-violet-500/10 dark:border-violet-500'
+                        : 'border-gray-200 dark:border-white/10 hover:border-violet-300 dark:hover:border-violet-500/50'
+                    }`}
+                  >
+                    <cat.icon className={`w-5 h-5 ${cat.color}`} />
+                    <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{cat.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
           </div>

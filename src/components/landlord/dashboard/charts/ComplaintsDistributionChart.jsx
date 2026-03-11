@@ -1,15 +1,36 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
 import { Card } from '../../../ui/card';
 
-const ComplaintsDistributionChart = ({ isDarkMode }) => {
+const ComplaintsDistributionChart = ({ isDarkMode, complaints = [] }) => {
+    // Process complaints to get real categories and counts
+    const categories = {
+        'Plumbing': 0,
+        'Maintenance': 0,
+        'Electrical': 0,
+        'Security': 0,
+        'Other': 0
+    };
+
+    complaints.forEach(c => {
+        const cat = c.category || 'Other';
+        if (categories.hasOwnProperty(cat)) {
+            categories[cat]++;
+        } else {
+            categories['Other']++;
+        }
+    });
+
     const data = [
-        { label: "Plumbing", value: 12, color: "bg-blue-600" },
-        { label: "Maintenance", value: 8, color: "bg-blue-700" },
-        { label: "Other", value: 5, color: "bg-blue-800" },
+        { label: "Plumbing", value: categories['Plumbing'], color: "bg-indigo-600" },
+        { label: "Maintenance", value: categories['Maintenance'], color: "bg-blue-600" },
+        { label: "Electrical", value: categories['Electrical'], color: "bg-violet-600" },
+        { label: "Other", value: categories['Security'] + categories['Other'], color: "bg-slate-600" },
     ];
-    const maxVal = 16;
-    const yAxisLabels = [0, 4, 8, 12, 16];
+
+    const maxVal = Math.max(16, ...data.map(d => d.value)) + 4;
+    const yAxisLabels = [0, Math.ceil(maxVal / 4), Math.ceil(maxVal / 2), Math.ceil(maxVal * 0.75), maxVal];
 
     return (
         <Card isDarkMode={isDarkMode} className="p-6 h-full flex flex-col">
@@ -30,12 +51,24 @@ const ComplaintsDistributionChart = ({ isDarkMode }) => {
 
                 <div className="absolute inset-0 left-8 pt-2 pb-6 flex items-end justify-around pl-4">
                     {data.map((d, i) => (
-                        <div key={i} className="flex flex-col items-center gap-3 h-full justify-end w-full group px-2">
-                            <div
-                                className={`w-16 rounded-t-lg transition-all duration-500 group-hover:opacity-80 group-hover:scale-y-105 ${d.color} shadow-lg`}
-                                style={{ height: `${(d.value / maxVal) * 100}%` }}
-                            ></div>
-                            <span className={`text-sm font-black mt-1 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{d.label}</span>
+                        <div key={i} className="flex flex-col items-center gap-2 h-full justify-end w-full group px-2">
+                            <motion.span
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 1 + i * 0.1 }}
+                                className={`text-xs font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}
+                            >
+                                {d.value}
+                            </motion.span>
+                            <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: `${(d.value / maxVal) * 85}%`, opacity: 1 }}
+                                transition={{ duration: 1, delay: i * 0.2, ease: "easeOut" }}
+                                className={`w-14 rounded-t-lg transition-all duration-300 group-hover:opacity-80 group-hover:scale-x-110 ${d.color} shadow-lg`}
+                            />
+                            <span className={`text-[11px] font-bold mt-1 text-center whitespace-nowrap ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                {d.label}
+                            </span>
                         </div>
                     ))}
                 </div>

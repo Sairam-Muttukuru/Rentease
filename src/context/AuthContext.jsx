@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 
 const AuthContext = createContext(null);
 
@@ -43,6 +44,24 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         window.location.reload(); // Hard reset state
     };
+
+    useEffect(() => {
+        // Set up global axios interceptor for 401 errors
+        const interceptor = axios.interceptors.response.use(
+            (response) => response,
+            (error) => {
+                if (error.response && error.response.status === 401) {
+                    console.warn('401 Unauthorized detected. Logging out user.');
+                    logout();
+                }
+                return Promise.reject(error);
+            }
+        );
+
+        return () => {
+            axios.interceptors.response.eject(interceptor);
+        };
+    }, []);
 
     return (
         <AuthContext.Provider value={{ user, login, logout, loading }}>

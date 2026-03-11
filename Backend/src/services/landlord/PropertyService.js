@@ -1,14 +1,21 @@
 const Property = require("../../models/landlord/PropertyModel");
 const Images = require("../../models/landlord/PropertyImageModel");
 const Amenities = require("../../models/landlord/PropertyAmenityModel");
+const { geocodeAddress } = require("../../utils/geocoder");
 
 /* =======================
    CREATE PROPERTY
 ======================= */
 exports.createProperty = async (landlordId, data) => {
+  // Automatic Geocoding
+  const fullAddress = `${data.address}, ${data.locality}, ${data.city}`;
+  const coords = await geocodeAddress(fullAddress);
+
   const property = await Property.createProperty({
     landlord_id: landlordId,
-    ...data
+    ...data,
+    latitude: coords ? coords.lat : null,
+    longitude: coords ? coords.lng : null
   });
 
   // images
@@ -91,6 +98,16 @@ exports.getPropertyDetails = async (propertyId) => {
 ======================= */
 exports.updateProperty = async (propertyId, landlordId, data) => {
   // 1️⃣ Update property basic details
+  // Automatic Geocoding
+  if (data.address || data.locality || data.city) {
+    const fullAddress = `${data.address || ''}, ${data.locality || ''}, ${data.city || ''}`;
+    const coords = await geocodeAddress(fullAddress);
+    if (coords) {
+      data.latitude = coords.lat;
+      data.longitude = coords.lng;
+    }
+  }
+
   const updatedProperty = await Property.updateProperty(
     propertyId,
     landlordId,

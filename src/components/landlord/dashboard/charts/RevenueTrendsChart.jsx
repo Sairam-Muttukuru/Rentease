@@ -1,29 +1,46 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { TrendingUp } from 'lucide-react';
 import { Card } from '../../../ui/card';
 
-const RevenueTrendsChart = ({ isDarkMode }) => {
-    const data = [
-        { month: "Jan", amount: 45000 },
-        { month: "Feb", amount: 52000 },
-        { month: "Mar", amount: 48000 },
-        { month: "Apr", amount: 61000 },
-        { month: "May", amount: 55000 },
-        { month: "Jun", amount: 67000 },
-    ];
+const RevenueTrendsChart = ({ isDarkMode, payments = [] }) => {
+    // Process payments to get monthly totals
+    const last6Months = [];
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        last6Months.push({
+            month: d.toLocaleString('default', { month: 'short' }),
+            monthNum: d.getMonth(),
+            year: d.getFullYear(),
+            amount: 0
+        });
+    }
 
-    const maxVal = 80000;
-    const width = 600; // Increased width for better resolution
+    payments.forEach(p => {
+        const pDate = new Date(p.date);
+        const match = last6Months.find(m => m.monthNum === pDate.getMonth() && m.year === pDate.getFullYear());
+        if (match) {
+            match.amount += Number(p.amount);
+        }
+    });
+
+    const chartData = last6Months.map(({ month, amount }) => ({ month, amount }));
+
+    const maxAmount = Math.max(...chartData.map(d => d.amount), 5000);
+    const maxVal = Math.ceil(maxAmount / 10000) * 10000 + 10000;
+
+    const width = 600;
     const height = 300;
     const padding = 40;
-    const leftPadding = 60; // Extra padding for Y-axis labels
-    const bottomPadding = 40; // Extra padding for X-axis labels
+    const leftPadding = 60;
+    const bottomPadding = 40;
 
-    const yAxisLabels = [0, 20000, 40000, 60000, 80000];
+    const yAxisLabels = [0, maxVal * 0.25, maxVal * 0.5, maxVal * 0.75, maxVal];
 
     // Calculate coordinates
-    const pointData = data.map((d, i) => {
-        const x = leftPadding + (i / (data.length - 1)) * (width - leftPadding - padding);
+    const pointData = chartData.map((d, i) => {
+        const x = leftPadding + (i / (chartData.length - 1)) * (width - leftPadding - padding);
         const y = height - bottomPadding - ((d.amount / maxVal) * (height - bottomPadding - padding));
         return { x, y, ...d };
     });
@@ -62,14 +79,17 @@ const RevenueTrendsChart = ({ isDarkMode }) => {
                                     textAnchor="end"
                                     className={`text-[12px] font-medium ${isDarkMode ? 'fill-slate-400' : 'fill-slate-500'}`}
                                 >
-                                    {label > 0 ? `${label / 1000}k` : 0}
+                                    {label >= 1000 ? `${Math.round(label / 1000)}k` : Math.round(label)}
                                 </text>
                             </g>
                         );
                     })}
 
-                    {/* Chart Line */}
-                    <polyline
+                    {/* Chart Line with Animated Draw Effect */}
+                    <motion.polyline
+                        initial={{ pathLength: 0, opacity: 0 }}
+                        animate={{ pathLength: 1, opacity: 1 }}
+                        transition={{ duration: 2, ease: "easeInOut" }}
                         fill="none"
                         stroke="#3b82f6"
                         strokeWidth="4"
@@ -92,12 +112,15 @@ const RevenueTrendsChart = ({ isDarkMode }) => {
                                 {p.month}
                             </text>
 
-                            {/* Circle Point */}
-                            <circle
+                            {/* Circle Point with Individual Animation */}
+                            <motion.circle
+                                initial={{ scale: 0, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ delay: 1.5 + (i * 0.1), duration: 0.5 }}
                                 cx={p.x}
                                 cy={p.y}
                                 r="6"
-                                className="fill-blue-500 stroke-white stroke-[3px] cursor-pointer hover:r-8 transition-all"
+                                className="fill-blue-500 stroke-white dark:stroke-slate-900 stroke-[3px] cursor-pointer hover:r-8 transition-all"
                             />
                         </g>
                     ))}

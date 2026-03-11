@@ -3,7 +3,7 @@ import { User, Shield, Phone, MessageCircle } from 'lucide-react';
 import Card from '../ui/Card';
 import { useTheme } from "../../../context/ThemeContext";
 
-const ImportantContacts = ({ user, onChatClick }) => {
+const ImportantContacts = ({ user }) => {
     const { theme } = useTheme();
     const isDarkMode = theme === 'dark';
 
@@ -18,16 +18,6 @@ const ImportantContacts = ({ user, onChatClick }) => {
                     <div>
                         <p className={`font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{user.landlord || "Landlord"}</p>
                         <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Property Manager</p>
-                    </div>
-                    <div className="ml-auto flex gap-2">
-                        <button
-                            onClick={onChatClick}
-                            className={`p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}
-                            title="Chat with Landlord"
-                        >
-                            <MessageCircle size={18} />
-                        </button>
-
                     </div>
                 </div>
 

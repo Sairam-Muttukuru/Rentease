@@ -16,9 +16,11 @@ import {
   Moon
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const { login: setAuthUser, user } = useAuth();
   // State for form fields & Theme
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,7 +28,25 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { theme, toggleTheme } = useTheme();
 
-  // Toggle Theme Handler is now from context
+
+  // Auto-redirect if already logged in
+  React.useEffect(() => {
+    if (user) {
+      const role = user.role?.toLowerCase();
+      if (role === 'landlord') {
+        navigate('/landlord/dashboard');
+      } else if (role === 'admin') {
+        navigate('/admin/dashboard');
+      } else if (role === 'service_provider') {
+        navigate('/service-provider/dashboard');
+      } else {
+        navigate('/tenant/dashboard');
+      }
+    }
+  }, [user, navigate]);
+
+
+
 
   // Mock login handler
   // const handleLogin = (e) => {
@@ -94,14 +114,10 @@ const LoginPage = () => {
       }
 
       // role-based redirect
-      window.dispatchEvent(new Event('storage')); // trigger navbar update
-      toast.success("Login successful!");
-
       // role-based redirect
-      // window.dispatchEvent(new Event('storage')); // trigger navbar update
-      // toast.success("Login successful!");
-
-      setTimeout(() => { navigate('/'); }, 1000);
+      setAuthUser(user, accessToken); // Update context
+      toast.success("Login successful!");
+      // Navigation is now handled by the useEffect above
     } catch (error) {
       console.error("Login error:", error);
       toast.error(error.response?.data?.error || error.message || "Login failed");

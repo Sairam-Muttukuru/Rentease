@@ -15,7 +15,6 @@ import ImportantContacts from './ImportantContacts';
 import RequestedServices from './RequestedServices';
 import VacateCard from './VacateCard';
 import RecentPaymentsPreview from './RecentPaymentsPreview';
-import ChatWindow from '../../chat/ChatWindow';
 
 const DashboardHome = ({
     user,
@@ -39,14 +38,7 @@ const DashboardHome = ({
 }) => {
     const { theme } = useTheme();
     const isDarkMode = theme === 'dark';
-    const [isChatOpen, setIsChatOpen] = useState(false);
 
-    // Construct landlord recipient object
-    const landlordRecipient = {
-        name: user?.landlord || "Property Manager",
-        avatar_url: null, // Placeholder or fetch if available
-        role: "landlord"
-    };
 
     return (
         <div className="space-y-8">
@@ -109,13 +101,11 @@ const DashboardHome = ({
                         isDarkMode={isDarkMode}
                     />
 
-                    <HomeServicesTeaser navigate={navigate} />
-
-                    <UsageChart user={user} isPaid={isPaid} />
+                    <UsageChart user={user} isPaid={isPaid} payments={payments} />
 
                     <RecentActivity dashboardNotifications={dashboardNotifications} />
 
-                    <PropertyRules />
+                    <PropertyRules rules={user?.guidelines} />
 
                     <RecentComplaintsPreview complaints={complaints} navigate={navigate} />
                 </div>
@@ -126,7 +116,7 @@ const DashboardHome = ({
 
                     <QuickActions navigate={navigate} isPaid={isPaid} />
 
-                    <ImportantContacts user={user} onChatClick={() => setIsChatOpen(true)} />
+                    <ImportantContacts user={user} />
 
                     <RequestedServices
                         serviceRequests={serviceRequests}
@@ -139,15 +129,6 @@ const DashboardHome = ({
 
                 </div>
             </div>
-
-            {/* Chat Window */}
-            <ChatWindow
-                isOpen={isChatOpen}
-                onClose={() => setIsChatOpen(false)}
-                recipient={landlordRecipient}
-                isDarkMode={isDarkMode}
-                currentUserRole="tenant"
-            />
         </div >
     );
 };

@@ -1,4 +1,5 @@
 const db = require("../../config/db");
+const logger = require("../../utils/logger");
 
 const createUser = async (user) => {
     const query = `
@@ -74,14 +75,29 @@ const updateUser = async (id, data) => {
 };
 
 const findUserBySlug = async (slug) => {
-    // Slug is expected to be "first-last" lowercase
+    // Slug is expected to be "first-last" or "first_last" lowercase
+    logger(slug, "findUserBySlug: INPUT");
+    const normalizedSlug = slug.toLowerCase().replace(/_/g, '-');
+    logger(normalizedSlug, "findUserBySlug: NORMALIZED");
+
     const res = await db.query(
-        "SELECT * FROM users WHERE LOWER(CONCAT(first_name, '-', last_name)) = $1",
-        [slug.toLowerCase()]
+        "SELECT * FROM users WHERE LOWER(CONCAT(TRIM(first_name), '-', TRIM(last_name))) = $1",
+        [normalizedSlug]
     );
+
+    logger(res.rows.length, "findUserBySlug: MATCH COUNT");
+    if (res.rows.length > 0) {
+        logger({ id: res.rows[0].id, email: res.rows[0].email }, "findUserBySlug: MATCH DATA");
+    }
     return res.rows[0];
 };
 
-module.exports = { createUser, findUserByEmail, updatePasswordByEmail, findUserById, getUserById, updateUser, findUserBySlug };
-
-
+module.exports = {
+    createUser,
+    findUserByEmail,
+    updatePasswordByEmail,
+    findUserById,
+    getUserById,
+    updateUser,
+    findUserBySlug
+};

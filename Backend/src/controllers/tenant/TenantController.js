@@ -1,6 +1,7 @@
 const TenantService = require("../../services/tenant/TenantService");
 const ServiceProviderService = require("../../services/serviceProvider/ServiceProviderService");
 const BookingService = require("../../services/booking/BookingService");
+const logger = require("../../utils/logger");
 
 exports.addTenant = async (req, res) => {
   try {
@@ -69,6 +70,7 @@ exports.getDashboardData = async (req, res) => {
     const data = await TenantService.getDashboardData(req.user.id, userName);
     res.json(data);
   } catch (err) {
+    logger(err, `getDashboardData(userId=${req.user?.id}, userName=${req.query.userName})`);
     res.status(404).json({ error: err.message });
   }
 };
@@ -79,6 +81,7 @@ exports.getPayments = async (req, res) => {
     const payments = await TenantService.getPayments(req.user.id, userName);
     res.json(payments);
   } catch (err) {
+    logger(err, `getPayments(userId=${req.user?.id}, userName=${req.query.userName})`);
     res.status(500).json({ error: err.message });
   }
 };
@@ -89,6 +92,7 @@ exports.getComplaints = async (req, res) => {
     const complaints = await TenantService.getComplaints(req.user.id, userName);
     res.json(complaints);
   } catch (err) {
+    logger(err, `getComplaints(userId=${req.user?.id}, userName=${req.query.userName})`);
     res.status(500).json({ error: err.message });
   }
 };

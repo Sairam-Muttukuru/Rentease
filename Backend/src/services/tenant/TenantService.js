@@ -5,6 +5,7 @@ const UserModel = require("../../models/common/UserModel");
 const Complaint = require("../../models/complaint/ComplaintModel");
 const ServiceRequestModel = require("../../models/serviceProvider/ServiceRequestModel");
 const sendTenantInvitationEmail = require("../../utils/email/sendTenantInvitationEmail");
+const logger = require("../../utils/logger");
 
 // ... existing code ...
 
@@ -15,13 +16,22 @@ exports.getPayments = async (requesterId, targetUserName = null) => {
     const targetUser = await UserModel.findUserBySlug(targetUserName);
     if (!targetUser) throw new Error("Tenant not found");
 
-    // Allow if searching for self
-    if (targetUser.id !== requesterId) {
+    logger({ requesterId, targetUserId: targetUser.id, targetUserName }, "getPayments: PRE-ACCESS CHECK");
+
+    // Allow if searching for self OR requester is ADMIN
+    const isSelf = targetUser.id == requesterId;
+    const requester = await UserModel.findUserById(requesterId);
+    const isAdmin = requester?.role === 'ADMIN';
+
+    logger({ isSelf, isAdmin }, "getPayments: ACCESS CHECK RESULTS");
+
+    if (!isSelf && !isAdmin) {
       // Verify landlord handles this tenant
       const tenants = await Tenant.getByUserId(targetUser.id);
       const isManaged = tenants?.some(t => t.landlord_id == requesterId);
+      logger(isManaged, "getPayments: IS MANAGED");
       if (!isManaged) {
-        throw new Error("Access denied");
+        throw new Error(`Access denied: Requester ${requesterId} does not manage Target ${targetUser.id}`);
       }
     }
     userId = targetUser.id;
@@ -55,12 +65,21 @@ exports.getComplaints = async (requesterId, targetUserName = null) => {
     const targetUser = await UserModel.findUserBySlug(targetUserName);
     if (!targetUser) throw new Error("Tenant not found");
 
-    // Allow if searching for self
-    if (targetUser.id !== requesterId) {
+    logger({ requesterId, targetUserId: targetUser.id, targetUserName }, "getComplaints: PRE-ACCESS CHECK");
+
+    // Allow if searching for self OR requester is ADMIN
+    const isSelf = targetUser.id == requesterId;
+    const requester = await UserModel.findUserById(requesterId);
+    const isAdmin = requester?.role === 'ADMIN';
+
+    logger({ isSelf, isAdmin }, "getComplaints: ACCESS CHECK RESULTS");
+
+    if (!isSelf && !isAdmin) {
       const tenants = await Tenant.getByUserId(targetUser.id);
       const isManaged = tenants?.some(t => t.landlord_id == requesterId);
+      logger(isManaged, "getComplaints: IS MANAGED");
       if (!isManaged) {
-        throw new Error("Access denied");
+        throw new Error(`Access denied: Requester ${requesterId} does not manage Target ${targetUser.id}`);
       }
     }
     userId = targetUser.id;
@@ -194,13 +213,22 @@ exports.getDashboardData = async (requesterId, targetUserName = null) => {
     const targetUser = await UserModel.findUserBySlug(targetUserName);
     if (!targetUser) throw new Error("Tenant not found");
 
-    // Allow if searching for self
-    if (targetUser.id !== requesterId) {
+    logger({ requesterId, targetUserId: targetUser.id, targetUserName }, "getDashboardData: PRE-ACCESS CHECK");
+
+    // Allow if searching for self OR requester is ADMIN
+    const isSelf = targetUser.id == requesterId;
+    const requester = await UserModel.findUserById(requesterId);
+    const isAdmin = requester?.role === 'ADMIN';
+
+    logger({ isSelf, isAdmin }, "getDashboardData: ACCESS CHECK RESULTS");
+
+    if (!isSelf && !isAdmin) {
       // Verify landlord handles this tenant
       const tenants = await Tenant.getByUserId(targetUser.id);
       const isManaged = tenants?.some(t => t.landlord_id == requesterId);
+      logger(isManaged, "getDashboardData: IS MANAGED");
       if (!isManaged) {
-        throw new Error("Access denied");
+        throw new Error(`Access denied: Requester ${requesterId} does not manage Target ${targetUser.id}`);
       }
     }
     userId = targetUser.id;

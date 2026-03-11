@@ -1,4 +1,6 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+import logo from "/favicon.png";
 
 const PreLoader = ({ userName, isDarkMode }) => {
     // Split name to get first name for a more personal touch
@@ -9,11 +11,11 @@ const PreLoader = ({ userName, isDarkMode }) => {
         bg: isDarkMode ? 'bg-zinc-950' : 'bg-slate-50',
         blob1: isDarkMode ? 'bg-indigo-500/10' : 'bg-indigo-400/20',
         blob2: isDarkMode ? 'bg-violet-500/10' : 'bg-purple-400/20',
-        iconBg: isDarkMode ? 'bg-zinc-900/50 border-white/5' : 'bg-white/60 border-indigo-100',
+        iconBg: isDarkMode ? 'bg-zinc-900/50 border-white/10' : 'bg-white/80 border-indigo-100',
         iconColor: isDarkMode ? 'text-white' : 'text-indigo-600',
-        textMain: isDarkMode ? 'from-white via-indigo-200 to-indigo-400' : 'from-slate-900 via-indigo-800 to-indigo-600',
-        textSub: isDarkMode ? 'text-indigo-400' : 'text-indigo-500',
-        textMuted: isDarkMode ? 'text-zinc-500' : 'text-slate-400',
+        textMain: isDarkMode ? 'from-white via-indigo-100 to-indigo-400' : 'from-slate-900 via-indigo-800 to-indigo-600',
+        textSub: isDarkMode ? 'text-indigo-300' : 'text-indigo-600',
+        textMuted: isDarkMode ? 'text-indigo-200/90' : 'text-slate-500',
         progressBg: isDarkMode ? 'bg-zinc-900' : 'bg-slate-200',
         shadow: isDarkMode ? 'shadow-2xl' : 'shadow-xl shadow-indigo-100/50',
         keyBg: isDarkMode ? 'bg-indigo-500' : 'bg-indigo-600',
@@ -34,20 +36,12 @@ const PreLoader = ({ userName, isDarkMode }) => {
                 {/* Animated Home Icon */}
                 <div className="relative group">
                     <div className={`absolute -inset-4 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full ${theme.glow} group-hover:opacity-40 transition-opacity duration-1000 animate-pulse`}></div>
-                    <div className={`relative p-6 backdrop-blur-xl border rounded-2xl ${theme.iconBg} ${theme.shadow} transform transition-all duration-700 hover:scale-105`}>
-                        <svg
-                            className={`w-16 h-16 ${theme.iconColor} drop-shadow-sm transition-colors duration-500`}
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={1.5}
-                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                            />
-                        </svg>
+                    <div className="relative group">
+                        <img
+                            src={logo}
+                            className="w-56 h-56 object-contain drop-shadow-[0_0_30px_rgba(99,102,241,0.5)] animate-pulse [animation-duration:4s]"
+                            alt="RentEase"
+                        />
 
                         {/* Key Element Animation */}
                         <div className={`absolute -bottom-2 -right-2 ${theme.keyBg} p-2 rounded-full shadow-lg animate-bounce [animation-duration:3s]`}>
@@ -72,9 +66,13 @@ const PreLoader = ({ userName, isDarkMode }) => {
                         </h2>
                     )}
 
-                    <div className={`flex items-center justify-center gap-2 mt-4 ${theme.textMuted} text-sm font-medium animate-fade-in-up delay-300`}>
-                        <span className={`w-2 h-2 ${isDarkMode ? 'bg-indigo-500' : 'bg-indigo-600'} rounded-full animate-pulse`}></span>
-                        <span>Preparing your dashboard...</span>
+                    <div className={`flex items-center justify-center gap-3 mt-6 ${theme.textMuted} text-base font-black tracking-widest uppercase animate-fade-in-up delay-300`}>
+                        <span className={`w-2.5 h-2.5 ${isDarkMode ? 'bg-indigo-400 shadow-[0_0_10px_rgba(129,140,248,0.8)]' : 'bg-indigo-600'} rounded-full animate-pulse`}></span>
+                        <span>Preparing your dashboard</span>
+                        <motion.span
+                            animate={{ opacity: [0, 1, 0] }}
+                            transition={{ duration: 1.5, repeat: Infinity, times: [0, 0.5, 1] }}
+                        >...</motion.span>
                     </div>
                 </div>
 
@@ -85,7 +83,7 @@ const PreLoader = ({ userName, isDarkMode }) => {
                 <div className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500 w-1/2 animate-[loading_2s_ease-in-out_infinite]"></div>
             </div>
 
-            <style jsx>{`
+            <style>{`
         @keyframes fade-in-up {
           0% { opacity: 0; transform: translateY(20px); }
           100% { opacity: 1; transform: translateY(0); }

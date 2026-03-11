@@ -20,6 +20,10 @@ const login = async (email, password) => {
     const user = await User.findUserByEmail(email);
     if (!user) throw new Error("User not found");
 
+    if (user.status === 'Blocked') {
+        throw new Error("Your account has been blocked. Please contact the administrator.");
+    }
+
     const match = await bcrypt.compare(password, user.password);
     if (!match) throw new Error("Invalid credentials");
 
