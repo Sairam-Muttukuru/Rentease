@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../../models/common/UserModel");
 const jwtConfig = require("../../config/jwt");
 const sendMail = require("../../utils/email/sendOtpMail");
+const sendWelcomeEmail = require("../../utils/email/sendWelcomeEmail");
 
 // In-memory OTP store: { email: { otp, expiresAt } }
 const resetOtps = new Map();
@@ -10,10 +11,19 @@ const resetOtps = new Map();
 const signup = async (data) => {
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    return await User.createUser({
+    const user = await User.createUser({
         ...data,
         password: hashedPassword
     });
+
+    // Send welcome email asynchronously
+    if (user && user.email) {
+        sendWelcomeEmail(user.email, `${user.first_name} ${user.last_name}`).catch(err => 
+            console.error("Failed to send welcome email:", err)
+        );
+    }
+
+    return user;
 };
 
 const login = async (email, password) => {
@@ -43,7 +53,8 @@ const login = async (email, password) => {
         id: user.id,
         name: `${user.first_name} ${user.last_name}`,
         email: user.email,
-        role: user.role
+        role: user.role,
+        avatar_url: user.avatar_url
     };
 
     return { accessToken, refreshToken, user: userResponse };

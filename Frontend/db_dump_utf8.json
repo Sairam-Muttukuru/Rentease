@@ -1,0 +1,130 @@
+﻿[dotenv@17.2.3] injecting env (13) from Backend\src\.env -- tip: ΓÜÖ∩╕Å  write to custom object with { processEnv: myObject }
+DB Config: {
+  user: 'postgres',
+  host: 'localhost',
+  database: 'RentEase',
+  passwordType: 'string',
+  port: '5432'
+}
+Tenants: [
+  {
+    "id": 12,
+    "landlord_id": 38,
+    "property_id": 12,
+    "tenant_type": "BACHELORS",
+    "monthly_rent": "4499.00",
+    "payment_status": "PAID",
+    "created_at": "2026-02-16T14:28:13.273Z",
+    "user_id": 33,
+    "start_date": "2026-01-18T18:30:00.000Z",
+    "rent_due_date": "2026-02-19T18:30:00.000Z",
+    "last_paid_month": "2026-02-18T18:30:00.000Z",
+    "last_reminder_sent_at": null,
+    "security_deposit_status": "Unpaid"
+  },
+  {
+    "id": 27,
+    "landlord_id": 38,
+    "property_id": 8,
+    "tenant_type": "FAMILY",
+    "monthly_rent": "6000.00",
+    "payment_status": "PENDING",
+    "created_at": "2026-03-15T14:43:16.174Z",
+    "user_id": 49,
+    "start_date": "2026-03-14T18:30:00.000Z",
+    "rent_due_date": "2026-04-14T18:30:00.000Z",
+    "last_paid_month": null,
+    "last_reminder_sent_at": null,
+    "security_deposit_status": "Unpaid"
+  }
+]
+Schema: [
+  {
+    "column_name": "id",
+    "data_type": "integer"
+  },
+  {
+    "column_name": "landlord_id",
+    "data_type": "integer"
+  },
+  {
+    "column_name": "property_id",
+    "data_type": "integer"
+  },
+  {
+    "column_name": "tenant_type",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "monthly_rent",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "payment_status",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "created_at",
+    "data_type": "timestamp without time zone"
+  },
+  {
+    "column_name": "user_id",
+    "data_type": "integer"
+  },
+  {
+    "column_name": "start_date",
+    "data_type": "date"
+  },
+  {
+    "column_name": "rent_due_date",
+    "data_type": "date"
+  },
+  {
+    "column_name": "last_paid_month",
+    "data_type": "date"
+  },
+  {
+    "column_name": "last_reminder_sent_at",
+    "data_type": "timestamp without time zone"
+  },
+  {
+    "column_name": "security_deposit_status",
+    "data_type": "character varying"
+  }
+]
+Payments: [
+  {
+    "id": 36,
+    "tenant_id": 12,
+    "property_id": 12,
+    "amount": "4499.00",
+    "payment_date": "2026-03-13T18:30:00.000Z",
+    "due_date": "2026-01-18T18:30:00.000Z",
+    "status": "PAID",
+    "created_at": "2026-03-14T19:53:06.542Z",
+    "payment_gateway": "Stripe",
+    "transaction_id": "RENT-1773512693936-JAN",
+    "receipt_number": "RENT-1773512693936-FEB",
+    "paid_by": "Megumi Fushiguro",
+    "remarks": null,
+    "ui_type": "STANDARD",
+    "payment_method_ui": null
+  },
+  {
+    "id": 37,
+    "tenant_id": 12,
+    "property_id": 12,
+    "amount": "4499.00",
+    "payment_date": "2026-03-13T18:30:00.000Z",
+    "due_date": "2026-02-18T18:30:00.000Z",
+    "status": "PAID",
+    "created_at": "2026-03-14T20:18:52.972Z",
+    "payment_gateway": "Stripe",
+    "transaction_id": "MOCK_TX_1773519532886",
+    "receipt_number": "RENT-1773519532955",
+    "paid_by": "Megumi Fushiguro",
+    "remarks": null,
+    "ui_type": "STANDARD",
+    "payment_method_ui": null
+  }
+]

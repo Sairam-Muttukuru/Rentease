@@ -52,6 +52,20 @@ exports.addProvider = async (req, res) => {
   }
 };
 
+exports.deleteProvider = async (req, res) => {
+  try {
+    const { reason } = req.body || req.headers.reason; // Handle reason in body or headers
+    const actualReason = reason || req.query.reason;
+    if (!actualReason) {
+        return res.status(400).json({ error: "Reason is required for deletion." });
+    }
+    const result = await service.deleteProvider(req.params.id, actualReason, req.user.id);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 exports.toggleProviderStatus = async (req, res) =>
   res.json(await service.toggleProviderStatus(req.params.id, req.user.id));
 

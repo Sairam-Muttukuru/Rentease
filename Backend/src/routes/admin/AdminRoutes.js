@@ -27,6 +27,7 @@ router.post("/complaints/:id/convert", ctrl.convertComplaint);
 // Service Provider Management
 router.get("/providers", ctrl.getProviders);
 router.post("/providers", ctrl.addProvider);
+router.delete("/providers/:id", ctrl.deleteProvider);
 router.put("/providers/:id/status", ctrl.toggleProviderStatus);
 
 // Payments & Logs

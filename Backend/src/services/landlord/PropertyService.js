@@ -168,6 +168,31 @@ exports.deleteProperty = async (propertyId, landlordId) => {
     throw new Error("Unauthorized or property not found");
   }
 
-  // delete property (Model handles deletion of related images/amenities in a transaction)
+  // 1️⃣ Fetch tenant details before deletion for notification
+  // Since one property has one tenant in this system, we can safely fetch the single tenant
+  try {
+    const Tenant = require("../../models/tenant/TenantModel");
+    const sendTenantRemovalEmail = require("../../utils/email/sendTenantRemovalEmail");
+    
+    const tenant = await Tenant.getByPropertyId(propertyId);
+    if (tenant) {
+      const tenantDetails = await Tenant.getDetailedById(tenant.id);
+      if (tenantDetails && tenantDetails.tenant_email) {
+        console.log(`[PropertyService] Sending removal email to tenant: ${tenantDetails.tenant_email}`);
+        sendTenantRemovalEmail({
+          tenantEmail: tenantDetails.tenant_email,
+          tenantName: tenantDetails.tenant_name || "Tenant",
+          landlordName: tenantDetails.landlord_name || "Your Landlord",
+          propertyName: tenantDetails.property_name,
+          propertyAddress: tenantDetails.property_address
+        }).catch(err => console.error("[PropertyService] Failed to send tenant removal email:", err));
+      }
+    }
+  } catch (err) {
+    console.error("[PropertyService] Error during tenant notification (non-blocking):", err);
+  }
+
+  // 2️⃣ delete property (Model handles deletion of related images/amenities/tenants in a transaction)
   return await Property.deletePropertyWithRelations(propertyId, landlordId);
 };
+

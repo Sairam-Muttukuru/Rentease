@@ -5,9 +5,57 @@ const UserModel = require("../../models/common/UserModel");
 const Complaint = require("../../models/complaint/ComplaintModel");
 const ServiceRequestModel = require("../../models/serviceProvider/ServiceRequestModel");
 const sendTenantInvitationEmail = require("../../utils/email/sendTenantInvitationEmail");
+const sendTenantRemovalEmail = require("../../utils/email/sendTenantRemovalEmail");
 const logger = require("../../utils/logger");
 
-// ... existing code ...
+// Helper to get YYYY-MM-DD in IST (handles UTC-stored dates from PostgreSQL)
+const getYMD = (d) => {
+  if (!d) return null;
+  // DB stores as UTC. Add IST offset (5h30m) to get the local date
+  const date = new Date(d);
+  const istDate = new Date(date.getTime() + (5.5 * 60 * 60 * 1000));
+  const year = istDate.getUTCFullYear();
+  const month = String(istDate.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(istDate.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const _calculateLateFees = (tenant, rentPayments, today) => {
+  if (!tenant.start_date) return 0;
+
+  const anchorDateRaw = tenant.rent_due_date ? new Date(tenant.rent_due_date) : new Date(tenant.start_date);
+  const anchorDateIST = new Date(anchorDateRaw.getTime() + (5.5 * 60 * 60 * 1000));
+  const anchorDate = new Date(Date.UTC(anchorDateIST.getUTCFullYear(), anchorDateIST.getUTCMonth(), anchorDateIST.getUTCDate(), 12, 0, 0, 0));
+
+  const latePenalty = parseFloat(tenant.latePenaltyAmount || 0);
+  let totalPenalty = 0;
+  
+  // Calculate months based on calendar cycles rather than hardcoded 31 days
+  const monthsDiff = (today.getFullYear() - anchorDate.getFullYear()) * 12 + (today.getMonth() - anchorDate.getMonth());
+  const cyclesToCharge = Math.max(0, monthsDiff + 1);
+
+  for (let i = 0; i < cyclesToCharge; i++) {
+    const cycleStartDate = new Date(anchorDate);
+    cycleStartDate.setMonth(anchorDate.getMonth() + i);
+    const cycleDateISO = getYMD(cycleStartDate);
+    
+    const isPaid = rentPayments.some(p => {
+      if (!p.due_date) return false;
+      return getYMD(p.due_date) === cycleDateISO;
+    });
+
+    if (!isPaid) {
+      if (today > cycleStartDate) {
+        const dDiff = Math.floor((today - cycleStartDate) / (1000 * 60 * 60 * 24));
+        if (dDiff > 0) {
+          totalPenalty += dDiff * latePenalty;
+        }
+      }
+    }
+  }
+
+  return totalPenalty;
+};
 
 exports.getPayments = async (requesterId, targetUserName = null) => {
   let userId = requesterId;
@@ -195,15 +243,72 @@ exports.updateTenant = async (landlordId, tenantId, data) => {
 };
 
 exports.deleteTenant = async (landlordId, tenantId) => {
-  return await Tenant.delete(tenantId, landlordId);
+  console.log(`[TenantService] Request to delete tenantId: ${tenantId} by landlordId: ${landlordId}`);
+  
+  // 1️⃣ Fetch tenant details before deletion for notification
+  const tenantDetails = await Tenant.getDetailedById(tenantId);
+  
+  if (tenantDetails) {
+    if (tenantDetails.landlord_id == landlordId) {
+      // 2️⃣ Send Removal Email (Fire-and-forget)
+      if (tenantDetails.tenant_email) {
+        console.log(`[TenantService] Sending removal email to: ${tenantDetails.tenant_email}`);
+        sendTenantRemovalEmail({
+          tenantEmail: tenantDetails.tenant_email,
+          tenantName: tenantDetails.tenant_name || "Tenant",
+          landlordName: tenantDetails.landlord_name || "Your Landlord",
+          propertyName: tenantDetails.property_name,
+          propertyAddress: tenantDetails.property_address
+        }).catch(err => console.error("[TenantService] Failed to send tenant removal email:", err));
+      } else {
+        console.warn(`[TenantService] No email found for tenantId: ${tenantId}, skipping notification.`);
+      }
+    } else {
+      console.error(`[TenantService] Unauthorized delete attempt: tenant belongs to landlord ${tenantDetails.landlord_id}, but request from ${landlordId}`);
+      throw new Error("Unauthorized: You do not manage this tenant");
+    }
+  } else {
+    console.warn(`[TenantService] Tenant with id ${tenantId} not found or already deleted.`);
+  }
+
+  const result = await Tenant.delete(tenantId, landlordId);
+  console.log(`[TenantService] Successfully deleted tenantId: ${tenantId}`);
+  return result;
 };
+
 
 exports.getTenantByProperty = async (landlordId, propertyId) => {
   return await Tenant.getFullTenantByProperty(propertyId, landlordId);
 };
 
 exports.getAllTenants = async (landlordId) => {
-  return await Tenant.getAllByLandlordId(landlordId);
+  const tenants = await Tenant.getAllByLandlordId(landlordId);
+  const today = new Date();
+
+  for (const tenant of tenants) {
+    if (!tenant.rent_due_date || !tenant.start_date) continue;
+
+    const paymentRes = await Tenant.getPaymentsByTenantId(tenant.id);
+    const rentPayments = paymentRes.filter(p => !p.receipt_number?.startsWith('SEC-DEP'));
+    const totalPaid = rentPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+
+    const startDate = new Date(tenant.start_date);
+    const diffTime = Math.abs(today - startDate);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const monthsElapsed = Math.max(1, Math.floor(diffDays / 31) + 1);
+
+    const totalExpected = monthsElapsed * parseFloat(tenant.monthly_rent);
+    const lateFees = _calculateLateFees(tenant, rentPayments, today);
+    const balanceDue = Math.round((totalExpected - totalPaid + lateFees) * 100) / 100;
+
+    // Override the static 'payment_status' with our dynamic check
+    tenant.status = balanceDue <= 0 ? 'PAID' : 'UNPAID';
+    // Expose balance for landlord dashboard to show cumulative debt
+    tenant.balance_due = Math.max(0, balanceDue);
+    tenant.months_overdue = balanceDue > 0 ? Math.ceil(balanceDue / parseFloat(tenant.monthly_rent)) : 0;
+  }
+
+  return tenants;
 };
 
 exports.getDashboardData = async (requesterId, targetUserName = null) => {
@@ -275,40 +380,87 @@ exports.getDashboardData = async (requesterId, targetUserName = null) => {
     // 3️⃣ Get family members
     const members = await TenantMember.getByTenantId(tenant.id);
 
-    // 4️⃣ Calculate Accumulated Rent
+    // 4️⃣ Calculate Accumulated Rent (Rounding to fix precision)
     const payments = await Tenant.getPaymentsByTenantId(tenant.id);
-    const totalPaid = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+    const totalPaid = Math.round(payments
+      .filter(p => !p.receipt_number?.startsWith('SEC-DEP'))
+      .reduce((sum, p) => sum + parseFloat(p.amount), 0) * 100) / 100;
 
     const currentDate = new Date();
-    const startDate = new Date(tenant.start_date);
+    currentDate.setHours(12, 0, 0, 0); // IST Safe Today
 
-    // Calculate months elapsed (including current month if start date passed)
-    const monthsElapsed = Math.max(1,
-      (currentDate.getFullYear() - startDate.getFullYear()) * 12 +
-      (currentDate.getMonth() - startDate.getMonth()) +
-      (currentDate.getDate() >= startDate.getDate() ? 1 : 0)
-    );
+    // Move-in date is the absolute floor for all cycles
+    const startDateRaw = new Date(tenant.start_date);
+    const startDateIST = new Date(startDateRaw.getTime() + (5.5 * 60 * 60 * 1000));
+    const startDate = new Date(Date.UTC(startDateIST.getUTCFullYear(), startDateIST.getUTCMonth(), startDateIST.getUTCDate(), 12, 0, 0, 0));
 
-    let expectedRent = monthsElapsed * parseFloat(tenant.monthly_rent);
-    let accumulatedDue = Math.max(0, expectedRent - totalPaid);
+    // Rent cycles are anchored to rent_due_date
+    const anchorDateSource = tenant.rent_due_date || tenant.start_date;
+    const anchorDateRaw = new Date(anchorDateSource);
+    const anchorDateIST = new Date(anchorDateRaw.getTime() + (5.5 * 60 * 60 * 1000));
+    const anchorDate = new Date(Date.UTC(anchorDateIST.getUTCFullYear(), anchorDateIST.getUTCMonth(), anchorDateIST.getUTCDate(), 12, 0, 0, 0));
 
-    // 10-Day Policy Logic: 
-    // If there is an outstanding balance AND we are > 10 days past the current cycle's due date,
-    // we proactively add the NEXT month's rent to the "Accumulated Due".
-    if (accumulatedDue > 0) {
-      // Determine the "Current" Due Date (the one that triggered the current expectedRent)
-      // This is effectively StartDate + (monthsElapsed - 1) months
-      const currentDueDate = new Date(startDate);
-      currentDueDate.setMonth(startDate.getMonth() + (monthsElapsed - 1));
+    // Calculate months elapsed: If moved in, we count the current cycle as expected rent
+    // Cycle 0: [move-in-date] up to [anchorDate]
+    // Even if today < anchorDate, if moved in, they owe for this first month.
+    let monthsElapsed = 0;
+    if (getYMD(currentDate) >= getYMD(startDate)) {
+        // Calculate how many cycles have started up to today
+        // E.g. Mar 15 (StartDate) to Apr 15 (Anchor) -> monthsElapsed = 1 on Mar 15
+        const monthsDiff = (currentDate.getFullYear() - anchorDate.getFullYear()) * 12 + (currentDate.getMonth() - anchorDate.getMonth());
+        monthsElapsed = Math.max(1, monthsDiff + 1);
+    }
 
-      // Calculate days past this due date
-      const diffTime = Math.abs(currentDate - currentDueDate);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const expectedRent = monthsElapsed * parseFloat(tenant.monthly_rent);
+    const lateFees = _calculateLateFees(tenant, payments.filter(p => !p.receipt_number?.startsWith('SEC-DEP')), currentDate);
+    const accumulatedDue = Math.round((expectedRent - totalPaid + lateFees) * 100) / 100;
+    const unpaidMonthsCount = Math.max(0, Math.ceil((expectedRent - totalPaid) / parseFloat(tenant.monthly_rent)));
 
-      // If we are more than 10 days past the due date (e.g., Due Feb 1, Today Feb 12)
-      if (diffDays > 10) {
-        accumulatedDue += parseFloat(tenant.monthly_rent);
-      }
+    // Calculate Next Due Date and Pending Months dynamically
+    let nextDueDate = new Date(anchorDate);
+    let nextDueDateDisplay = "";
+    let nextDueDateSet = false;
+    const pendingMonths = [];
+    const pendingMonthsRanges = [];
+
+    // Special Rule: If last_paid_month is empty, start due date MUST be rent_due_date
+    const lastPaidMonth = tenant.last_paid_month ? new Date(tenant.last_paid_month) : null;
+    
+    const formatDateShort = (d) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+    // Scan ahead to find the next unpaid cycle
+    for (let i = -1; i < 36; i++) {
+        const cycleStart = new Date(anchorDate);
+        cycleStart.setMonth(anchorDate.getMonth() + i);
+        
+        // Skip cycles preceding official move-in
+        if (getYMD(cycleStart) < getYMD(startDate)) continue;
+
+        const cycleEnd = new Date(cycleStart);
+        cycleEnd.setMonth(cycleStart.getMonth() + 1);
+
+        const cycleDateISO = getYMD(cycleStart);
+        const isCyclePaid = payments
+            .filter(p => !p.receipt_number?.startsWith('SEC-DEP'))
+            .some(p => getYMD(p.due_date) === cycleDateISO);
+        
+        const isCoveredByLastPaid = lastPaidMonth && getYMD(cycleStart) <= getYMD(lastPaidMonth);
+
+        const rangeStr = `${formatDateShort(cycleStart)} - ${formatDateShort(cycleEnd)}`;
+
+        if (!isCyclePaid && !isCoveredByLastPaid) {
+            if (!nextDueDateSet) {
+               nextDueDate = cycleStart;
+               nextDueDateDisplay = rangeStr;
+               nextDueDateSet = true;
+            }
+            if (getYMD(cycleStart) <= getYMD(currentDate)) {
+                pendingMonths.push(cycleStart.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }));
+                pendingMonthsRanges.push(rangeStr);
+            }
+        }
+        
+        if (nextDueDateSet && getYMD(cycleStart) > getYMD(currentDate)) break;
     }
 
     // Return merged response for this property
@@ -323,8 +475,14 @@ exports.getDashboardData = async (requesterId, targetUserName = null) => {
       propertyImages: tenant.images,
 
       accumulated_due: accumulatedDue,
+      late_fees: lateFees,
+      unpaid_months_count: unpaidMonthsCount,
+      pending_months: pendingMonths,
+      pending_months_ranges: pendingMonthsRanges,
       months_elapsed: monthsElapsed,
       total_paid: totalPaid,
+      next_due_date: nextDueDate, // New dynamic field
+      next_due_date_display: nextDueDateDisplay,
 
       // Keep existing backend fields just in case
       tenant_name: `${user.first_name} ${user.last_name}`,

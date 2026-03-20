@@ -3,116 +3,131 @@ const db = require("../config/db");
 const sendMail = require("../utils/email/sendMail");
 const { rentReminderTemplate } = require("../utils/email/emailTemplates");
 
-// Runs every day at 3:15 PM
-cron.schedule("25 15 * * *", async () => {
-    console.log("🔔 Rent Reminder Cron Started (Local Check)");
+// Schedule: Runs every day at 10:25 AM
+cron.schedule("25 10 * * *", async () => {
+    console.log("[RentReminderCron] Starting daily rent reminder task at 10:25 AM...");
 
     try {
-        // Use Local Date String for comparison (YYYY-MM-DD)
-        // This ensures Jan 28 14:30 matches Jan 28 00:00
         const todayDate = new Date();
-        const year = todayDate.getFullYear();
-        const month = String(todayDate.getMonth() + 1).padStart(2, '0');
-        const day = String(todayDate.getDate()).padStart(2, '0');
-        const todayStr = `${year}-${month}-${day}`;
-
-        console.log(`Checking reminders for date: ${todayStr}`);
-
+        
+        // 1. Fetch all tenants with their lease and payment info
         const result = await db.query(`
-      SELECT 
-        t.id,
-        t.start_date,
-        t.payment_status,
-        t.last_reminder_sent_at,
-        t.monthly_rent,
-        t.rent_due_date,
-        u.email as user_email,
-        tm.tenant_emailid as member_email,
-        u.first_name,
-        l.first_name AS landlord_first_name,
-        l.last_name AS landlord_last_name
-      FROM tenants t
-      JOIN users u ON u.id = t.user_id
-      JOIN properties p ON p.id = t.property_id
-      JOIN users l ON l.id = p.landlord_id
-      LEFT JOIN tenant_members tm ON tm.tenant_id = t.id AND tm.is_primary = true
-      WHERE (t.payment_status != 'PAID' OR t.payment_status IS NULL)
-    `);
+            SELECT 
+                t.id,
+                t.start_date,
+                t.monthly_rent,
+                t.rent_due_date,
+                t.last_reminder_sent_at,
+                u.email as user_email,
+                tm.tenant_emailid as member_email,
+                u.first_name,
+                l.first_name AS landlord_first_name,
+                l.last_name AS landlord_last_name
+            FROM tenants t
+            JOIN users u ON u.id = t.user_id
+            JOIN properties p ON p.id = t.property_id
+            JOIN users l ON l.id = p.landlord_id
+            LEFT JOIN tenant_members tm ON tm.tenant_id = t.id AND tm.is_primary = true
+        `);
 
         for (const tenant of result.rows) {
-            if (!tenant.rent_due_date) continue;
+            if (!tenant.rent_due_date || !tenant.start_date) continue;
 
             const targetEmail = tenant.member_email || tenant.user_email;
             if (!targetEmail) continue;
 
-            // 1. Parse DB Due Date
-            let dbDueDate = new Date(tenant.rent_due_date);
-            if (isNaN(dbDueDate.getTime())) continue;
+            // 2. Calculate Total Paid
+            const paymentRes = await db.query("SELECT SUM(amount) as paid FROM rent_payments WHERE tenant_id = $1", [tenant.id]);
+            const totalPaid = parseFloat(paymentRes.rows[0].paid) || 0;
 
-            // 2. Project to current/future month
-            // We want to find the NEXT due date relative to today
-            let targetDueDate = new Date(dbDueDate);
-            targetDueDate.setFullYear(todayDate.getFullYear());
-            targetDueDate.setMonth(todayDate.getMonth());
+            // 3. Billing Logic: Use Rent Due Date (Anchor Date)
+            const anchorRaw = tenant.rent_due_date || tenant.start_date;
+            const anchorDate = new Date(anchorRaw);
+            anchorDate.setHours(12,0,0,0);
+            
+            const startDate = new Date(tenant.start_date);
+            startDate.setHours(12,0,0,0);
 
-            // 2b. Start Date buffer check
-            const startDate = tenant.start_date ? new Date(tenant.start_date) : new Date();
-            const minDueDate = new Date(startDate);
-            minDueDate.setDate(minDueDate.getDate() + 30);
+            const today = new Date();
+            today.setHours(12,0,0,0);
 
-            // While target < minBuffer OR target <= today
-            // We move to next month if the due date is in the past
-            // e.g. if today is Jan 28, and Target is Jan 1 -> Move to Feb 1
-            while (targetDueDate < minDueDate || targetDueDate <= todayDate) {
-                targetDueDate.setMonth(targetDueDate.getMonth() + 1);
+            if (today < startDate) {
+                console.log(`[RentReminderCron] Skipping Tenant ${tenant.id}: Lease starts in future (${tenant.start_date})`);
+                continue;
             }
 
-            // 3. Calculate Reminder Date (Due Date - 5 days)
-            const reminderDate = new Date(targetDueDate);
-            reminderDate.setDate(reminderDate.getDate() - 5);
+            // Calculate cycles: Current month + any month starting within 2 days
+            const monthsDiff = (today.getFullYear() - anchorDate.getFullYear()) * 12 + (today.getMonth() - anchorDate.getMonth());
+            const cyclesStarted = Math.max(1, monthsDiff + 1);
+            
+            // Check if next cycle is within 2 days
+            const twoDaysFromNow = new Date(today);
+            twoDaysFromNow.setDate(today.getDate() + 2);
+            const nextCycleStart = new Date(anchorDate);
+            nextCycleStart.setMonth(anchorDate.getMonth() + cyclesStarted);
+            
+            const effectiveCycles = (twoDaysFromNow >= nextCycleStart) ? cyclesStarted + 1 : cyclesStarted;
 
-            // Format Reminder Date to Local String YYYY-MM-DD
-            const rYear = reminderDate.getFullYear();
-            const rMonth = String(reminderDate.getMonth() + 1).padStart(2, '0');
-            const rDay = String(reminderDate.getDate()).padStart(2, '0');
-            const reminderDateStr = `${rYear}-${rMonth}-${rDay}`;
+            // 4. Calculate Expected vs Balance
+            const totalExpected = effectiveCycles * parseFloat(tenant.monthly_rent);
+            const balanceDue = totalExpected - totalPaid;
 
-            // 4. Check if today is within the reminder window (ReminderDate to DueDate)
-            const reminderTime = reminderDate.getTime();
-            const todayTime = new Date(todayStr).getTime();
-            const dueTime = targetDueDate.getTime();
+            if (balanceDue > 0) {
+                // Determine display due date (First unpaid cycle)
+                let nDue = new Date(anchorDate);
+                for (let i = 0; i < 48; i++) {
+                    const cycleStart = new Date(anchorDate);
+                    cycleStart.setMonth(anchorDate.getMonth() + i);
+                    if (cycleStart < startDate) continue;
 
-            // We send if Today is >= Reminder Date AND Today <= Due Date
-            if (todayTime >= reminderTime && todayTime <= dueTime) {
-
-                // Check if we already sent a reminder *after* the calculated ReminderDate (i.e., in this cycle)
-                if (tenant.last_reminder_sent_at) {
-                    const lastSent = new Date(tenant.last_reminder_sent_at);
-                    lastSent.setHours(0, 0, 0, 0); // Normalize to midnight
-
-                    if (lastSent.getTime() >= reminderTime) {
-                        console.log(`Reminder already sent to ${targetEmail} for this cycle.`);
-                        continue;
+                    const cycleDateISO = getYMD(cycleStart);
+                    const isPaid = (await db.query(
+                        "SELECT id FROM rent_payments WHERE tenant_id = $1 AND due_date = $2 AND receipt_number NOT LIKE 'SEC-DEP%'",
+                        [tenant.id, cycleDateISO]
+                    )).rows.length > 0;
+                    
+                    if (!isPaid) {
+                        nDue = cycleStart;
+                        break;
                     }
                 }
 
-                const formattedDueDate = targetDueDate.toLocaleDateString('en-IN', {
+                const formattedDueDate = nDue.toLocaleDateString('en-IN', {
                     day: 'numeric', month: 'long', year: 'numeric'
                 });
 
                 const landlordName = `${tenant.landlord_first_name} ${tenant.landlord_last_name}`;
 
-                const html = rentReminderTemplate(
-                    tenant.first_name,
-                    tenant.monthly_rent,
-                    formattedDueDate,
-                    landlordName
-                );
+                // --- Improved Template (Nicer UI) ---
+                const subject = `⚠️ Action Required: Rent Payment of ₹${balanceDue.toLocaleString()} Overdue`;
+                const html = `
+                    <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 10px; overflow: hidden;">
+                        <div style="background: #ef4444; color: white; padding: 20px; text-align: center;">
+                            <h2 style="margin: 0;">Rent Payment Reminder</h2>
+                        </div>
+                        <div style="padding: 30px; line-height: 1.6; color: #333;">
+                            <p>Dear <b>${tenant.first_name}</b>,</p>
+                            <p>This is a reminder for your rent at <b>RentEase Properties</b> managed by <b>${landlordName}</b>.</p>
+                            <div style="background: #fff5f5; border-left: 5px solid #ef4444; padding: 15px; margin: 20px 0;">
+                                <p style="margin: 0;"><b>Total Balance Due:</b></p>
+                                <h1 style="margin: 10px 0; color: #dc2626;">₹${balanceDue.toLocaleString()}</h1>
+                                <p style="margin: 0; font-size: 14px; color: #666;">Cycle Start Date: ${formattedDueDate}</p>
+                            </div>
+                            <p>Please ensure the payment is made promptly to avoid any late fees.</p>
+                            <div style="text-align: center; margin-top: 30px;">
+                                <a href="http://localhost:5173/login" style="background: #ef4444; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Pay via Dashboard</a>
+                            </div>
+                        </div>
+                        <div style="background: #f9fafb; padding: 15px; text-align: center; font-size: 12px; color: #666;">
+                            Thanks, <br> <b>RentEase Management</b>
+                        </div>
+                    </div>
+                `;
 
-                await sendMail(targetEmail, "Rent Payment Reminder", html);
+                await sendMail(targetEmail, subject, html);
 
                 await db.query("UPDATE tenants SET last_reminder_sent_at = NOW() WHERE id = $1", [tenant.id]);
-                console.log(`📧 Reminder sent to ${targetEmail} for due date ${formattedDueDate}`);
+                console.log(`[RentReminderCron] ✅ Cumulative Reminder sent to ${targetEmail} | Balance: ₹${balanceDue} | Math: ${totalExpected}-${totalPaid}`);
             }
         }
     } catch (err) {

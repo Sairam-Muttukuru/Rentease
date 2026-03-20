@@ -36,6 +36,7 @@ exports.getAllByLandlordId = async (landlordId) => {
     `
     SELECT 
     t.id,
+    t.user_id,
     t.property_id,
     t.tenant_type,
     t.monthly_rent,
@@ -43,6 +44,8 @@ exports.getAllByLandlordId = async (landlordId) => {
     t.start_date,
     t.rent_due_date,
     p.title as property_name,
+    p.late_penalty_amount as "latePenaltyAmount",
+    p.rent_due_day as "rentDueDay",
     tm.full_name as name,
     tm.phone,
     tm.tenant_emailid as email,
@@ -56,7 +59,7 @@ exports.getAllByLandlordId = async (landlordId) => {
     FROM tenants t
     JOIN properties p ON p.id = t.property_id
     JOIN users u ON u.id = t.user_id 
-    JOIN tenant_members tm ON tm.tenant_id = t.id AND tm.is_primary = true
+    LEFT JOIN tenant_members tm ON tm.tenant_id = t.id AND tm.is_primary = true
     WHERE t.landlord_id = $1
     `,
     [landlordId]
@@ -128,6 +131,7 @@ exports.getByUserId = async (userId) => {
 
     CONCAT(u.first_name, ' ', u.last_name) as landlord_name,
     u.email as landlord_email,
+    u.avatar_url as landlord_avatar_url,
     CONCAT(tu.first_name, ' ', tu.last_name) as full_name, --Fetch tenant name
   COALESCE(
     (SELECT json_agg(pi.image_url)
@@ -158,3 +162,26 @@ exports.getPaymentsByTenantId = async (tenantId) => {
     ORDER BY payment_date DESC
     `, [tenantId])).rows;
 };
+
+exports.getDetailedById = async (tenantId) => {
+  return (await db.query(
+    `
+    SELECT 
+      t.id,
+      t.user_id,
+      t.property_id,
+      t.landlord_id,
+      p.title as property_name,
+      p.address as property_address,
+      tm.full_name as tenant_name,
+      tm.tenant_emailid as tenant_email,
+      CONCAT(lu.first_name, ' ', lu.last_name) as landlord_name
+    FROM tenants t
+    JOIN properties p ON p.id = t.property_id
+    JOIN users lu ON lu.id = t.landlord_id
+    LEFT JOIN tenant_members tm ON tm.tenant_id = t.id AND tm.is_primary = true
+    WHERE t.id = $1
+    `,
+    [tenantId]
+  )).rows[0];
+};

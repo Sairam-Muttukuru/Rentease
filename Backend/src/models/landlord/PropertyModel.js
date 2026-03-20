@@ -488,19 +488,81 @@ exports.deletePropertyWithRelations = async (propertyId, landlordId) => {
       throw new Error("Unauthorized or property not found");
     }
 
-    // ✅ Delete images
+    // ✅ 1. Delete Service Related (Reviews, Updates, Earnings, Slots)
+    // These reference service_requests. Clear by property_id OR tenant_id subquery.
+    await client.query(`
+      DELETE FROM service_reviews WHERE user_id IN (SELECT user_id FROM tenants WHERE property_id=$1)
+    `, [propertyId]);
+
+    await client.query(`
+      DELETE FROM reviews WHERE request_id IN (
+        SELECT id FROM service_requests WHERE property_id=$1 OR tenant_id IN (SELECT id FROM tenants WHERE property_id=$1)
+      )`, [propertyId]);
+
+    await client.query(`
+      DELETE FROM service_updates WHERE service_request_id IN (
+        SELECT id FROM service_requests WHERE property_id=$1 OR tenant_id IN (SELECT id FROM tenants WHERE property_id=$1)
+      )`, [propertyId]);
+
+    await client.query(`
+      DELETE FROM provider_earnings WHERE service_request_id IN (
+        SELECT id FROM service_requests WHERE property_id=$1 OR tenant_id IN (SELECT id FROM tenants WHERE property_id=$1)
+      )`, [propertyId]);
+
+    await client.query(`
+      DELETE FROM service_slots WHERE service_request_id IN (
+        SELECT id FROM service_requests WHERE property_id=$1 OR tenant_id IN (SELECT id FROM tenants WHERE property_id=$1)
+      )`, [propertyId]);
+
+    // ✅ 2. Delete Service Requests
     await client.query(
-      "DELETE FROM property_images WHERE property_id=$1",
+      "DELETE FROM service_requests WHERE property_id=$1 OR tenant_id IN (SELECT id FROM tenants WHERE property_id=$1)",
       [propertyId]
     );
 
-    // ✅ Delete amenities
+    // ✅ 3. Delete Complaint Images
+    await client.query(`
+      DELETE FROM complaint_images WHERE complaint_id IN (
+        SELECT id FROM complaints WHERE property_id=$1 OR tenant_id IN (SELECT id FROM tenants WHERE property_id=$1)
+      )`, [propertyId]);
+
+    // ✅ 4. Delete Complaints
     await client.query(
-      "DELETE FROM property_amenities WHERE property_id=$1",
+      "DELETE FROM complaints WHERE property_id=$1 OR tenant_id IN (SELECT id FROM tenants WHERE property_id=$1)",
       [propertyId]
     );
 
-    // ✅ Delete property
+    // ✅ 5. Delete Financials & Comms
+    await client.query(
+      "DELETE FROM rent_payments WHERE property_id=$1 OR tenant_id IN (SELECT id FROM tenants WHERE property_id=$1)",
+      [propertyId]
+    );
+
+    await client.query(
+      "DELETE FROM announcements WHERE property_id=$1",
+      [propertyId]
+    );
+
+    // ✅ 6. Delete Tenants & Members
+    await client.query(
+      "DELETE FROM tenant_members WHERE tenant_id IN (SELECT id FROM tenants WHERE property_id=$1)",
+      [propertyId]
+    );
+
+    await client.query(
+      "DELETE FROM tenants WHERE property_id=$1",
+      [propertyId]
+    );
+
+    // ✅ 7. Delete Property Core (Tenancy Requests, Bookings, Images, Amenities)
+    // tenancy_requests will be deleted if it exists, but we'll check first or just skip if we know it doesn't.
+    // Based on check_tenancy_req.js, it DOES NOT exist in public schema.
+    
+    await client.query("DELETE FROM bookings WHERE property_id=$1", [propertyId]);
+    await client.query("DELETE FROM property_images WHERE property_id=$1", [propertyId]);
+    await client.query("DELETE FROM property_amenities WHERE property_id=$1", [propertyId]);
+
+    // ✅ 8. Final Delete Property
     await client.query(
       "DELETE FROM properties WHERE id=$1",
       [propertyId]

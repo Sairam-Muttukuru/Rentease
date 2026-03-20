@@ -9,7 +9,8 @@ const Notification = require("../../models/common/NotificationModel");
 exports.createComplaint = async (userId, data) => {
 
     // 1️⃣ Get tenant details
-    const tenant = await Tenant.getByUserId(userId);
+    const tenants = await Tenant.getByUserId(userId);
+    const tenant = Array.isArray(tenants) ? tenants[0] : tenants;
     console.log("Fetched tenant for complaint:", tenant);
     if (!tenant) {
         console.error("Tenant not found for userId:", userId);
@@ -37,30 +38,38 @@ exports.createComplaint = async (userId, data) => {
     // 4️⃣ 🔔 NOTIFICATIONS (Fail-safe)
     try {
         const landlord = await User.getUserById(tenant.landlord_id);
+        console.log("🏠 Landlord fetched:", landlord?.email, "| Tenant:", tenant?.full_name, "| Property:", tenant?.property_name);
 
         if (landlord) {
             // Create In-App Notification
             await Notification.create({
-                user_id: tenant.landlord_id, // ✅ Fix: Use ID from tenant object
+                user_id: tenant.landlord_id,
                 type: "complaint",
                 title: `New Complaint: ${data.title}`,
                 message: `${tenant.full_name || 'A tenant'} raised a complaint regarding ${data.title} at ${tenant.property_name || 'your property'}. Priority: ${data.priority_level || 'Low'}.`
             });
 
             if (landlord.email) {
-                // Fire and forget email - don't await
-                sendComplaintMail({
+                const propertyImage = (tenant.images && tenant.images.length > 0) ? tenant.images[0] : null;
+                console.log(`📧 Sending complaint email to: ${landlord.email}`);
+                // Await here so we can catch errors clearly
+                await sendComplaintMail({
                     landlordEmail: landlord.email,
-                    landlordName: landlord.first_name,
+                    landlordName: landlord.first_name || 'Landlord',
                     tenantName: tenant.full_name || "A Tenant",
                     propertyName: tenant.property_name || "Property",
-                    propertyImage: (tenant.images && tenant.images.length > 0) ? tenant.images[0] : null,
+                    propertyImage,
                     complaint
-                }).catch(err => console.error("Background email error:", err));
+                });
+                console.log("✅ Complaint email sent successfully to:", landlord.email);
+            } else {
+                console.warn("⚠️ Landlord has no email address — skipping complaint email");
             }
+        } else {
+            console.warn("⚠️ No landlord found for landlord_id:", tenant.landlord_id);
         }
     } catch (notifyErr) {
-        console.error("⚠️ Notification failed but complaint was created:", notifyErr);
+        console.error("⚠️ Notification/email failed but complaint was created:", notifyErr);
         // Do not throw error, allowing complaint creation to succeed
     }
 
@@ -69,7 +78,8 @@ exports.createComplaint = async (userId, data) => {
 };
 
 exports.getTenantComplaints = async (userId) => {
-    const tenant = await Tenant.getByUserId(userId);
+    const tenants = await Tenant.getByUserId(userId);
+    const tenant = Array.isArray(tenants) ? tenants[0] : tenants;
     console.log("Fetched tenant for userId", userId, ":", tenant);
     if (!tenant) throw new Error("Tenant not found");
 

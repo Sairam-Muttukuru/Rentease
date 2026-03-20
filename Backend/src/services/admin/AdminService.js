@@ -1,6 +1,7 @@
 const model = require("../../models/admin/AdminModel");
 const bcrypt = require("bcryptjs");
 const sendMail = require("../../utils/email/sendCredentialsMail");
+const sendProviderDeletionEmail = require("../../utils/email/sendProviderDeletionEmail");
 
 exports.getOverview = async () => {
   const users = await model.countUsers();
@@ -98,6 +99,28 @@ exports.addProvider = async (data, adminId) => {
   } catch (err) {
     console.error("❌ addProvider failed:", err.message);
     throw err; // Propagate to controller
+  }
+};
+
+exports.deleteProvider = async (id, reason, adminId) => {
+  const provider = await model.getProviderById(id);
+  if (!provider) throw new Error("Provider not found");
+
+  try {
+    await model.deleteProviderAndUser(id, provider.user_id);
+
+    // Send notification email in background
+    sendProviderDeletionEmail(provider.email, provider.first_name, reason).catch(e => {
+      console.error("Failed to send deletion email:", e);
+    });
+
+    await model.logAction(adminId, `Deleted Service Provider: ${provider.company_name} (Reason: ${reason})`);
+    return { message: "Provider deleted successfully" };
+  } catch (err) {
+    if (err.message.includes("foreign key constraint")) {
+      throw new Error("Cannot delete this provider because they have associated service records or requests. Please suspend them instead.");
+    }
+    throw err;
   }
 };
 

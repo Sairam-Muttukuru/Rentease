@@ -180,6 +180,27 @@ exports.findUserByEmail = async (email) =>
 exports.checkProviderExists = async (userId) =>
   (await db.query("SELECT * FROM service_providers WHERE user_id = $1", [userId])).rows[0];
 
+
+exports.getProviderById = async (id) =>
+  (await db.query(`
+    SELECT sp.*, u.email, u.first_name, u.last_name 
+    FROM service_providers sp 
+    JOIN users u ON sp.user_id = u.id 
+    WHERE sp.id = $1
+  `, [id])).rows[0];
+
+exports.deleteProviderAndUser = async (providerId, userId) => {
+  await db.query("BEGIN");
+  try {
+    await db.query("DELETE FROM service_providers WHERE id = $1", [providerId]);
+    await db.query("DELETE FROM users WHERE id = $1", [userId]);
+    await db.query("COMMIT");
+  } catch (err) {
+    await db.query("ROLLBACK");
+    throw err;
+  }
+};
+
 exports.toggleProviderStatus = async (id) =>
   db.query(`UPDATE service_providers SET status = CASE WHEN status = 'Active' THEN 'Suspended' ELSE 'Active' END WHERE id = $1`, [id]);
 
