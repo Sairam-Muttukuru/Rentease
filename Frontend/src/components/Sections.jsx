@@ -1,5 +1,6 @@
 import React from "react";
 import { Layout, CreditCard, ShieldCheck, Users, Key, CheckCircle, Code, Server, Database, Mail, ArrowRight } from "lucide-react";
+import RevealOnScroll from "./RevealOnScroll";
 
 /* FeatureCard, RoleCard, TechItem - section-local helpers */
 const FeatureCard = ({ icon, title, desc }) => (
@@ -56,97 +57,105 @@ const Sections = () => {
   return (
     <>
       {/* Features */}
-      <section id="features" className="py-32 bg-white dark:bg-slate-900/60">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto mb-20">
-            <span className="text-indigo-600 dark:text-indigo-400 font-bold tracking-wider uppercase text-sm mb-2 block">
-              Features
-            </span>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6">
-              Everything you need to run your rentals
-            </h2>
-            <p className="text-lg text-slate-600 dark:text-slate-400">
-              Powerful features wrapped in a simple, intuitive interface.
-            </p>
-          </div>
+      <RevealOnScroll distance={50} delay={100}>
+        <section id="features" className="py-24 md:py-32 bg-white dark:bg-slate-900/60">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center max-w-3xl mx-auto mb-20">
+              <span className="text-indigo-600 dark:text-indigo-400 font-bold tracking-wider uppercase text-sm mb-2 block">
+                Features
+              </span>
+              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6">
+                Everything you need to run your rentals
+              </h2>
+              <p className="text-lg text-slate-600 dark:text-slate-400">
+                Powerful features wrapped in a simple, intuitive interface.
+              </p>
+            </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <FeatureCard icon={<Layout />} title="Intuitive Dashboard" desc="Clean, clutter-free interfaces designed specifically for tenants, landlords, and admins." />
-            <FeatureCard icon={<CreditCard />} title="Secure Payments" desc="Integrated payment gateways for rent collection, deposit tracking, and financial history." />
-            <FeatureCard icon={<ShieldCheck />} title="Role-Based Security" desc="Advanced JWT authentication ensures that users only access what they are authorized to see." />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <FeatureCard icon={<Layout />} title="Intuitive Dashboard" desc="Clean, clutter-free interfaces designed specifically for tenants, landlords, and admins." />
+              <FeatureCard icon={<CreditCard />} title="Secure Payments" desc="Integrated payment gateways for rent collection, deposit tracking, and financial history." />
+              <FeatureCard icon={<ShieldCheck />} title="Role-Based Security" desc="Advanced JWT authentication ensures that users only access what they are authorized to see." />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </RevealOnScroll>
 
       {/* Roles */}
-      <section id="who-its-for" className="py-32 bg-slate-50 dark:bg-slate-950">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="mb-16 text-center md:text-left">
-            <span className="text-indigo-600 dark:text-indigo-400 font-bold tracking-wider uppercase text-sm">The Ecosystem</span>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mt-2">Tailored experiences for every user</h2>
-          </div>
+      <RevealOnScroll distance={50} delay={200}>
+        <section id="who-its-for" className="py-24 md:py-32 bg-slate-50 dark:bg-slate-950">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="mb-16 text-center md:text-left">
+              <span className="text-indigo-600 dark:text-indigo-400 font-bold tracking-wider uppercase text-sm">The Ecosystem</span>
+              <h2 className="text-4xl md:text-5xl font-bold text-slate-900 dark:text-white mt-2">Tailored experiences for every user</h2>
+            </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <RoleCard title="Tenant" desc="Search properties, sign leases digitally, and pay rent in seconds." icon={<Users className="w-6 h-6 text-blue-500" />} color="blue" features={["One-click applications", "Maintenance requests", "Rent history"]} />
-            <RoleCard title="Landlord" desc="List properties, screen tenants, and manage your portfolio effortlessly." icon={<Key className="w-6 h-6 text-emerald-500" />} color="emerald" features={["Property analytics", "Tenant screening", "Automated reminders"]} />
-            <RoleCard title="Admin" desc="Oversee the entire platform with powerful moderation and oversight tools." icon={<ShieldCheck className="w-6 h-6 text-purple-500" />} color="purple" features={["User verification", "Dispute resolution", "System logs"]} />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <RoleCard title="Tenant" desc="Search properties, sign leases digitally, and pay rent in seconds." icon={<Users className="w-6 h-6 text-blue-500" />} color="blue" features={["One-click applications", "Maintenance requests", "Rent history"]} />
+              <RoleCard title="Landlord" desc="List properties, screen tenants, and manage your portfolio effortlessly." icon={<Key className="w-6 h-6 text-emerald-500" />} color="emerald" features={["Property analytics", "Tenant screening", "Automated reminders"]} />
+              <RoleCard title="Admin" desc="Oversee the entire platform with powerful moderation and oversight tools." icon={<ShieldCheck className="w-6 h-6 text-purple-500" />} color="purple" features={["User verification", "Dispute resolution", "System logs"]} />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </RevealOnScroll>
 
       {/* Become a Partner CTA */}
-      <section className="py-24 bg-slate-900 text-white relative overflow-hidden">
-        {/* Background Gradients */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-orange-500/20 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-500/20 rounded-full blur-[80px] pointer-events-none" />
+      <RevealOnScroll distance={30} delay={100}>
+        <section className="py-24 bg-slate-900 text-white relative overflow-hidden">
+          {/* Background Gradients */}
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-orange-500/20 rounded-full blur-[100px] pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-500/20 rounded-full blur-[80px] pointer-events-none" />
 
-        <div className="max-w-4xl mx-auto px-6 relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 font-bold text-xs uppercase tracking-widest mb-6">
-            <Users size={14} /> Join Our Network
-          </div>
-          <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tight">
-            Are you a Service Professional?
-          </h2>
-          <p className="text-lg text-slate-300 mb-10 leading-relaxed max-w-2xl mx-auto">
-            Expand your business with RentEase. Connect with thousands of tenants and landlords looking for quality maintenance services.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a
-              href="https://mail.google.com/mail/?view=cm&fs=1&to=bhavanimuttukuru@gmail.com&su=Service%20Provider%20Application&body=Hi%20RentEase%20Team%2C%0A%0AI%20am%20interested%20in%20becoming%20a%20service%20provider%20on%20your%20platform.%0A%0ACompany%20Name%3A%0AService%20Type%3A%0AContact%20Number%3A%0A%0AThank%20you!"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-8 py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-bold flex items-center gap-3 transition-all hover:scale-105 shadow-lg shadow-orange-600/30 group"
-            >
-              <Mail size={20} />
-              Join as Partner
-              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-            </a>
-            <p className="text-sm text-slate-500 mt-4 sm:mt-0">
-              *Verification required
+          <div className="max-w-4xl mx-auto px-6 relative z-10 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 font-bold text-xs uppercase tracking-widest mb-6">
+              <Users size={14} /> Join Our Network
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tight">
+              Are you a Service Professional?
+            </h2>
+            <p className="text-lg text-slate-300 mb-10 leading-relaxed max-w-2xl mx-auto">
+              Expand your business with RentEase. Connect with thousands of tenants and landlords looking for quality maintenance services.
             </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <a
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=bhavanimuttukuru@gmail.com&su=Service%20Provider%20Application&body=Hi%20RentEase%20Team%2C%0A%0AI%20am%20interested%20in%20becoming%20a%20service%20provider%20on%20your%20platform.%0A%0ACompany%20Name%3A%0AService%20Type%3A%0AContact%20Number%3A%0A%0AThank%20you!"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-8 py-4 bg-orange-600 hover:bg-orange-700 text-white rounded-2xl font-bold flex items-center gap-3 transition-all hover:scale-105 shadow-lg shadow-orange-600/30 group"
+              >
+                <Mail size={20} />
+                Join as Partner
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              </a>
+              <p className="text-sm text-slate-500 mt-4 sm:mt-0">
+                *Verification required
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </RevealOnScroll>
 
       {/* Tech Stack */}
-      <section id="tech-stack" className="py-32 bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 opacity-20">
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-600 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-600 rounded-full blur-3xl animate-pulse delay-700" />
-        </div>
-
-        <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-16">Engineered for Scale</h2>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
-            <TechItem icon={<Code />} label="React.js" sub="Frontend" color="text-cyan-500" />
-            <TechItem icon={<Server />} label="Node.js" sub="Backend" color="text-green-500" />
-            <TechItem icon={<Database />} label="PostgreSQL" sub="Database" color="text-blue-500" />
-            <TechItem icon={<Layout />} label="MVC" sub="Architecture" color="text-pink-500" />
+      <RevealOnScroll distance={40} delay={100}>
+        <section id="tech-stack" className="py-24 md:py-32 bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 opacity-20">
+            <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-600 rounded-full blur-3xl animate-pulse" />
+            <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-600 rounded-full blur-3xl animate-pulse delay-700" />
           </div>
-        </div>
-      </section>
+
+          <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold mb-16">Engineered for Scale</h2>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
+              <TechItem icon={<Code />} label="React.js" sub="Frontend" color="text-cyan-500" />
+              <TechItem icon={<Server />} label="Node.js" sub="Backend" color="text-green-500" />
+              <TechItem icon={<Database />} label="PostgreSQL" sub="Database" color="text-blue-500" />
+              <TechItem icon={<Layout />} label="MVC" sub="Architecture" color="text-pink-500" />
+            </div>
+          </div>
+        </section>
+      </RevealOnScroll>
     </>
   );
 };

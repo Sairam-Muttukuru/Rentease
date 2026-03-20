@@ -16,36 +16,7 @@ const PLACEHOLDER =
     `<svg xmlns='http://www.w3.org/2000/svg' width='1600' height='900' viewBox='0 0 1600 900'><rect width='100%' height='100%' fill='%23e9eef2'/><text x='50%' y='50%' fill='%238a8f95' font-size='28' font-family='Arial' dominant-baseline='middle' text-anchor='middle'>Image unavailable</text></svg>`
   );
 
-/* RevealOnScroll */
-export const RevealOnScroll = ({ children, delay = 0, width = "100%" }) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          obs.disconnect();
-        }
-      },
-      { threshold: 0.08, rootMargin: "60px" }
-    );
-    if (ref.current) obs.observe(ref.current);
-    return () => obs.disconnect();
-  }, []);
-
-  return (
-    <div
-      ref={ref}
-      style={{ width, transitionDelay: `${delay}ms` }}
-      className={`transition-all duration-900 ease-out transform ${isVisible ? "opacity-100 translate-y-0 blur-0" : "opacity-0 translate-y-8 blur-sm"
-        }`}
-    >
-      {children}
-    </div>
-  );
-};
+import RevealOnScroll from "./RevealOnScroll";
 
 /* ImageSlider */
 const ImageSlider = ({ images = [], autoplay = true, interval = 3600 }) => {

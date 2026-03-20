@@ -106,7 +106,6 @@ const LandingPage = () => {
         duration={1000}   // slower duration for cinematic feel
         distance={50}     // a bit more vertical travel
         scale={0.985}     // tiny pop
-        threshold={0.18}
         className="w-full"
       >
         <Hero />
@@ -115,17 +114,7 @@ const LandingPage = () => {
 
 
       {/* SECTIONS - cascade the grids with a comfortable stagger */}
-      <RevealOnScroll
-        delay={60}
-        duration={900}
-        distance={40}
-        scale={0.992}
-        threshold={0.20}
-        stagger={100}     // 100ms between each child
-        className="w-full"
-      >
-        <Sections />
-      </RevealOnScroll>
+      <Sections />
 
 
 
