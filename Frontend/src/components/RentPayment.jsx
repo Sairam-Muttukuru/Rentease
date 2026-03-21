@@ -66,7 +66,7 @@ const CheckoutForm = ({ amount, tenantId, propertyId, tenantName, isDarkMode, pa
 
     try {
       // 1️⃣ Create payment intent
-      const res = await fetch("http://localhost:5000/api/payment/create-payment-intent", {
+      const res = await fetch("/api/payment/create-payment-intent", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -111,8 +111,8 @@ const CheckoutForm = ({ amount, tenantId, propertyId, tenantName, isDarkMode, pa
 
         // Determine endpoint based on paymentType
         const endpoint = paymentType === 'SECURITY_DEPOSIT'
-          ? "http://localhost:5000/api/payment/security-deposit"
-          : "http://localhost:5000/api/payment/rent-payment";
+          ? "/api/payment/security-deposit"
+          : "/api/payment/rent-payment";
 
         const saveRes = await fetch(endpoint, {
           method: "POST",
@@ -156,8 +156,8 @@ const CheckoutForm = ({ amount, tenantId, propertyId, tenantName, isDarkMode, pa
       try {
         const mockTx = "MOCK_TX_" + Date.now();
         const endpoint = paymentType === 'SECURITY_DEPOSIT'
-          ? "http://localhost:5000/api/payment/security-deposit"
-          : "http://localhost:5000/api/payment/rent-payment";
+          ? "/api/payment/security-deposit"
+          : "/api/payment/rent-payment";
 
         const saveRes = await fetch(endpoint, {
           method: "POST",

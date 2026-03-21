@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { loadStripe } from "@stripe/stripe-js";
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import BASE_URL from '../utils/apiConfig';
 
 // Layout
 import TenantLayout from '../components/tenant/layout/TenantLayout';
@@ -158,9 +159,9 @@ export default function TenantDashboard() {
 
       // Optimized: Fetch data directly without artificial delay
       const [userRes, paymentsRes, complaintsRes] = await Promise.all([
-        axios.get(`http://localhost:5000/api/tenants/dashboard${userName ? `?userName=${userName}` : ''}`, { headers }),
-        axios.get(`http://localhost:5000/api/tenants/payments${userName ? `?userName=${userName}` : ''}`, { headers }),
-        axios.get(`http://localhost:5000/api/complaints/tenant`, { headers })
+        axios.get(`${BASE_URL}/api/tenants/dashboard${userName ? `?userName=${userName}` : ''}`, { headers }),
+        axios.get(`${BASE_URL}/api/tenants/payments${userName ? `?userName=${userName}` : ''}`, { headers }),
+        axios.get(`${BASE_URL}/api/complaints/tenant`, { headers })
       ]);
 
       setTenantData({
@@ -215,7 +216,7 @@ export default function TenantDashboard() {
   // --- Handlers ---
   const handleLogout = async () => {
     try {
-      await axios.post("http://localhost:5000/api/auth/logout", {}, { withCredentials: true });
+      await axios.post("/api/auth/logout", {}, { withCredentials: true });
       localStorage.clear();
       toast.success("Logged out successfully");
       setTimeout(() => window.location.href = "/", 1000);
@@ -229,7 +230,7 @@ export default function TenantDashboard() {
     setIsUpdatingProfile(true);
     try {
       const token = localStorage.getItem("accessToken");
-      await axios.put("http://localhost:5000/api/tenants/profile", {
+      await axios.put("/api/tenants/profile", {
         full_name: tenantData.name,
         email: tenantData.email,
         phone: tenantData.phone,
@@ -259,7 +260,7 @@ export default function TenantDashboard() {
     setIsUpdatingPassword(true);
     try {
       const token = localStorage.getItem("accessToken");
-      await axios.put("http://localhost:5000/api/auth/change-password", {
+      await axios.put("/api/auth/change-password", {
         oldPassword: passwordForm.oldPassword,
         newPassword: passwordForm.newPassword
       }, { headers: { Authorization: `Bearer ${token}` } });
@@ -303,7 +304,7 @@ export default function TenantDashboard() {
         images: complaintImages
       };
 
-      const res = await axios.post("http://localhost:5000/api/complaints", complaintData, {
+      const res = await axios.post("/api/complaints", complaintData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -331,7 +332,7 @@ export default function TenantDashboard() {
   const handleUpdateStatus = async (id, status) => {
     try {
       const token = localStorage.getItem("accessToken");
-      await axios.patch(`http://localhost:5000/api/complaints/${id}/status`, { status }, {
+      await axios.patch(`/api/complaints/${id}/status`, { status }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success(`Complaint marked as ${status}`);

@@ -6,6 +6,7 @@ import Button from '../ui/Button';
 import Card from '../ui/Card';
 import StatusBadge from '../ui/StatusBadge';
 import { useTheme } from "../../../context/ThemeContext";
+import BASE_URL from "../../../utils/apiConfig";
 
 const PaymentsPage = ({ payments }) => {
     const { theme } = useTheme();
@@ -14,7 +15,7 @@ const PaymentsPage = ({ payments }) => {
     const downloadReceipt = async (payment) => {
         try {
             const token = localStorage.getItem("accessToken");
-            const res = await axios.get(`http://localhost:5000/api/payment/download-receipt/${payment.id}`, {
+            const res = await axios.get(`${BASE_URL}/api/payment/download-receipt/${payment.id}`, {
                 headers: { Authorization: `Bearer ${token}` },
                 responseType: 'blob' // Important for PDF download
             });

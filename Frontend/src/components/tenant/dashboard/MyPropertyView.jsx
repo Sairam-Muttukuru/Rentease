@@ -23,7 +23,7 @@ const MyPropertyView = ({
     const handleDownloadReceipt = async () => {
         setDownloading(true);
         try {
-            const res = await fetch(`http://localhost:5000/api/payment/security-deposit/tenant/${user.id}`, {
+            const res = await fetch(`/api/payment/security-deposit/tenant/${user.id}`, {
                 headers: {
                     "Authorization": `Bearer ${localStorage.getItem("accessToken")}`
                 }

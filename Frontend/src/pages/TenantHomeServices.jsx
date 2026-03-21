@@ -9,6 +9,7 @@ import {
 import { toast } from 'react-toastify';
 import { useTheme } from '../context/ThemeContext';
 import axios from 'axios';
+import BASE_URL from '../utils/apiConfig';
 
 // Icon Mapping
 const ICON_MAP = {
@@ -57,8 +58,8 @@ export default function TenantHomeServices({ toggleSidebar }) {
     const fetchCategories = async () => {
         setIsLoading(true);
         try {
-            const res = await axios.get('http://localhost:5000/api/tenants/catalog/categories', {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            const res = await axios.get(`${BASE_URL}/api/tenants/catalog/categories`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
             });
             setCategories(res.data);
 
@@ -82,8 +83,8 @@ export default function TenantHomeServices({ toggleSidebar }) {
     const fetchTypes = async (categoryId) => {
         setIsLoading(true);
         try {
-            const res = await axios.get(`http://localhost:5000/api/tenants/catalog/types/${categoryId}`, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            const res = await axios.get(`${BASE_URL}/api/tenants/catalog/types/${categoryId}`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
             });
             setTypes(res.data);
             setViewState('TYPES');
@@ -103,8 +104,8 @@ export default function TenantHomeServices({ toggleSidebar }) {
             // Wait, I need to check TenantController.js. 
             // It likely needs an update to expose getSubTypes. 
             // For now, I will optimistically implement this and then fix the backend controller.
-            const res = await axios.get(`http://localhost:5000/api/tenants/catalog/sub-types/${typeId}`, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            const res = await axios.get(`${BASE_URL}/api/tenants/catalog/sub-types/${typeId}`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
             });
             setSubTypes(res.data);
             setViewState('SUB_TYPES');
@@ -120,8 +121,8 @@ export default function TenantHomeServices({ toggleSidebar }) {
         setIsLoading(true);
         try {
             // Updated endpoint to fetch by sub-type
-            const res = await axios.get(`http://localhost:5000/api/tenants/catalog/services-by-subtype/${subTypeId}`, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            const res = await axios.get(`${BASE_URL}/api/tenants/catalog/services-by-subtype/${subTypeId}`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
             });
             setServices(res.data);
             setViewState('SERVICES');

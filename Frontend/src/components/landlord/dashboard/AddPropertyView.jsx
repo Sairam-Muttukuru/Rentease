@@ -177,7 +177,7 @@ const AddPropertyView = ({ isDarkMode, onSuccess, showNotificationToast }) => {
                 late_penalty_amount: parseFloat(newProperty.late_penalty_amount) || 0,
                 guidelines: newProperty.guidelines || null
             };
-            const response = await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/properties/addproperty`, propertyPayload, {
+            const response = await axios.post(`${import.meta.env.VITE_API_URL || ""}/api/properties/addproperty`, propertyPayload, {
                 headers: { Authorization: `Bearer ${token}` },
                 withCredentials: true
             });

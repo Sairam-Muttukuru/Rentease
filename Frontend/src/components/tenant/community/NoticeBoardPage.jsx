@@ -16,7 +16,7 @@ const NoticeBoardPage = () => {
         const fetchNotices = async () => {
             try {
                 const token = localStorage.getItem("accessToken");
-                const res = await axios.get("http://localhost:5000/api/announcement/tenant", {
+                const res = await axios.get("/api/announcement/tenant", {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 // Map backend fields to frontend expected fields if necessary

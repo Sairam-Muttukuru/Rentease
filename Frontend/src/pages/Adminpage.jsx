@@ -31,7 +31,7 @@ const ThemeToggle = ({ theme, toggleTheme }) => (
     </button>
 );
 // --- CONFIG ---
-const API_URL = `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/admin`;
+const API_URL = `${import.meta.env.VITE_API_URL || ""}/api/admin`;
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']; // Indigo-based palette
 const getAuthConfig = () => {
     const token = localStorage.getItem("accessToken");
@@ -1347,7 +1347,7 @@ const Adminpage = () => {
 
     const handleLogout = async () => {
         try {
-            await axios.post("http://localhost:5000/api/auth/logout", {}, getAuthConfig());
+            await axios.post("/api/auth/logout", {}, getAuthConfig());
             localStorage.removeItem("accessToken");
             localStorage.removeItem("user");
             toast.success("Logged out successfully");

@@ -56,7 +56,7 @@ const AddTenantModal = ({ isOpen, onClose, properties, onSuccess, isDarkMode }) 
                 }
             };
             await axios.post(
-                `http://localhost:5000/api/tenants/property/${formData.propertyId}`,
+                `/api/tenants/property/${formData.propertyId}`,
                 payload,
                 { headers: { Authorization: `Bearer ${token}` } }
             );

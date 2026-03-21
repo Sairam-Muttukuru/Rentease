@@ -9,7 +9,13 @@ const init = (server) => {
     io = new Server(server, {
         cors: {
             origin: process.env.NODE_ENV === "production" 
-                ? ["https://rentease.com", "https://www.rentease.com"]
+                ? [
+                    "https://rentease.com", 
+                    "https://www.rentease.com", 
+                    "https://rentease-rho.vercel.app",
+                    "http://localhost:5173", 
+                    "http://127.0.0.1:5173"
+                  ]
                 : ["http://localhost:5173", "http://127.0.0.1:5173"],
             methods: ["GET", "POST"],
             credentials: true

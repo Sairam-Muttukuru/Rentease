@@ -27,7 +27,7 @@ const ICON_MAP = {
     Fan, Sparkles, Zap, Paintbrush, Wrench, Hammer, Home, Star, LayoutGrid, ClipboardList
 };
 
-const API_BASE_URL = "http://localhost:5000/api/service-provider";
+const API_BASE_URL = "/api/service-provider";
 
 // Axios Interceptor for Auth
 const api = axios.create({
@@ -255,7 +255,7 @@ const ProfileView = ({ user, profile, onUpdate }) => {
         }
 
         try {
-            await axios.post('http://localhost:5000/api/auth/change-password', {
+            await axios.post('/api/auth/change-password', {
                 currentPassword: passwordForm.current,
                 newPassword: passwordForm.new
             }, {

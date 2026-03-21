@@ -66,7 +66,7 @@ const PropertyBrowse = () => {
       }
 
       // API Call
-      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/properties/allproperties`, { params });
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || ''}/api/properties/allproperties`, { params });
 
       setProperties(response.data.properties);
       setPagination(prev => ({

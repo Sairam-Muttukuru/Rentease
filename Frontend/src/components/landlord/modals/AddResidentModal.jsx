@@ -31,7 +31,7 @@ const AddResidentModal = ({ isOpen, onClose, tenantId, onResidentAdded, isDarkMo
             };
 
             await axios.post(
-                `http://localhost:5000/api/tenants/${tenantId}/members`,
+                `/api/tenants/${tenantId}/members`,
                 payload,
                 { headers: { Authorization: `Bearer ${token}` } }
             );

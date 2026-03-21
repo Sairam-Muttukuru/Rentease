@@ -34,7 +34,7 @@
 //         setProcessing(true); // Show overlay
 
 //         try {
-//             const res = await fetch("http://localhost:5000/api/payment/create-razorpay", {
+//             const res = await fetch("/api/payment/create-razorpay", {
 //                 method: "POST",
 //                 headers: {
 //                     "Content-Type": "application/json",

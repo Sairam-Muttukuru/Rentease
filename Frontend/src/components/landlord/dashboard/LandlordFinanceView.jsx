@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import BASE_URL from '../../utils/apiConfig';
 import { toast } from 'react-toastify';
 import { Download, IndianRupee, Users, PieChart } from 'lucide-react';
 import { Card } from '../../ui/card';
@@ -20,7 +21,7 @@ const LandlordFinanceView = ({ isDarkMode, tenants, onUpdateStatus }) => {
             const token = localStorage.getItem("accessToken");
             if (!token) return;
 
-            const res = await axios.get("http://localhost:5000/api/payment/landlord-payments", {
+            const res = await axios.get(`${BASE_URL}/api/payment/landlord-payments`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setRealPayments(res.data);
@@ -34,7 +35,7 @@ const LandlordFinanceView = ({ isDarkMode, tenants, onUpdateStatus }) => {
     const downloadReceipt = async (paymentId) => {
         try {
             const token = localStorage.getItem("accessToken");
-            const res = await axios.get(`http://localhost:5000/api/payment/download-receipt/${paymentId}`, {
+            const res = await axios.get(`${BASE_URL}/api/payment/download-receipt/${paymentId}`, {
                 headers: { Authorization: `Bearer ${token}` },
                 responseType: 'blob'
             });
