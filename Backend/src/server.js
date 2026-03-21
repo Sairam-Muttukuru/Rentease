@@ -6,6 +6,9 @@ const socketService = require("./services/common/SocketService");
 
 const server = http.createServer(app);
 
+app.get("/", (req, res) => {
+    res.console.log("Server is running");
+})
 // Initialize Socket.io
 socketService.init(server);
 

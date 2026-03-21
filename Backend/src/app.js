@@ -18,7 +18,9 @@ const allowedOrigins =
             "http://localhost:5173",
             "http://127.0.0.1:5173"
         ];
-
+app.get("/", (req, res) => {
+    res.console.log("Server is running");
+})
 app.use(cors({
     origin: (origin, callback) => {
         // allow non-browser clients (Postman, mobile apps, server-to-server)
