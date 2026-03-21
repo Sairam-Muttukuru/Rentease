@@ -12,15 +12,14 @@ const allowedOrigins =
     process.env.NODE_ENV === "production"
         ? [
             "https://rentease.com",
-            "https://www.rentease.com"
+            "https://www.rentease.com",
+            "https://rentease-rho.vercel.app"
         ]
         : [
             "http://localhost:5173",
             "http://127.0.0.1:5173"
         ];
-app.get("/", (req, res) => {
-    res.console.log("Server is running");
-})
+
 app.use(cors({
     origin: (origin, callback) => {
         // allow non-browser clients (Postman, mobile apps, server-to-server)

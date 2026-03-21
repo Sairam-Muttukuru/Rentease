@@ -31,7 +31,7 @@ const ThemeToggle = ({ theme, toggleTheme }) => (
     </button>
 );
 // --- CONFIG ---
-const API_URL = "http://localhost:5000/api/admin";
+const API_URL = `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/admin`;
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']; // Indigo-based palette
 const getAuthConfig = () => {
     const token = localStorage.getItem("accessToken");

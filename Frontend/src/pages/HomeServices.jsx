@@ -522,7 +522,7 @@ const HomeServices = () => {
         setLoading(true);
         try {
             // Using public endpoints now
-            const res = await axios.get('http://localhost:5000/api/tenants/catalog/categories');
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/tenants/catalog/categories`);
             setCategories(res.data);
         } catch (error) {
             console.error("Error fetching categories:", error);
@@ -530,14 +530,14 @@ const HomeServices = () => {
             setLoading(false);
         }
     };
-
+ 
     const fetchTypes = async (categoryId) => {
         setLoading(true);
         try {
-            const res = await axios.get(`http://localhost:5000/api/tenants/catalog/types/${categoryId}`);
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/tenants/catalog/types/${categoryId}`);
             const fetchedTypes = res.data;
             setTypes(fetchedTypes);
-
+ 
             if (fetchedTypes.length > 0) {
                 // Automatically select the first type and fetch its services
                 handleTypeSelect(fetchedTypes[0]);
@@ -552,11 +552,11 @@ const HomeServices = () => {
             setLoading(false);
         }
     };
-
+ 
     const fetchServices = async (typeId) => {
         setLoading(true);
         try {
-            const res = await axios.get(`http://localhost:5000/api/tenants/catalog/services/${typeId}`);
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/tenants/catalog/services/${typeId}`);
             setServices(res.data);
             setViewState('SERVICES');
         } catch (error) {
@@ -566,12 +566,12 @@ const HomeServices = () => {
             setLoading(false);
         }
     };
-
+ 
     // fetchServicesByCategory is no longer the primary entry point but kept for fallback if needed
     const fetchServicesByCategory = async (categoryId) => {
         setLoading(true);
         try {
-            const res = await axios.get(`http://localhost:5000/api/tenants/catalog/category/${categoryId}/services`);
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/tenants/catalog/category/${categoryId}/services`);
             setServices(res.data);
             setViewState('SERVICES');
         } catch (error) {
@@ -580,20 +580,20 @@ const HomeServices = () => {
             setLoading(false);
         }
     };
-
+ 
     const handleCategoryClick = (category) => {
         setSelectedCategory(category);
         fetchTypes(category.id);
     };
-
+ 
     const handleTypeSelect = (type) => {
         setSelectedType(type);
         setViewState('SERVICES');
         fetchServices(type.id);
     };
-
+ 
     // handleSubCategorySelect is deprecated/removed in this flow
-
+ 
     const handleBack = () => {
         setViewState('CATEGORIES');
         setSelectedCategory(null);
@@ -601,12 +601,12 @@ const HomeServices = () => {
         setServices([]);
         setTypes([]);
     };
-
+ 
     const handleServiceClick = (service) => {
         setSelectedServiceDetails(service);
         setIsDetailsModalOpen(true);
     };
-
+ 
     const handleBookClick = (service) => {
         const token = localStorage.getItem('accessToken');
         if (!token) {
@@ -617,7 +617,7 @@ const HomeServices = () => {
         setSelectedService(service);
         setIsBookingModalOpen(true);
     };
-
+ 
     const handleBookingConfirm = async (formData) => {
         // Ensure we send the global service ID (which is 'id' if fetching from public catalog, or 'service_id' if from provider list)
         // But for public catalog, 'id' IS the service_id.
@@ -625,12 +625,12 @@ const HomeServices = () => {
         // Let's assume selectedService has 'id' as primary key of WHATEVER table it came from.
         // If it came from 'st.getServices', it's provider_services join services.
         // If it came from 'st.getCatalogServices', it's services table.
-
+ 
         // selectedService comes from provider_services JOIN services
         // id = service_id (from services table, due to select s.*)
         // provider_id = from provider_services
         // price = from provider_services
-
+ 
         const payload = {
             service_id: selectedService.id, // This is the Service ID
             provider_id: selectedService.provider_id, // This is the Provider ID
@@ -644,10 +644,10 @@ const HomeServices = () => {
             service_type: selectedService.type_name || selectedService.category_name || 'Standard', // Use type from service object
             priority: formData.priority || 'Normal'
         };
-
+ 
         const token = localStorage.getItem('accessToken');
         try {
-            await axios.post('http://localhost:5000/api/tenants/service-request', payload, {
+            await axios.post(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/tenants/service-request`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success("Booking Request Sent Successfully!");
