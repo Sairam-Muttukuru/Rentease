@@ -43,4 +43,14 @@ const pool = new Pool(
         }
 );
 
+
+// Test the database connection
+pool.connect((err, client, release) => {
+    if (err) {
+        return console.error('Database Connection Error:', err.stack);
+    }
+    console.log('✅ Connected to the PostgreSQL database successfully!');
+    release();
+});
+
 module.exports = pool;
