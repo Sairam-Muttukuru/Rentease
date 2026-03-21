@@ -1347,7 +1347,7 @@ const Adminpage = () => {
 
     const handleLogout = async () => {
         try {
-            await axios.post('api/auth/logout', {}, getAuthConfig());
+            await axios.post('https://rentease-1-pwm5.onrender.com/api/auth/logout', {}, getAuthConfig());
             localStorage.removeItem("accessToken");
             localStorage.removeItem("user");
             toast.success("Logged out successfully");

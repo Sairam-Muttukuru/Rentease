@@ -89,7 +89,7 @@ const TenantSettings = ({
 
                                             // Save to Database via Profile Update
                                             const token = localStorage.getItem("accessToken");
-                                            await axios.put("/api/tenants/profile", {
+                                            await axios.put("https://rentease-1-pwm5.onrender.com/api/tenants/profile", {
                                                 full_name: user.name,
                                                 email: user.email,
                                                 phone: user.phone,

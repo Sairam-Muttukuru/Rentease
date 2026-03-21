@@ -34,7 +34,7 @@
 //         setProcessing(true); // Show overlay
 
 //         try {
-//             const res = await fetch("/api/payment/create-razorpay", {
+//             const res = await fetch("https://rentease-1-pwm5.onrender.com/api/payment/create-razorpay", {
 //                 method: "POST",
 //                 headers: {
 //                     "Content-Type": "application/json",

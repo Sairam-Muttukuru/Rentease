@@ -21,7 +21,7 @@ const TenantDetailView = ({ tenants, selectedTenantId, isDarkMode, setActiveTab,
         setIsLoadingMembers(true);
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await axios.get(`api/tenants/${tenant.id}/members`, {
+            const response = await axios.get(`https://rentease-1-pwm5.onrender.com/api/tenants/${tenant.id}/members`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setMembers(response.data);
@@ -38,7 +38,7 @@ const TenantDetailView = ({ tenants, selectedTenantId, isDarkMode, setActiveTab,
 
         try {
             const token = localStorage.getItem('accessToken');
-            await axios.delete(`api/tenant-members/${memberId}`, {
+            await axios.delete(`https://rentease-1-pwm5.onrender.com/api/tenant-members/${memberId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             showNotificationToast("Resident deleted successfully", "success");

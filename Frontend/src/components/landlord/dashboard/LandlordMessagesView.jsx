@@ -83,7 +83,7 @@ export default function LandlordMessagesView({ isDarkMode, tenants = [], current
         const fetchStatuses = async () => {
             tenants.forEach(async (t) => {
                 try {
-                    const res = await axios.get(`api/messages/status/${t.user_id}`, {
+                    const res = await axios.get(`https://rentease-1-pwm5.onrender.com/api/messages/status/${t.user_id}`, {
                         headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` }
                     });
                     setOnlineStatus(prev => ({ ...prev, [t.user_id]: res.data.status }));
@@ -94,7 +94,7 @@ export default function LandlordMessagesView({ isDarkMode, tenants = [], current
         };
         const fetchConversations = async () => {
             try {
-                const res = await axios.get(`api/messages/conversations`, {
+                const res = await axios.get(`https://rentease-1-pwm5.onrender.com/api/messages/conversations`, {
                     headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` }
                 });
                 const messages = {};
@@ -112,7 +112,7 @@ export default function LandlordMessagesView({ isDarkMode, tenants = [], current
 
         const fetchUnreadCounts = async () => {
             try {
-                const res = await axios.get(`api/messages/unread-counts`, {
+                const res = await axios.get(`https://rentease-1-pwm5.onrender.com/api/messages/unread-counts`, {
                     headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` }
                 });
                 const counts = {};
@@ -169,7 +169,7 @@ export default function LandlordMessagesView({ isDarkMode, tenants = [], current
         try {
             setLoading(true);
             const token = localStorage.getItem("accessToken");
-            const res = await axios.get(`api/messages/chat/${contactId}`, {
+            const res = await axios.get(`https://rentease-1-pwm5.onrender.com/api/messages/chat/${contactId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             
@@ -250,7 +250,7 @@ export default function LandlordMessagesView({ isDarkMode, tenants = [], current
 
         try {
             const token = localStorage.getItem("accessToken");
-            const res = await axios.post(`api/messages/send`, {
+            const res = await axios.post(`https://rentease-1-pwm5.onrender.com/api/messages/send`, {
                 receiverId: selectedTenant.user_id,
                 text: text
             }, {

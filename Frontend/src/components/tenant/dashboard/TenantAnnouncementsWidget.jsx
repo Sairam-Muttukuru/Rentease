@@ -14,7 +14,7 @@ const TenantAnnouncementsWidget = ({ isDarkMode }) => {
     const fetchAnnouncements = async () => {
         try {
             const token = localStorage.getItem("accessToken");
-            const res = await axios.get('api/announcement/tenant', {
+            const res = await axios.get('https://rentease-1-pwm5.onrender.com/api/announcement/tenant', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setAnnouncements(res.data);

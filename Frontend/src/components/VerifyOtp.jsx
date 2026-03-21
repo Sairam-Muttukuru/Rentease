@@ -21,7 +21,7 @@ const VerifyOtp = () => {
     }
     setIsLoading(true);
     try {
-      await axios.post('api/auth/verify-otp', { email, otp });
+      await axios.post('https://rentease-1-pwm5.onrender.com/api/auth/verify-otp', { email, otp });
       toast.success('OTP verified');
       navigate('/reset-password', { state: { email } });
     } catch (error) {

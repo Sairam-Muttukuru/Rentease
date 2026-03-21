@@ -66,7 +66,7 @@ const CheckoutForm = ({ amount, tenantId, propertyId, tenantName, isDarkMode, pa
 
     try {
       // 1️⃣ Create payment intent
-      const res = await fetch("/api/payment/create-payment-intent", {
+      const res = await fetch("https://rentease-1-pwm5.onrender.com/api/payment/create-payment-intent", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -111,8 +111,8 @@ const CheckoutForm = ({ amount, tenantId, propertyId, tenantName, isDarkMode, pa
 
         // Determine endpoint based on paymentType
         const endpoint = paymentType === 'SECURITY_DEPOSIT'
-          ? "/api/payment/security-deposit"
-          : "/api/payment/rent-payment";
+          ? "https://rentease-1-pwm5.onrender.com/api/payment/security-deposit"
+          : "https://rentease-1-pwm5.onrender.com/api/payment/rent-payment";
 
         const saveRes = await fetch(endpoint, {
           method: "POST",
@@ -156,8 +156,8 @@ const CheckoutForm = ({ amount, tenantId, propertyId, tenantName, isDarkMode, pa
       try {
         const mockTx = "MOCK_TX_" + Date.now();
         const endpoint = paymentType === 'SECURITY_DEPOSIT'
-          ? "/api/payment/security-deposit"
-          : "/api/payment/rent-payment";
+          ? "https://rentease-1-pwm5.onrender.com/api/payment/security-deposit"
+          : "https://rentease-1-pwm5.onrender.com/api/payment/rent-payment";
 
         const saveRes = await fetch(endpoint, {
           method: "POST",

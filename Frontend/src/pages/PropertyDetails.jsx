@@ -77,7 +77,7 @@ const PropertyDetails = () => {
     useEffect(() => {
         const fetchProperty = async () => {
             try {
-                const res = await axios.get(`api/properties/${id}`);
+                const res = await axios.get(`https://rentease-1-pwm5.onrender.com/api/properties/${id}`);
                 setProperty(res.data);
             } catch (err) {
                 console.error("Failed to load property", err);
@@ -107,7 +107,7 @@ const PropertyDetails = () => {
 
         setIsBooking(true);
         try {
-            await axios.post('api/bookings',
+            await axios.post('https://rentease-1-pwm5.onrender.com/api/bookings',
                 { propertyId: id, message: bookingMessage, visitSlot },
                 { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } }
             );

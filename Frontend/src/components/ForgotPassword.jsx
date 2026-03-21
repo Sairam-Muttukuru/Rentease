@@ -16,7 +16,7 @@ const ForgotPassword = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await axios.post('api/auth/forgot-password', { email });
+      await axios.post('https://rentease-1-pwm5.onrender.com/api/auth/forgot-password', { email });
       toast.success('OTP sent to your email');
       navigate('/verify-otp', { state: { email } });
     } catch (error) {

@@ -59,7 +59,7 @@ const SettingsView = ({ user, isDarkMode, handleLogout, onUpdateUser }) => {
         const token = localStorage.getItem("accessToken");
         if (!token) return;
         try {
-            const response = await axios.put("/api/auth/update-profile", formData, {
+            const response = await axios.put("https://rentease-1-pwm5.onrender.com/api/auth/update-profile", formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (response.status === 200) {
@@ -93,7 +93,7 @@ const SettingsView = ({ user, isDarkMode, handleLogout, onUpdateUser }) => {
         setChangingPassword(true);
         try {
             const token = localStorage.getItem("accessToken");
-            await axios.post('api/auth/change-password', {
+            await axios.post('https://rentease-1-pwm5.onrender.com/api/auth/change-password', {
                 currentPassword: passwordData.oldPassword,
                 newPassword: passwordData.newPassword
             }, { headers: { Authorization: `Bearer ${token}` } });

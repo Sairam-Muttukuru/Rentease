@@ -31,7 +31,7 @@ const AddResidentModal = ({ isOpen, onClose, tenantId, onResidentAdded, isDarkMo
             };
 
             await axios.post(
-                `/api/tenants/${tenantId}/members`,
+                `https://rentease-1-pwm5.onrender.com/api/tenants/${tenantId}/members`,
                 payload,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
