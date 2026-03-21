@@ -24,21 +24,7 @@ const allowedOrigins =
         ];
 
 app.use(cors({
-    origin: (origin, callback) => {
-        // allow non-browser clients (Postman, mobile apps, server-to-server)
-        if (!origin) return callback(null, true);
-        
-        console.log("CORS Check - Origin:", origin);
-        console.log("Allowed Origins:", allowedOrigins);
-        console.log("Match Found:", allowedOrigins.includes(origin));
-
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        } else {
-            console.error("CORS Blocked for Origin:", origin);
-            return callback(new Error("CORS: Origin not allowed"));
-        }
-    },
+    origin: true, // 🔓 Temporarily allow all for debugging
     credentials: true, // 🔐 allow cookies (refresh token)
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
