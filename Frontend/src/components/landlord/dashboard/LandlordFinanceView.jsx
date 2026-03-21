@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import BASE_URL from '../../utils/apiConfig';
+import BASE_URL from '../../../utils/apiConfig';
 import { toast } from 'react-toastify';
 import { Download, IndianRupee, Users, PieChart } from 'lucide-react';
 import { Card } from '../../ui/card';

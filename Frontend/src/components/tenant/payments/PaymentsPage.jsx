@@ -6,7 +6,7 @@ import Button from '../ui/Button';
 import Card from '../ui/Card';
 import StatusBadge from '../ui/StatusBadge';
 import { useTheme } from "../../../context/ThemeContext";
-import BASE_URL from "../../../utils/apiConfig";
+import BASE_URL from '../../../utils/apiConfig';
 
 const PaymentsPage = ({ payments }) => {
     const { theme } = useTheme();
