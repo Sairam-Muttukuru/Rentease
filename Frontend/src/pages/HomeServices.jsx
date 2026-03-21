@@ -522,7 +522,7 @@ const HomeServices = () => {
         setLoading(true);
         try {
             // Using public endpoints now
-            const res = await axios.get(`${import.meta.env.VITE_API_URL || ""}/api/tenants/catalog/categories`);
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || 'https://rentease-1-pwm5.onrender.com'}/api/tenants/catalog/categories`);
             setCategories(res.data);
         } catch (error) {
             console.error("Error fetching categories:", error);
@@ -534,7 +534,7 @@ const HomeServices = () => {
     const fetchTypes = async (categoryId) => {
         setLoading(true);
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL || ""}/api/tenants/catalog/types/${categoryId}`);
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || 'https://rentease-1-pwm5.onrender.com'}/api/tenants/catalog/types/${categoryId}`);
             const fetchedTypes = res.data;
             setTypes(fetchedTypes);
  
@@ -556,7 +556,7 @@ const HomeServices = () => {
     const fetchServices = async (typeId) => {
         setLoading(true);
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL || ""}/api/tenants/catalog/services/${typeId}`);
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || 'https://rentease-1-pwm5.onrender.com'}/api/tenants/catalog/services/${typeId}`);
             setServices(res.data);
             setViewState('SERVICES');
         } catch (error) {
@@ -571,7 +571,7 @@ const HomeServices = () => {
     const fetchServicesByCategory = async (categoryId) => {
         setLoading(true);
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_URL || ""}/api/tenants/catalog/category/${categoryId}/services`);
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || 'https://rentease-1-pwm5.onrender.com'}/api/tenants/catalog/category/${categoryId}/services`);
             setServices(res.data);
             setViewState('SERVICES');
         } catch (error) {
@@ -647,7 +647,7 @@ const HomeServices = () => {
  
         const token = localStorage.getItem('accessToken');
         try {
-            await axios.post(`${import.meta.env.VITE_API_URL || ""}/api/tenants/service-request`, payload, {
+            await axios.post(`${import.meta.env.VITE_API_URL || 'https://rentease-1-pwm5.onrender.com'}/api/tenants/service-request`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success("Booking Request Sent Successfully!");

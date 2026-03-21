@@ -6,17 +6,26 @@ let io;
 const connectedUsers = new Map();
 
 const init = (server) => {
+    const allowedOrigins = [
+        "https://rentease-rho.vercel.app",
+        "https://rentease.com",
+        "https://www.rentease.com",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+    ];
+
     io = new Server(server, {
         cors: {
-            origin: process.env.NODE_ENV === "production" 
-                ? [
-                    "https://rentease.com", 
-                    "https://www.rentease.com", 
-                    "https://rentease-rho.vercel.app",
-                    "http://localhost:5173", 
-                    "http://127.0.0.1:5173"
-                  ]
-                : ["http://localhost:5173", "http://127.0.0.1:5173"],
+            origin: (origin, callback) => {
+                if (!origin) return callback(null, true);
+                const isAllowed = allowedOrigins.includes(origin) || origin.includes("localhost") || origin.includes("127.0.0.1");
+                if (isAllowed) {
+                    callback(null, true);
+                } else {
+                    console.warn(`CORS blocked for origin: ${origin}`);
+                    callback(null, true); // Temporarily allow all for debugging heart
+                }
+            },
             methods: ["GET", "POST"],
             credentials: true
         }

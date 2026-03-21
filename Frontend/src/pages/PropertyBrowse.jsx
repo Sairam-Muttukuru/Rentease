@@ -66,7 +66,7 @@ const PropertyBrowse = () => {
       }
 
       // API Call
-      const response = await axios.get(`${import.meta.env.VITE_API_URL || ''}/api/properties/allproperties`, { params });
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'https://rentease-1-pwm5.onrender.com'}/api/properties/allproperties`, { params });
 
       setProperties(response.data.properties);
       setPagination(prev => ({
