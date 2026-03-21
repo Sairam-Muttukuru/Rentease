@@ -334,6 +334,7 @@ const BookingModal = ({ isOpen, onClose, service, onConfirm, initialAddress }) =
                                         <input
                                             type="date"
                                             required
+                                            min={new Date().toISOString().split('T')[0]}
                                             value={formData.date}
                                             className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 transition-colors dark:text-white font-medium"
                                             onChange={e => setFormData({ ...formData, date: e.target.value })}
