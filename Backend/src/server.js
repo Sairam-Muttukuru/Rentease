@@ -12,8 +12,9 @@ app.get("/", (req, res) => {
 // Initialize Socket.io
 socketService.init(server);
 
-server.listen(5000, () => {
-    console.log("Server running on port 5000 with WebSockets");
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT} with WebSockets`);
     // Start Cron Jobs
     initRentScheduler();
 });
