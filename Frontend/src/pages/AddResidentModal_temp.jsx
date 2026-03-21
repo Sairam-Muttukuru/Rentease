@@ -16,7 +16,7 @@
 //         setIsSubmitting(true);
 //         try {
 //             const token = localStorage.getItem('token');
-//             await axios.post(`/api/tenants/${tenantId}/members`, {
+//             await axios.post(`api/tenants/${tenantId}/members`, {
 //                 ...formData
 //             }, {
 //                 headers: { Authorization: `Bearer ${token}` }

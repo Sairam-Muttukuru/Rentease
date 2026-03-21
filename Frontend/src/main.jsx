@@ -4,6 +4,11 @@ import './index.css'
 import 'leaflet/dist/leaflet.css'
 import App from './App.jsx'
 import './i18n';
+import axios from 'axios';
+import BASE_URL from './utils/apiConfig';
+
+axios.defaults.baseURL = BASE_URL;
+console.log("Axios Global BaseURL set to:", axios.defaults.baseURL);
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

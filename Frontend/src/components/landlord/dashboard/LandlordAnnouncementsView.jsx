@@ -38,7 +38,7 @@ const LandlordAnnouncementsView = ({ isDarkMode, properties = [] }) => {
 
         try {
             const token = localStorage.getItem("accessToken");
-            const res = await axios.get(`/api/tenants/property/${propertyId}`, {
+            const res = await axios.get(`api/tenants/property/${propertyId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setTenants(res.data);
@@ -51,7 +51,7 @@ const LandlordAnnouncementsView = ({ isDarkMode, properties = [] }) => {
     const fetchAnnouncements = async () => {
         try {
             const token = localStorage.getItem("accessToken");
-            const res = await axios.get("/api/announcement/landlord", {
+            const res = await axios.get('api/announcement/landlord', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setAnnouncements(res.data);
@@ -67,7 +67,7 @@ const LandlordAnnouncementsView = ({ isDarkMode, properties = [] }) => {
         e.preventDefault();
         try {
             const token = localStorage.getItem("accessToken");
-            await axios.post("/api/announcement", formData, {
+            await axios.post('api/announcement', formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success("Announcement posted successfully!");
@@ -96,7 +96,7 @@ const LandlordAnnouncementsView = ({ isDarkMode, properties = [] }) => {
         if (result.isConfirmed) {
             try {
                 const token = localStorage.getItem("accessToken");
-                await axios.delete(`/api/announcement/${id}`, {
+                await axios.delete(`api/announcement/${id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setAnnouncements(prev => prev.filter(a => a.id !== id));

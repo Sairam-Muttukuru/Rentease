@@ -216,7 +216,7 @@ export default function TenantDashboard() {
   // --- Handlers ---
   const handleLogout = async () => {
     try {
-      await axios.post("/api/auth/logout", {}, { withCredentials: true });
+      await axios.post('api/auth/logout', {}, { withCredentials: true });
       localStorage.clear();
       toast.success("Logged out successfully");
       setTimeout(() => window.location.href = "/", 1000);
@@ -304,7 +304,7 @@ export default function TenantDashboard() {
         images: complaintImages
       };
 
-      const res = await axios.post("/api/complaints", complaintData, {
+      const res = await axios.post('api/complaints', complaintData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

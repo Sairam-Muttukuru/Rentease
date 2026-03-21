@@ -93,7 +93,7 @@ const SettingsView = ({ user, isDarkMode, handleLogout, onUpdateUser }) => {
         setChangingPassword(true);
         try {
             const token = localStorage.getItem("accessToken");
-            await axios.post("/api/auth/change-password", {
+            await axios.post('api/auth/change-password', {
                 currentPassword: passwordData.oldPassword,
                 newPassword: passwordData.newPassword
             }, { headers: { Authorization: `Bearer ${token}` } });

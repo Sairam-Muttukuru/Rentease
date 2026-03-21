@@ -255,7 +255,7 @@ const ProfileView = ({ user, profile, onUpdate }) => {
         }
 
         try {
-            await axios.post('/api/auth/change-password', {
+            await axios.post('api/auth/change-password', {
                 currentPassword: passwordForm.current,
                 newPassword: passwordForm.new
             }, {

@@ -100,7 +100,7 @@ export default function TenantMessagesView({ isDarkMode, currentUser, allPropert
         const fetchStatuses = async () => {
             landlords.forEach(async (l) => {
                 try {
-                    const res = await axios.get(`/api/messages/status/${l.user_id}`, {
+                    const res = await axios.get(`api/messages/status/${l.user_id}`, {
                         headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` }
                     });
                     setOnlineStatus(prev => ({ ...prev, [l.user_id]: res.data.status }));
@@ -111,7 +111,7 @@ export default function TenantMessagesView({ isDarkMode, currentUser, allPropert
         };
         const fetchConversations = async () => {
             try {
-                const res = await axios.get(`/api/messages/conversations`, {
+                const res = await axios.get(`api/messages/conversations`, {
                     headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` }
                 });
                 const messages = {};
@@ -129,7 +129,7 @@ export default function TenantMessagesView({ isDarkMode, currentUser, allPropert
 
         const fetchUnreadCounts = async () => {
             try {
-                const res = await axios.get(`/api/messages/unread-counts`, {
+                const res = await axios.get(`api/messages/unread-counts`, {
                     headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}` }
                 });
                 const counts = {};

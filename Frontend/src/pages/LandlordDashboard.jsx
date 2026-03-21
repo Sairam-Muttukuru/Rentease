@@ -172,7 +172,7 @@ export default function LandlordDashboard() {
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
-      const res = await axios.get("/api/properties/myproperties", {
+      const res = await axios.get('api/properties/myproperties', {
         headers: { Authorization: `Bearer ${token}` }
       });
       const formatted = res.data.map(p => ({
@@ -199,7 +199,7 @@ export default function LandlordDashboard() {
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
-      const res = await axios.get("/api/tenants/all", {
+      const res = await axios.get('api/tenants/all', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setTenants(res.data);
@@ -212,7 +212,7 @@ export default function LandlordDashboard() {
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
-      const res = await axios.get("/api/complaints/landlord", {
+      const res = await axios.get('api/complaints/landlord', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setComplaints(res.data);
@@ -225,7 +225,7 @@ export default function LandlordDashboard() {
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
-      const res = await axios.get("/api/notifications", {
+      const res = await axios.get('api/notifications', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setNotifications(res.data);
@@ -238,7 +238,7 @@ export default function LandlordDashboard() {
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
-      const res = await axios.get("/api/bookings/landlord", {
+      const res = await axios.get('api/bookings/landlord', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setBookings(res.data);
@@ -251,7 +251,7 @@ export default function LandlordDashboard() {
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
-      const res = await axios.get("/api/payment/landlord-payments", {
+      const res = await axios.get('api/payment/landlord-payments', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPayments(res.data);
@@ -269,7 +269,7 @@ export default function LandlordDashboard() {
   const handleUpdateProperty = async (updatedData) => {
     try {
       const token = localStorage.getItem("accessToken");
-      await axios.put(`/api/properties/${updatedData.id}`, updatedData, {
+      await axios.put(`api/properties/${updatedData.id}`, updatedData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success("Property updated");
@@ -296,7 +296,7 @@ export default function LandlordDashboard() {
     if (result.isConfirmed) {
       try {
         const token = localStorage.getItem("accessToken");
-        await axios.delete(`/api/properties/${propertyId}`, {
+        await axios.delete(`api/properties/${propertyId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -326,7 +326,7 @@ export default function LandlordDashboard() {
   const handleUpdateTenant = async (updatedData) => {
     try {
       const token = localStorage.getItem("accessToken");
-      await axios.put(`/api/tenants/${updatedData.id}`, updatedData, {
+      await axios.put(`api/tenants/${updatedData.id}`, updatedData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success("Tenant updated");
@@ -353,7 +353,7 @@ export default function LandlordDashboard() {
     if (result.isConfirmed) {
       try {
         const token = localStorage.getItem("accessToken");
-        await axios.delete(`/api/tenants/${tenantId}`, {
+        await axios.delete(`api/tenants/${tenantId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -391,7 +391,7 @@ export default function LandlordDashboard() {
       const token = localStorage.getItem("accessToken");
       const tenant = tenants.find(t => t.id === tenantId);
       if (!tenant) return;
-      await axios.put(`/api/tenants/${tenantId}`, {
+      await axios.put(`api/tenants/${tenantId}`, {
         ...tenant,
         payment_status: newStatus
       }, { headers: { Authorization: `Bearer ${token}` } });
