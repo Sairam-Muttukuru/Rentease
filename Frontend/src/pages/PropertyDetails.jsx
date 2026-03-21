@@ -465,7 +465,16 @@ const PropertyDetails = () => {
                                                 <input
                                                     type="date"
                                                     value={visitDate}
-                                                    onChange={(e) => setVisitDate(e.target.value)}
+                                                    onChange={(e) => {
+                                                        const selected = e.target.value;
+                                                        const today = new Date().toLocaleDateString('en-CA');
+                                                        if (selected < today) {
+                                                            setVisitDate(today);
+                                                            toast.info("Please select a date from today onwards.");
+                                                        } else {
+                                                            setVisitDate(selected);
+                                                        }
+                                                    }}
                                                     min={new Date().toLocaleDateString('en-CA')}
                                                     className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 outline-none transition-all dark:[color-scheme:dark]"
                                                 />

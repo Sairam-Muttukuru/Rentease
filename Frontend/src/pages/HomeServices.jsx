@@ -334,10 +334,19 @@ const BookingModal = ({ isOpen, onClose, service, onConfirm, initialAddress }) =
                                         <input
                                             type="date"
                                             required
-                                            min={new Date().toISOString().split('T')[0]}
+                                            min={new Date().toLocaleDateString('en-CA')}
                                             value={formData.date}
                                             className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 transition-colors dark:text-white font-medium"
-                                            onChange={e => setFormData({ ...formData, date: e.target.value })}
+                                            onChange={e => {
+                                                const selected = e.target.value;
+                                                const today = new Date().toLocaleDateString('en-CA');
+                                                if (selected < today) {
+                                                    setFormData({ ...formData, date: today });
+                                                    toast.info("Please select a date from today onwards.");
+                                                } else {
+                                                    setFormData({ ...formData, date: selected });
+                                                }
+                                            }}
                                         />
                                     </div>
                                 </div>
