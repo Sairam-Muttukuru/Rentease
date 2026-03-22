@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Home, UserCheck, UserX } from 'lucide-react';
 import { Card } from '../../ui/card';
 
-const LandlordBookingsView = ({ isDarkMode, bookings, onUpdateStatus }) => {
+const LandlordBookingsView = ({ isDarkMode, bookings, onUpdateStatus, onRentToApplicant }) => {
     const [filter, setFilter] = useState('All');
     const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState(null);
@@ -168,15 +168,18 @@ const LandlordBookingsView = ({ isDarkMode, bookings, onUpdateStatus }) => {
                                                     >
                                                         <UserCheck size={14} /> Reschedule
                                                     </button>
-                                                    <button
-                                                        onClick={() => onUpdateStatus(booking.id, 'PENDING')}
-                                                        className="text-xs font-bold text-slate-500 hover:text-violet-500 transition-colors"
-                                                    >
-                                                        Reset
-                                                    </button>
                                                 </>
                                             )}
-                                            {!['Pending', 'PENDING', 'Approved', 'APPROVED'].includes(booking.status) && (
+                                            {['Visited', 'VISITED'].includes(booking.status) && (
+                                                <button
+                                                    onClick={() => onRentToApplicant(booking)}
+                                                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all font-black text-xs flex items-center gap-2 shadow-lg shadow-emerald-500/20"
+                                                    title="Move in as Tenant"
+                                                >
+                                                    <UserCheck size={14} /> Rent to Applicant
+                                                </button>
+                                            )}
+                                            {!['Pending', 'PENDING', 'Approved', 'APPROVED', 'Visited', 'VISITED'].includes(booking.status) && (
                                                 <button
                                                     onClick={() => onUpdateStatus(booking.id, 'PENDING')}
                                                     className="text-xs font-bold text-slate-500 hover:text-violet-500 transition-colors"

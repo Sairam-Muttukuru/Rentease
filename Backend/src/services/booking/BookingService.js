@@ -10,13 +10,10 @@ const sendBookingStatusNotification = require("../../utils/email/sendBookingStat
 class BookingService {
     // --- Property Visit Bookings ---
     async createPropertyBooking(userId, propertyId, message, visitSlot) {
-        // 1. Check if user is booking their own property
+        // 1. Check if property exists
         const property = await PropertyModel.getPropertyById(propertyId);
         if (!property) throw new Error("Property not found");
 
-        if (property.landlord_id === userId) {
-            throw new Error("You cannot book your own property.");
-        }
 
         // 2. Check for existing pending/approved bookings
         const existing = await BookingModel.checkExistingBooking(userId, propertyId);

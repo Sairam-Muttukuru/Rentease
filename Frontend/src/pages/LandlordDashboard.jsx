@@ -116,6 +116,7 @@ export default function LandlordDashboard() {
   const [selectedPropertyImages, setSelectedPropertyImages] = useState([]);
   const [selectedComplaintId, setSelectedComplaintId] = useState(null);
   const [isAddTenantModalOpen, setIsAddTenantModalOpen] = useState(false);
+  const [prefillTenantData, setPrefillTenantData] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatRecipient, setChatRecipient] = useState(null);
 
@@ -589,6 +590,10 @@ export default function LandlordDashboard() {
             isDarkMode={isDarkMode}
             bookings={bookings}
             onUpdateStatus={handleUpdateBookingStatus}
+            onRentToApplicant={(booking) => {
+              setPrefillTenantData(booking);
+              setIsAddTenantModalOpen(true);
+            }}
           />
         )}
 
@@ -643,10 +648,11 @@ export default function LandlordDashboard() {
 
       <AddTenantModal
         isOpen={isAddTenantModalOpen}
-        onClose={() => setIsAddTenantModalOpen(false)}
+        onClose={() => { setIsAddTenantModalOpen(false); setPrefillTenantData(null); }}
         properties={landlordProperties}
         onSuccess={() => { fetchTenants(); fetchLandlordProperties(); }}
         isDarkMode={isDarkMode}
+        prefill={prefillTenantData}
       />
 
       {isChatOpen && chatRecipient && (

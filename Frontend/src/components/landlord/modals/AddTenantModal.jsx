@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { X } from 'lucide-react';
 import { Card } from '../../ui/card';
 import LandlordButton from '../common/LandlordButton';
 
-const AddTenantModal = ({ isOpen, onClose, properties, onSuccess, isDarkMode }) => {
-    if (!isOpen) return null;
+const AddTenantModal = ({ isOpen, onClose, properties, onSuccess, isDarkMode, prefill = null }) => {
     const [formData, setFormData] = useState({
         propertyId: "",
         full_name: "",
@@ -19,6 +18,43 @@ const AddTenantModal = ({ isOpen, onClose, properties, onSuccess, isDarkMode }) 
         start_date: "",
         rent_due_date: ""
     });
+
+    useEffect(() => {
+        if (isOpen && prefill) {
+            setFormData(prev => ({
+                ...prev,
+                propertyId: prefill.propertyId || "",
+                full_name: prefill.tenantName || "",
+                email: prefill.email || "",
+                phone: prefill.phone || "",
+                monthly_rent: prefill.monthly_rent || ""
+            }));
+            
+            // If propertyId is prefilled, find its rent
+            if (prefill.propertyId) {
+                const selectedProp = properties.find(p => p.id == prefill.propertyId);
+                if (selectedProp) {
+                    setFormData(prev => ({ ...prev, monthly_rent: selectedProp.price }));
+                }
+            }
+        } else if (isOpen && !prefill) {
+            // Reset if no prefill
+             setFormData({
+                propertyId: "",
+                full_name: "",
+                email: "",
+                phone: "",
+                relation: "Self",
+                tenant_type: "Family",
+                monthly_rent: "",
+                payment_status: "PENDING",
+                start_date: "",
+                rent_due_date: ""
+            });
+        }
+    }, [isOpen, prefill, properties]);
+
+    if (!isOpen) return null;
 
     const handleChange = (e) => {
         const { name, value } = e.target;
