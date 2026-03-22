@@ -67,7 +67,9 @@ export default function LandlordDashboard() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notificationToast, setNotificationToast] = useState(null);
-  const [showInitialLoader, setShowInitialLoader] = useState(true);
+  const [showInitialLoader, setShowInitialLoader] = useState(() => {
+    return !sessionStorage.getItem('landlord_loaded');
+  });
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
@@ -461,7 +463,10 @@ export default function LandlordDashboard() {
   ];
 
   if (showInitialLoader) {
-    return <LandlordLoader onComplete={() => setShowInitialLoader(false)} isDarkMode={isDarkMode} />;
+    return <LandlordLoader onComplete={() => {
+      setShowInitialLoader(false);
+      sessionStorage.setItem('landlord_loaded', 'true');
+    }} isDarkMode={isDarkMode} />;
   }
 
   return (

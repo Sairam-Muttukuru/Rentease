@@ -115,8 +115,11 @@ exports.getByUserId = async (userId) => {
     p.address,
     p.city,
     p.locality,
-    p.locality,
     p.price as property_rent,
+    p.property_type,
+    p.area_sqft,
+    p.bedrooms,
+    p.bathrooms,
 
     --Financials & Policies
   p.security_deposit as "securityDeposit",

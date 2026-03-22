@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Building,
@@ -11,7 +11,9 @@ import {
     PlusCircle,
     Home,
     Megaphone,
-    MessageSquare
+    MessageSquare,
+    ChevronLeft,
+    ChevronRight
 } from 'lucide-react';
 
 const LANDLORD_MENU = [
@@ -23,21 +25,36 @@ const LANDLORD_MENU = [
     { id: 'requests', icon: Wrench, label: 'Issues at Property' },
     { id: 'finance', icon: IndianRupee, label: 'Financials' },
     { id: 'bookings', icon: Calendar, label: 'Bookings' },
-    { id: 'announcements', icon: Megaphone, label: 'Announcements' }, // Added Announcements
-    { id: 'settings', icon: Home, label: 'Settings' } // Added settings as it was in the switch but not menu
+    { id: 'announcements', icon: Megaphone, label: 'Announcements' },
+    { id: 'settings', icon: Home, label: 'Settings' }
 ];
 
 const LandlordSidebar = ({ activeTab, setActiveTab, handleLogout, isDarkMode, isMobileMenuOpen, setIsMobileMenuOpen, user }) => {
+    const [isExpanded, setIsExpanded] = useState(true);
+
     return (
-        <aside className={`fixed inset-y-0 left-0 z-30 w-72 backdrop-blur-xl border-r transform transition-transform duration-500 ease-in-out flex flex-col ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static ${isDarkMode ? 'bg-slate-900/80 border-slate-900' : 'bg-white/90 border-slate-200'}`}>
-            <div className={`p-8 border-b flex flex-col items-start gap-0 ${isDarkMode ? 'border-slate-900' : 'border-slate-100'}`}>
-                <div className="flex items-center gap-3">
-                    <img src="/favicon.png" alt="RentEase Logo" className="w-17 h-12 object-contain" />
-                    <span className={`text-3xl relative right-5 bottom-0.5 font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>RentEase</span>
+        <aside className={`fixed inset-y-0 left-0 z-40 backdrop-blur-xl border-r transform transition-all duration-500 ease-in-out flex flex-col shrink-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static ${isExpanded ? 'w-72' : 'w-20'} ${isDarkMode ? 'bg-slate-900/80 border-slate-900' : 'bg-white/90 border-slate-200'}`}>
+            
+            <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className={`hidden md:flex absolute -right-3 top-10 w-6 h-6 rounded-full items-center justify-center z-50 text-white shadow-md transition-transform hover:scale-110 ${isDarkMode ? 'bg-emerald-600' : 'bg-emerald-500'}`}
+            >
+                {isExpanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+            </button>
+
+            <div className={`p-6 border-b flex flex-col items-center gap-0 min-h-[100px] justify-center ${isDarkMode ? 'border-slate-900' : 'border-slate-100'}`}>
+                <div className="flex items-center gap-3 w-full justify-center">
+                    <img src="/favicon.png" alt="RentEase Logo" className="w-10 h-10 object-contain shrink-0" />
+                    {isExpanded && (
+                        <div className="flex flex-col animate-in fade-in duration-300">
+                            <span className={`text-2xl font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>RentEase</span>
+                            <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-emerald-500">Landlord Portal</span>
+                        </div>
+                    )}
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-500 relative left-14 bottom-2">Landlord Portal</span>
             </div>
-            <nav className="flex-1 p-4 space-y-2 mt-4 overflow-y-auto scrollbar-hide">
+
+            <nav className={`flex-1 ${isExpanded ? 'p-4' : 'p-3'} space-y-2 mt-4 overflow-y-auto scrollbar-hide flex flex-col items-center`}>
                 {LANDLORD_MENU.map((item) => (
                     <button
                         key={item.id}
@@ -46,24 +63,31 @@ const LandlordSidebar = ({ activeTab, setActiveTab, handleLogout, isDarkMode, is
                             setActiveTab(item.id);
                             setIsMobileMenuOpen(false);
                         }}
-                        className={`relative z-50 w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all duration-300 cursor-pointer ${activeTab === item.id ? 'bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-xl shadow-emerald-500/5' : `${isDarkMode ? 'text-slate-400 hover:text-white hover:bg-slate-900' : 'text-black hover:bg-slate-100 hover:text-black'}`}`}
+                        title={!isExpanded ? item.label : ''}
+                        className={`relative z-10 flex items-center rounded-2xl text-sm font-bold transition-all duration-300 cursor-pointer ${isExpanded ? 'w-full gap-3 px-4 py-3.5' : 'w-12 h-12 justify-center'} ${activeTab === item.id ? 'bg-gradient-to-r from-emerald-600/20 to-teal-600/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-xl shadow-emerald-500/5' : `${isDarkMode ? 'text-slate-400 hover:text-white hover:bg-slate-900' : 'text-black hover:bg-slate-100 hover:text-black'}`}`}
                     >
-                        <item.icon size={20} className={activeTab === item.id ? 'text-emerald-500' : ''} />
-                        {item.label}
+                        <item.icon size={20} className={`shrink-0 ${activeTab === item.id ? 'text-emerald-500' : ''}`} />
+                        {isExpanded && <span className="whitespace-nowrap animate-in fade-in duration-300">{item.label}</span>}
                     </button>
                 ))}
             </nav>
-            <div className={`p-6 border-t ${isDarkMode ? 'border-slate-900' : 'border-slate-100'}`}>
+
+            <div className={`${isExpanded ? 'p-6' : 'p-3'} border-t flex flex-col items-center flex-shrink-0 ${isDarkMode ? 'border-slate-900' : 'border-slate-100'}`}>
                 <Link
                     to={`/${user?.name?.toLowerCase().replace(/\s+/g, '-') || 'user'}/tenant/dashboard`}
-                    className={`w-full flex items-center gap-3 px-4 py-3 mb-2 rounded-2xl transition-all duration-300 ${isDarkMode ? 'text-violet-400 hover:bg-violet-500/10' : 'text-violet-600 hover:bg-violet-50'}`}
+                    title={!isExpanded ? "Switch to Tenant Mode" : ""}
+                    className={`flex items-center mb-2 rounded-2xl transition-all duration-300 ${isExpanded ? 'w-full gap-3 px-4 py-3' : 'w-12 h-12 justify-center'} ${isDarkMode ? 'text-violet-400 hover:bg-violet-500/10' : 'text-violet-600 hover:bg-violet-50'}`}
                 >
-                    <Users size={20} />
-                    <span className="text-sm font-bold">Switch to Tenant Mode</span>
+                    <Users size={20} className="shrink-0" />
+                    {isExpanded && <span className="text-sm font-bold whitespace-nowrap animate-in fade-in duration-300">Switch to Tenant</span>}
                 </Link>
-                <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 text-slate-500 hover:text-rose-500">
-                    <LogOut size={20} />
-                    <span className="text-sm font-bold">Logout</span>
+                <button 
+                    onClick={handleLogout} 
+                    title={!isExpanded ? "Logout" : ""}
+                    className={`flex items-center rounded-2xl transition-all duration-300 text-slate-500 hover:text-rose-500 ${isExpanded ? 'w-full gap-3 px-4 py-3' : 'w-12 h-12 justify-center'}`}
+                >
+                    <LogOut size={20} className="shrink-0" />
+                    {isExpanded && <span className="text-sm font-bold whitespace-nowrap animate-in fade-in duration-300">Logout</span>}
                 </button>
             </div>
         </aside>
