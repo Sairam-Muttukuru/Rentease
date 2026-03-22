@@ -5,21 +5,22 @@ const LandlordProfileModal = ({ isDarkMode, onClose, landlord }) => {
     if (!landlord) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 pt-28 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300 overflow-y-auto">
             <div 
                 className={`relative w-full max-w-md overflow-hidden rounded-3xl shadow-2xl transition-all duration-500 scale-in-center ${
                     isDarkMode ? 'bg-slate-900 border border-slate-700' : 'bg-white border border-slate-100'
                 }`}
             >
+                {/* Close Button - Moved and z-index increased */}
+                <button 
+                    onClick={onClose}
+                    className="absolute top-4 right-4 p-2 rounded-full bg-black/20 text-white hover:bg-black/40 transition-colors z-[60]"
+                >
+                    <X size={20} />
+                </button>
+
                 {/* Header/Banner Area */}
                 <div className="h-32 bg-gradient-to-r from-violet-600 to-indigo-600 relative">
-                    <button 
-                        onClick={onClose}
-                        className="absolute top-4 right-4 p-2 rounded-full bg-white/20 text-white hover:bg-white/40 transition-colors z-10"
-                    >
-                        <X size={20} />
-                    </button>
-                    
                     {/* Decorative Circles */}
                     <div className="absolute -top-6 -left-6 w-24 h-24 rounded-full bg-white/10 blur-xl"></div>
                     <div className="absolute top-12 -right-10 w-32 h-32 rounded-full bg-indigo-400/20 blur-2xl"></div>
