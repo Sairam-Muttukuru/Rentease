@@ -131,6 +131,9 @@ exports.getByUserId = async (userId) => {
     p.late_penalty_amount as "latePenaltyAmount",
     p.rent_due_day as "rentDueDay",
     p.guidelines,
+    p.room_type,
+    p.food_included,
+    p.electricity_included,
 
     CONCAT(u.first_name, ' ', u.last_name) as landlord_name,
     u.email as landlord_email,

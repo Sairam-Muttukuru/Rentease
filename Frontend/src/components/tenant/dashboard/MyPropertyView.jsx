@@ -204,8 +204,8 @@ const MyPropertyView = ({
                             if (isShared) {
                                 return [
                                     { label: 'Type', value: user.property_type || 'PG / Hostel', icon: Building },
-                                    { label: 'Sharing', value: 'See Residents', icon: Users },
-                                    { label: 'Food & Utils', value: 'Check Amenities', icon: Sparkles },
+                                    { label: 'Sharing', value: user.room_type || 'Shared Room', icon: Users },
+                                    { label: 'Food Served', value: user.food_included ? 'Included' : (user.food_included === false ? 'Not Included' : 'Check Amenities'), icon: Sparkles },
                                     { label: 'Size', value: (user.area_sqft && Number(user.area_sqft) > 0) ? `${user.area_sqft} sq ft` : 'N/A', icon: FileText }
                                 ];
                             }
