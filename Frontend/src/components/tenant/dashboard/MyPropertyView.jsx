@@ -4,6 +4,7 @@ import { Building, FileText, Users, Sparkles, ShieldCheck, TrendingUp, ChevronLe
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import ImageGalleryModal from '../../ui/ImageGalleryModal';
+import LandlordProfileModal from '../modals/LandlordProfileModal';
 
 const MyPropertyView = ({
     isDarkMode,
@@ -19,6 +20,7 @@ const MyPropertyView = ({
     const navigate = useNavigate();
     const [downloading, setDownloading] = React.useState(false);
     const [showGallery, setShowGallery] = React.useState(false);
+    const [showLandlordModal, setShowLandlordModal] = React.useState(false);
 
     const handleDownloadReceipt = async () => {
         setDownloading(true);
@@ -258,7 +260,13 @@ const MyPropertyView = ({
                             </div>
                         </div>
                         <div className="space-y-3">
-                            <Button variant="ghost" className="w-full">View Profile</Button>
+                            <Button 
+                                variant="ghost" 
+                                className="w-full"
+                                onClick={() => setShowLandlordModal(true)}
+                            >
+                                View Profile
+                            </Button>
                         </div>
                     </Card>
 
@@ -452,6 +460,20 @@ const MyPropertyView = ({
                 images={propertyImages}
                 initialIndex={currentImageIndex}
             />
+
+            {/* Landlord Profile Modal */}
+            {showLandlordModal && (
+                <LandlordProfileModal 
+                    isDarkMode={isDarkMode} 
+                    onClose={() => setShowLandlordModal(false)} 
+                    landlord={{
+                        name: user.landlord,
+                        email: user.landlord_email,
+                        phone: user.landlord_phone,
+                        avatar_url: user.landlord_avatar_url
+                    }}
+                />
+            )}
         </div>
     );
 };

@@ -137,6 +137,7 @@ exports.getByUserId = async (userId) => {
 
     CONCAT(u.first_name, ' ', u.last_name) as landlord_name,
     u.email as landlord_email,
+    u.phone as landlord_phone,
     u.avatar_url as landlord_avatar_url,
     CONCAT(tu.first_name, ' ', tu.last_name) as full_name, --Fetch tenant name
   COALESCE(
