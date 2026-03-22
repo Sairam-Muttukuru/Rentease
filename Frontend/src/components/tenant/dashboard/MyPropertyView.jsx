@@ -197,12 +197,26 @@ const MyPropertyView = ({
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {[
-                            { label: 'Type', value: user.property_type || 'Not Specified', icon: Building },
-                            { label: 'Size', value: (user.area_sqft !== null && user.area_sqft !== undefined) ? `${user.area_sqft} sq ft` : 'Not Specified', icon: FileText },
-                            { label: 'Bedrooms', value: (user.bedrooms !== null && user.bedrooms !== undefined) ? `${user.bedrooms} Beds` : 'Not Specified', icon: Users },
-                            { label: 'Bathrooms', value: (user.bathrooms !== null && user.bathrooms !== undefined) ? `${user.bathrooms} Baths` : 'Not Specified', icon: Sparkles }
-                        ].map((item, idx) => (
+                        {(() => {
+                            const pType = (user.property_type || '').toUpperCase();
+                            const isShared = pType.includes('PG') || pType.includes('HOSTEL');
+
+                            if (isShared) {
+                                return [
+                                    { label: 'Type', value: user.property_type || 'PG / Hostel', icon: Building },
+                                    { label: 'Sharing', value: 'See Residents', icon: Users },
+                                    { label: 'Food & Utils', value: 'Check Amenities', icon: Sparkles },
+                                    { label: 'Size', value: (user.area_sqft && Number(user.area_sqft) > 0) ? `${user.area_sqft} sq ft` : 'N/A', icon: FileText }
+                                ];
+                            }
+
+                            return [
+                                { label: 'Type', value: user.property_type || 'Not Specified', icon: Building },
+                                { label: 'Size', value: (user.area_sqft && Number(user.area_sqft) > 0) ? `${user.area_sqft} sq ft` : 'Not Specified', icon: FileText },
+                                { label: 'Bedrooms', value: (user.bedrooms && Number(user.bedrooms) > 0) ? `${user.bedrooms} Beds` : 'Not Specified', icon: Users },
+                                { label: 'Bathrooms', value: (user.bathrooms && Number(user.bathrooms) > 0) ? `${user.bathrooms} Baths` : 'Not Specified', icon: Sparkles }
+                            ];
+                        })().map((item, idx) => (
                             <Card key={idx} className="p-4 flex flex-col items-center justify-center text-center gap-2 hover:scale-105 transition-transform cursor-default">
                                 <item.icon size={24} className={`transition-colors duration-500 ${isDarkMode ? 'text-violet-400' : 'text-violet-600'}`} />
                                 <div>
