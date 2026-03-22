@@ -198,10 +198,10 @@ const MyPropertyView = ({
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {[
-                            { label: 'Type', value: user.property_type || 'Luxury Villa', icon: Building },
-                            { label: 'Size', value: user.area_sqft ? `${user.area_sqft} sq ft` : '2,400 sq ft', icon: FileText },
-                            { label: 'Bedrooms', value: user.bedrooms ? `${user.bedrooms} Beds` : '4 Beds', icon: Users },
-                            { label: 'Bathrooms', value: user.bathrooms ? `${user.bathrooms} Baths` : '3 Baths', icon: Sparkles }
+                            { label: 'Type', value: user.property_type || 'Not Specified', icon: Building },
+                            { label: 'Size', value: (user.area_sqft !== null && user.area_sqft !== undefined) ? `${user.area_sqft} sq ft` : 'Not Specified', icon: FileText },
+                            { label: 'Bedrooms', value: (user.bedrooms !== null && user.bedrooms !== undefined) ? `${user.bedrooms} Beds` : 'Not Specified', icon: Users },
+                            { label: 'Bathrooms', value: (user.bathrooms !== null && user.bathrooms !== undefined) ? `${user.bathrooms} Baths` : 'Not Specified', icon: Sparkles }
                         ].map((item, idx) => (
                             <Card key={idx} className="p-4 flex flex-col items-center justify-center text-center gap-2 hover:scale-105 transition-transform cursor-default">
                                 <item.icon size={24} className={`transition-colors duration-500 ${isDarkMode ? 'text-violet-400' : 'text-violet-600'}`} />
