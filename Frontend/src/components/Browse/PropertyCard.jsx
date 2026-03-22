@@ -25,7 +25,6 @@ const PropertyCard = ({ property }) => {
             navigate('/login');
             return;
         }
-        if (user.role === 'LANDLORD') return; // Disabled for landlords
         navigate(`/properties/${property.id}`); // Or open booking modal
     };
 
@@ -144,7 +143,7 @@ const PropertyCard = ({ property }) => {
                     </button>
                     <button
                         onClick={handleBookNow}
-                        disabled={property.status === 'Occupied' || user?.role === 'LANDLORD'}
+                        disabled={property.status === 'Occupied'}
                         className="flex-[2] bg-violet-600 hover:bg-violet-500 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white py-3 rounded-xl font-bold text-sm transition-all shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] flex items-center justify-center gap-2"
                     >
                         {property.status === 'Occupied' ? 'Rented' : 'Book Now'} <ArrowRight className="w-4 h-4" />

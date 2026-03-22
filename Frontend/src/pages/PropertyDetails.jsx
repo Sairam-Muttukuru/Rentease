@@ -503,10 +503,10 @@ const PropertyDetails = () => {
                                         ></textarea>
                                         <button
                                             onClick={handleBooking}
-                                            disabled={isBooking}
+                                            disabled={isBooking || (user && property.landlord_id === user.id)}
                                             className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 disabled:bg-gray-300 dark:disabled:bg-gray-800 disabled:text-gray-500 py-4 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2 group"
                                         >
-                                            {isBooking ? 'Sending...' : 'Request Booking'}
+                                            {isBooking ? 'Sending...' : (user && property.landlord_id === user.id) ? 'Your Property' : 'Request Booking'}
                                             {!isBooking && <ArrowLeft key="arrow" className="rotate-180 transition-transform group-hover:translate-x-1" />}
                                         </button>
                                     </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import {
     Building,
     Users,
@@ -53,13 +54,13 @@ const LandlordSidebar = ({ activeTab, setActiveTab, handleLogout, isDarkMode, is
                 ))}
             </nav>
             <div className={`p-6 border-t ${isDarkMode ? 'border-slate-900' : 'border-slate-100'}`}>
-                <a
-                    href={`/${user?.name?.toLowerCase().replace(/\s+/g, '-') || 'user'}/tenant/dashboard`}
+                <Link
+                    to={`/${user?.name?.toLowerCase().replace(/\s+/g, '-') || 'user'}/tenant/dashboard`}
                     className={`w-full flex items-center gap-3 px-4 py-3 mb-2 rounded-2xl transition-all duration-300 ${isDarkMode ? 'text-violet-400 hover:bg-violet-500/10' : 'text-violet-600 hover:bg-violet-50'}`}
                 >
                     <Users size={20} />
                     <span className="text-sm font-bold">Switch to Tenant Mode</span>
-                </a>
+                </Link>
                 <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 text-slate-500 hover:text-rose-500">
                     <LogOut size={20} />
                     <span className="text-sm font-bold">Logout</span>

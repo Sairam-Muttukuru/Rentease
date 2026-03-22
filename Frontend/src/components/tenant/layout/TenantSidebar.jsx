@@ -74,8 +74,21 @@ const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout
 
             </nav>
 
-            {/* Logout Section */}
+            {/* Switch & Logout Section */}
             <div className={`p-6 border-t ${isDarkMode ? 'border-white/5' : 'border-slate-100'}`}>
+                {user?.role === 'LANDLORD' && (
+                    <Link
+                        to={`/${user?.name?.toLowerCase().replace(/\s+/g, '-') || 'user'}/landlord/dashboard`}
+                        className={`w-full flex items-center gap-4 px-4 py-3.5 mb-2 rounded-2xl transition-all duration-300 group font-bold
+                            ${isDarkMode
+                                ? 'text-emerald-400 hover:bg-emerald-500/10'
+                                : 'text-emerald-600 hover:bg-emerald-50'}
+                        `}
+                    >
+                        <Building size={20} className="group-hover:scale-110 transition-transform" />
+                        <span>Switch to Landlord Mode</span>
+                    </Link>
+                )}
                 <button
                     onClick={handleLogout}
                     className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-300 group font-bold
