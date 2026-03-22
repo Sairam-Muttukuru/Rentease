@@ -64,19 +64,10 @@ const ComplaintModal = ({
 
                 <div>
                     <label className={`block text-sm font-medium mb-1 transition-colors duration-500 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Upload Images</label>
-                    <div className={`border-2 border-dashed rounded-xl p-4 text-center transition-colors cursor-pointer hover:bg-opacity-50 mb-4 ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-300 hover:bg-slate-50'}`}>
-                        <input type="file" multiple accept="image/*" onChange={handleImageChange} className="hidden" id="complaint-images" />
-                        <label htmlFor="complaint-images" className="cursor-pointer flex flex-col items-center gap-2">
-                            <Camera size={24} className="text-violet-500" />
-                            <span className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                Click to upload photos
-                            </span>
-                        </label>
-                    </div>
-
-                    {/* Uploaded Images Grid */}
+                    
+                    {/* Uploaded Images Grid moved above dropzone */}
                     {complaintImages.length > 0 && (
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-3 gap-2 mb-4">
                             {complaintImages.map((url, idx) => (
                                 <div key={idx} className="relative group rounded-lg overflow-hidden h-20 border border-slate-200 dark:border-slate-700">
                                     <img src={url} alt="Proof" className="w-full h-full object-cover" />
@@ -91,6 +82,16 @@ const ComplaintModal = ({
                             ))}
                         </div>
                     )}
+
+                    <div className={`border-2 border-dashed rounded-xl p-4 text-center transition-colors cursor-pointer hover:bg-opacity-50 mb-4 ${isDarkMode ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-300 hover:bg-slate-50'}`}>
+                        <input type="file" multiple accept="image/*" onChange={handleImageChange} className="hidden" id="complaint-images" />
+                        <label htmlFor="complaint-images" className="cursor-pointer flex flex-col items-center gap-2">
+                            <Camera size={24} className="text-violet-500" />
+                            <span className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                                Click to upload photos
+                            </span>
+                        </label>
+                    </div>
                 </div>
 
                 <div className="pt-4 flex gap-3">

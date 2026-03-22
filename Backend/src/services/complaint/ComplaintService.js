@@ -35,43 +35,36 @@ exports.createComplaint = async (userId, data) => {
         }
     }
 
-    // 4️⃣ 🔔 NOTIFICATIONS (Fail-safe)
-    try {
-        const landlord = await User.getUserById(tenant.landlord_id);
-        console.log("🏠 Landlord fetched:", landlord?.email, "| Tenant:", tenant?.full_name, "| Property:", tenant?.property_name);
+    // 4️⃣ 🔔 NOTIFICATIONS (Non-blocking)
+    (async () => {
+        try {
+            const landlord = await User.getUserById(tenant.landlord_id);
+            if (landlord) {
+                // Create In-App Notification (No await to return response faster)
+                Notification.create({
+                    user_id: tenant.landlord_id,
+                    type: "complaint",
+                    title: `New Complaint: ${data.title}`,
+                    message: `${tenant.full_name || 'A tenant'} raised a complaint regarding ${data.title} at ${tenant.property_name || 'your property'}. Priority: ${data.priority_level || 'Low'}.`
+                }).catch(e => console.error("Notification failed:", e));
 
-        if (landlord) {
-            // Create In-App Notification
-            await Notification.create({
-                user_id: tenant.landlord_id,
-                type: "complaint",
-                title: `New Complaint: ${data.title}`,
-                message: `${tenant.full_name || 'A tenant'} raised a complaint regarding ${data.title} at ${tenant.property_name || 'your property'}. Priority: ${data.priority_level || 'Low'}.`
-            });
-
-            if (landlord.email) {
-                const propertyImage = (tenant.images && tenant.images.length > 0) ? tenant.images[0] : null;
-                console.log(`📧 Sending complaint email to: ${landlord.email}`);
-                // Await here so we can catch errors clearly
-                await sendComplaintMail({
-                    landlordEmail: landlord.email,
-                    landlordName: landlord.first_name || 'Landlord',
-                    tenantName: tenant.full_name || "A Tenant",
-                    propertyName: tenant.property_name || "Property",
-                    propertyImage,
-                    complaint
-                });
-                console.log("✅ Complaint email sent successfully to:", landlord.email);
-            } else {
-                console.warn("⚠️ Landlord has no email address — skipping complaint email");
+                if (landlord.email) {
+                    const propertyImage = (tenant.images && tenant.images.length > 0) ? tenant.images[0] : null;
+                    console.log(`📧 Background: Sending complaint email to: ${landlord.email}`);
+                    sendComplaintMail({
+                        landlordEmail: landlord.email,
+                        landlordName: landlord.first_name || 'Landlord',
+                        tenantName: tenant.full_name || "A Tenant",
+                        propertyName: tenant.property_name || "Property",
+                        propertyImage,
+                        complaint
+                    }).then(() => console.log("✅ Background: Complaint email sent successfully")).catch(e => console.error("📧 Background: Email failed:", e));
+                }
             }
-        } else {
-            console.warn("⚠️ No landlord found for landlord_id:", tenant.landlord_id);
+        } catch (notifyErr) {
+            console.error("⚠️ Background notification/email setup failed:", notifyErr);
         }
-    } catch (notifyErr) {
-        console.error("⚠️ Notification/email failed but complaint was created:", notifyErr);
-        // Do not throw error, allowing complaint creation to succeed
-    }
+    })();
 
     // 5️⃣ Return response
     return complaint;

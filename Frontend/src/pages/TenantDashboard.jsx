@@ -220,7 +220,7 @@ export default function TenantDashboard() {
   // --- Handlers ---
   const handleLogout = async () => {
     try {
-      await axios.post('https://rentease-1-pwm5.onrender.com/api/auth/logout', {}, { withCredentials: true });
+      await axios.post(`${BASE_URL}/api/auth/logout`, {}, { withCredentials: true });
       localStorage.clear();
       toast.success("Logged out successfully");
       setTimeout(() => window.location.href = "/", 1000);
@@ -234,7 +234,7 @@ export default function TenantDashboard() {
     setIsUpdatingProfile(true);
     try {
       const token = localStorage.getItem("accessToken");
-      await axios.put("https://rentease-1-pwm5.onrender.com/api/tenants/profile", {
+      await axios.put(`${BASE_URL}/api/tenants/profile`, {
         full_name: tenantData.name,
         email: tenantData.email,
         phone: tenantData.phone,
@@ -264,7 +264,7 @@ export default function TenantDashboard() {
     setIsUpdatingPassword(true);
     try {
       const token = localStorage.getItem("accessToken");
-      await axios.put("https://rentease-1-pwm5.onrender.com/api/auth/change-password", {
+      await axios.put(`${BASE_URL}/api/auth/change-password`, {
         oldPassword: passwordForm.oldPassword,
         newPassword: passwordForm.newPassword
       }, { headers: { Authorization: `Bearer ${token}` } });
@@ -308,7 +308,7 @@ export default function TenantDashboard() {
         images: complaintImages
       };
 
-      const res = await axios.post('https://rentease-1-pwm5.onrender.com/api/complaints', complaintData, {
+      const res = await axios.post(`${BASE_URL}/api/complaints`, complaintData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -322,6 +322,8 @@ export default function TenantDashboard() {
       setComplaints(prev => [newComplaint, ...prev]);
 
       toast.success("Complaint submitted successfully!");
+      
+      // Close modal and reset state
       setShowComplaintModal(false);
       setComplaintImages([]);
       e.target.reset();
@@ -336,7 +338,7 @@ export default function TenantDashboard() {
   const handleUpdateStatus = async (id, status) => {
     try {
       const token = localStorage.getItem("accessToken");
-      await axios.patch(`https://rentease-1-pwm5.onrender.com/api/complaints/${id}/status`, { status }, {
+      await axios.patch(`${BASE_URL}/api/complaints/${id}/status`, { status }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success(`Complaint marked as ${status}`);
