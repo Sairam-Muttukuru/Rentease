@@ -4,6 +4,7 @@ import { Card } from '../../ui/card';
 import LandlordButton from '../common/LandlordButton';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import BASE_URL from '../../../utils/apiConfig';
 
 const SettingsView = ({ user, isDarkMode, handleLogout, onUpdateUser }) => {
     const [isEditing, setIsEditing] = useState(false);
@@ -59,7 +60,7 @@ const SettingsView = ({ user, isDarkMode, handleLogout, onUpdateUser }) => {
         const token = localStorage.getItem("accessToken");
         if (!token) return;
         try {
-            const response = await axios.put("https://rentease-1-pwm5.onrender.com/api/auth/update-profile", formData, {
+            const response = await axios.put(`${BASE_URL}/api/auth/update-profile`, formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (response.status === 200) {
@@ -93,7 +94,7 @@ const SettingsView = ({ user, isDarkMode, handleLogout, onUpdateUser }) => {
         setChangingPassword(true);
         try {
             const token = localStorage.getItem("accessToken");
-            await axios.post('https://rentease-1-pwm5.onrender.com/api/auth/change-password', {
+            await axios.post(`${BASE_URL}/api/auth/change-password`, {
                 currentPassword: passwordData.oldPassword,
                 newPassword: passwordData.newPassword
             }, { headers: { Authorization: `Bearer ${token}` } });
@@ -101,7 +102,7 @@ const SettingsView = ({ user, isDarkMode, handleLogout, onUpdateUser }) => {
             setPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
             setShowPasswordSection(false);
         } catch (err) {
-            toast.error(err.response?.data?.message || "Failed to change password");
+            toast.error(err.response?.data?.error || err.response?.data?.message || "Failed to change password");
         } finally {
             setChangingPassword(false);
         }

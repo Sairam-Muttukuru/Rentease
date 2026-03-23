@@ -5,6 +5,7 @@ import Button from '../ui/Button';
 import { useTheme } from "../../../context/ThemeContext";
 import { toast } from "react-toastify";
 import axios from "axios";
+import BASE_URL from "../../../utils/apiConfig";
 
 const TenantSettings = ({
     user,
@@ -89,7 +90,7 @@ const TenantSettings = ({
 
                                             // Save to Database via Profile Update
                                             const token = localStorage.getItem("accessToken");
-                                            await axios.put("https://rentease-1-pwm5.onrender.com/api/tenants/profile", {
+                                            await axios.put(`${BASE_URL}/api/tenants/profile`, {
                                                 full_name: user.name,
                                                 email: user.email,
                                                 phone: user.phone,
@@ -101,7 +102,7 @@ const TenantSettings = ({
                                             toast.update(toastId, { render: "Profile picture updated!", type: "success", isLoading: false, autoClose: 3000 });
                                         } catch (err) {
                                             console.error(err);
-                                            toast.update(toastId, { render: "Failed to upload image", type: "error", isLoading: false, autoClose: 3000 });
+                                            toast.update(toastId, { render: err.response?.data?.error || err.response?.data?.message || "Failed to upload image", type: "error", isLoading: false, autoClose: 3000 });
                                         }
                                     }}
                                 />

@@ -264,8 +264,8 @@ export default function TenantDashboard() {
     setIsUpdatingPassword(true);
     try {
       const token = localStorage.getItem("accessToken");
-      await axios.put(`${BASE_URL}/api/auth/change-password`, {
-        oldPassword: passwordForm.oldPassword,
+      await axios.post(`${BASE_URL}/api/auth/change-password`, {
+        currentPassword: passwordForm.oldPassword,
         newPassword: passwordForm.newPassword
       }, { headers: { Authorization: `Bearer ${token}` } });
 
@@ -273,7 +273,7 @@ export default function TenantDashboard() {
       setShowChangePasswordModal(false);
       setPasswordForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to update password");
+      toast.error(err.response?.data?.error || err.response?.data?.message || "Failed to update password");
     } finally {
       setIsUpdatingPassword(false);
     }
