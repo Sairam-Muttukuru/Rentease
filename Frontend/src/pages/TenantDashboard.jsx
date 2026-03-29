@@ -441,7 +441,7 @@ export default function TenantDashboard() {
             i18n={i18n}
           />
         } />
-        <Route path="/services" element={<TenantHomeServices />} />
+        <Route path="/services" element={<TenantHomeServices tenantData={tenantData} />} />
         <Route path="/messages" element={
           <TenantMessagesView 
             isDarkMode={isDarkMode} 

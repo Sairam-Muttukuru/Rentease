@@ -113,7 +113,7 @@ function App() {
       {/* <TenantDashboard/> */}
       {/* <LandlordDashboard/> */}
       <ToastContainer
-        position="top-center"
+        position="top-right"
         autoClose={3000}      // toast disappears after 3 seconds
         hideProgressBar={false}
         closeOnClick

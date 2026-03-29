@@ -147,18 +147,7 @@ const LoginPage = () => {
             Manage your properties, track payments, and handle maintenance requests from one secure dashboard.
           </p>
 
-          {/* Feature Cards */}
-          <div className="grid gap-4">
-            <div className="flex items-center gap-4 p-4 bg-white/5 rounded-xl backdrop-blur-md border border-white/10 hover:bg-white/10 transition-colors">
-              <div className="bg-indigo-500/20 p-3 rounded-lg">
-                <ShieldCheck size={24} className="text-indigo-300" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-white">Bank-Level Security</h3>
-                <p className="text-sm text-slate-400">Your data is encrypted and safe.</p>
-              </div>
-            </div>
-          </div>
+          {/* Feature Cards removed */}
         </div>
       </div>
 

@@ -273,23 +273,35 @@ const CheckoutForm = ({ amount, tenantId, propertyId, tenantName, isDarkMode, pa
               <button
                 onClick={() => {
                   import('jspdf').then(({ jsPDF }) => {
-                    const doc = new jsPDF();
-                    const purpleColor = [124, 58, 237]; // RentEase Purple
-                    const subTextColor = [100, 116, 139]; // Slate-500
-                    const blackColor = [15, 23, 42]; // Slate-900
-                    const greenColor = [22, 163, 74]; // Green-600
-                    const navyColor = [30, 41, 59]; // Table Header Navy
+                    // Load favicon first, then generate PDF
+                    const img = new Image();
+                    img.src = '/favicon.png';
+                    img.onload = () => {
+                      // Convert image to base64 via canvas
+                      const canvas = document.createElement('canvas');
+                      canvas.width = img.width;
+                      canvas.height = img.height;
+                      canvas.getContext('2d').drawImage(img, 0, 0);
+                      const faviconBase64 = canvas.toDataURL('image/png');
 
-                    // --- Header Section ---
-                    doc.setFont("helvetica", "bold");
-                    doc.setFontSize(36);
-                    doc.setTextColor(purpleColor[0], purpleColor[1], purpleColor[2]);
-                    doc.text("RentEase", 20, 30);
+                      const doc = new jsPDF();
+                      const purpleColor = [124, 58, 237]; // RentEase Purple
+                      const subTextColor = [100, 116, 139]; // Slate-500
+                      const blackColor = [15, 23, 42]; // Slate-900
+                      const greenColor = [22, 163, 74]; // Green-600
+                      const navyColor = [30, 41, 59]; // Table Header Navy
 
-                    doc.setFont("helvetica", "normal");
-                    doc.setFontSize(10);
-                    doc.setTextColor(subTextColor[0], subTextColor[1], subTextColor[2]);
-                    doc.text("Premium Property Management", 20, 38);
+                      // --- Header Section: Logo Image + Brand Name ---
+                      doc.addImage(faviconBase64, 'PNG', 20, 15, 14, 14); // favicon 14x14mm
+                      doc.setFont("helvetica", "bold");
+                      doc.setFontSize(36);
+                      doc.setTextColor(purpleColor[0], purpleColor[1], purpleColor[2]);
+                      doc.text("RentEase", 37, 27); // shifted right to make room for logo
+
+                      doc.setFont("helvetica", "normal");
+                      doc.setFontSize(10);
+                      doc.setTextColor(subTextColor[0], subTextColor[1], subTextColor[2]);
+                      doc.text("Premium Property Management", 37, 34); // shifted right
 
                     // Top Right Info
                     doc.setFont("helvetica", "bold");
@@ -372,13 +384,20 @@ const CheckoutForm = ({ amount, tenantId, propertyId, tenantName, isDarkMode, pa
                     doc.text(`Transaction ID: ${paymentId}`, 25, footerY + 18);
                     doc.text(`Status: COMPLETED (Verified via Stripe)`, 25, footerY + 26);
 
-                    // Disclaimer
-                    doc.setFontSize(8);
-                    doc.setFont("helvetica", "italic");
-                    doc.text("This is a computer-generated receipt, no signature required.", 105, 280, { align: "center" });
+                      // Disclaimer
+                      doc.setFontSize(8);
+                      doc.setFont("helvetica", "italic");
+                      doc.text("This is a computer-generated receipt, no signature required.", 105, 280, { align: "center" });
 
-                    doc.save(`Receipt_${paymentType}_${Date.now()}.pdf`);
-                  });
+                      doc.save(`Receipt_${paymentType}_${Date.now()}.pdf`);
+                    }; // end img.onload
+                    img.onerror = () => {
+                      // Fallback: generate PDF without logo if image fails to load
+                      const doc = new jsPDF();
+                      doc.text("RentEase", 20, 30);
+                      doc.save(`Receipt_${paymentType}_${Date.now()}.pdf`);
+                    };
+                  }); // end import jspdf
                 }}
                 className="w-full py-4 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2"
               >

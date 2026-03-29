@@ -1367,7 +1367,7 @@ const Adminpage = () => {
             <aside className="w-72 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl h-screen fixed left-0 top-0 flex flex-col text-slate-600 dark:text-slate-300 z-50 border-r border-slate-200 dark:border-white/10 shadow-2xl transition-all duration-300">
                 <div className="p-6 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
                     <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
-                        <img src={logo} alt="RentEase" className="h-12 min-w-13 rounded-lg" />
+                        <img src={logo} alt="RentEase" className="w-16 h-16 rounded-lg object-contain" />
                         <div>
                             <h1 className="text-2xl relative right-5 font-extrabold text-slate-900 dark:text-white tracking-tight">RentEase</h1>
                             {/* <p className="text-[10px] uppercase tracking-[0.2em] text-indigo-500 dark:text-indigo-400 font-bold">Admin</p> */}

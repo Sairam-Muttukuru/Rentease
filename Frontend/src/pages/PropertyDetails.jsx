@@ -19,6 +19,8 @@ const PropertyDetails = () => {
     const [showAllImages, setShowAllImages] = useState(false);
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState('education');
+    const [pois, setPois] = useState([]);
+    const [poisLoading, setPoisLoading] = useState(false);
 
     const NEIGHBOURHOOD_CATEGORIES = [
         { id: 'education', name: 'Education', icon: GraduationCap, color: 'violet', label: 'Schools & Colleges' },
@@ -28,41 +30,69 @@ const PropertyDetails = () => {
         { id: 'shopping', name: 'Shopping', icon: ShoppingBag, color: 'emerald', label: 'Malls & Stores' },
     ];
 
-    const getMockPOIs = (category, lat, lng) => {
-        // Simple deterministic "random" based on lat/lng to keep it consistent
-        const seed = (lat + lng) * 1000;
-        const pseudoRandom = (offset) => Math.abs(Math.sin(seed + offset));
-
-        const pois = {
-            education: [
-                { name: "Royal Global School", distance: "450m", latitude: lat + 0.002, longitude: lng + 0.003, category: 'education' },
-                { name: "City Institute of Tech", distance: "1.2km", latitude: lat - 0.005, longitude: lng + 0.004, category: 'education' },
-                { name: "Sunshine Preschool", distance: "800m", latitude: lat + 0.004, longitude: lng - 0.002, category: 'education' },
-            ],
-            healthcare: [
-                { name: "Apollo Specialty Clinics", distance: "300m", latitude: lat + 0.001, longitude: lng - 0.002, category: 'healthcare' },
-                { name: "General Medical Center", distance: "2.5km", latitude: lat - 0.008, longitude: lng - 0.005, category: 'healthcare' },
-                { name: "24/7 Wellness Pharmacy", distance: "150m", latitude: lat + 0.0005, longitude: lng + 0.001, category: 'healthcare' },
-            ],
-            commute: [
-                { name: "Central Metro Station", distance: "600m", latitude: lat + 0.003, longitude: lng + 0.005, category: 'commute' },
-                { name: "City Transit Bus Hub", distance: "1.1km", latitude: lat - 0.004, longitude: lng + 0.006, category: 'commute' },
-            ],
-            food: [
-                { name: "The Spice Garden", distance: "200m", latitude: lat - 0.001, longitude: lng - 0.001, category: 'food' },
-                { name: "Urban Brew Coffee", distance: "500m", latitude: lat + 0.002, longitude: lng - 0.003, category: 'food' },
-                { name: "Quick Bites Pizzeria", distance: "850m", latitude: lat - 0.003, longitude: lng + 0.002, category: 'food' },
-            ],
-            shopping: [
-                { name: "Grand Plaza Mall", distance: "1.5km", latitude: lat + 0.007, longitude: lng + 0.008, category: 'shopping' },
-                { name: "Fresh Mart Grocery", distance: "400m", latitude: lat - 0.002, longitude: lng + 0.003, category: 'shopping' },
-                { name: "Trendz Fashion Street", distance: "900m", latitude: lat + 0.005, longitude: lng - 0.001, category: 'shopping' },
-            ]
-        };
-        return pois[category] || [];
+    // Overpass API queries per category (searches within 2km radius)
+    const OVERPASS_QUERIES = {
+        education: `node["amenity"~"school|college|university|kindergarten"]`,
+        healthcare: `node["amenity"~"hospital|clinic|pharmacy|doctors"]`,
+        commute:    `node["amenity"~"bus_station|bus_stop"]`,
+        food:       `node["amenity"~"restaurant|cafe|fast_food|food_court"]`,
+        shopping:   `node["shop"~"supermarket|mall|convenience|grocery|department_store"]`,
     };
 
-    const activePOIs = property ? getMockPOIs(selectedCategory, parseFloat(property.latitude), parseFloat(property.longitude)) : [];
+    // Haversine formula — calculates real-world distance in meters between two GPS points
+    const getDistance = (lat1, lon1, lat2, lon2) => {
+        const R = 6371000;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    };
+
+    const formatDistance = (meters) => meters < 1000 ? `${meters}m` : `${(meters / 1000).toFixed(1)}km`;
+
+    // Fetch REAL nearby places from Overpass API whenever category or property changes
+    useEffect(() => {
+        if (!property?.latitude || !property?.longitude) return;
+        const lat = parseFloat(property.latitude);
+        const lng = parseFloat(property.longitude);
+        if (isNaN(lat) || isNaN(lng)) return;
+
+        const fetchPOIs = async () => {
+            setPoisLoading(true);
+            setPois([]);
+            try {
+                const query = OVERPASS_QUERIES[selectedCategory];
+                const overpassQuery = `[out:json][timeout:15];${query}(around:2000,${lat},${lng});out 10;`;
+                const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
+                const res = await axios.get(url);
+                const results = (res.data.elements || [])
+                    .filter(el => el.lat && el.lon && el.tags?.name)
+                    .slice(0, 8)
+                    .map(el => ({
+                        name: el.tags.name,
+                        latitude: el.lat,
+                        longitude: el.lon,
+                        category: selectedCategory,
+                        distance: formatDistance(getDistance(lat, lng, el.lat, el.lon))
+                    }))
+                    .sort((a, b) => {
+                        const distA = parseInt(a.distance);
+                        const distB = parseInt(b.distance);
+                        return distA - distB;
+                    });
+                setPois(results);
+            } catch (err) {
+                console.error('Overpass API error:', err);
+                setPois([]);
+            } finally {
+                setPoisLoading(false);
+            }
+        };
+
+        fetchPOIs();
+    }, [selectedCategory, property]);
 
 
     const handleChat = () => {
@@ -339,7 +369,7 @@ const PropertyDetails = () => {
                             <div className="relative h-[450px] rounded-[2.5rem] overflow-hidden border border-gray-200 dark:border-white/10 shadow-2xl group">
                                 <FreeMap
                                     properties={[property]}
-                                    pois={activePOIs}
+                                    pois={pois}
                                     singleProperty={true}
                                     zoom={15}
                                 />
@@ -353,7 +383,11 @@ const PropertyDetails = () => {
                                             </div>
                                             <div>
                                                 <p className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">
-                                                    {activePOIs.length} {NEIGHBOURHOOD_CATEGORIES.find(c => c.id === selectedCategory)?.label}
+                                                    {poisLoading ? (
+                                                        <span className="animate-pulse">Searching...</span>
+                                                    ) : (
+                                                        <>{pois.length} {NEIGHBOURHOOD_CATEGORIES.find(c => c.id === selectedCategory)?.label} found nearby</>
+                                                    )}
                                                 </p>
                                                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Available around your home</p>
                                             </div>

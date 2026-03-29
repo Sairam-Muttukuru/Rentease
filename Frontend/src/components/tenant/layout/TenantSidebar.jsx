@@ -31,7 +31,7 @@ const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout
                 <div className="flex items-center gap-4 w-full justify-center">
                     <div className="relative group shrink-0">
                         <div className={`absolute inset-0 bg-violet-500 blur-[20px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full`}></div>
-                        <img src="/favicon.png" alt="RentEase" className="w-10 h-10 object-contain relative z-10 drop-shadow-lg" />
+                        <img src="/favicon.png" alt="RentEase" className="w-16 h-16 object-contain relative z-10 drop-shadow-lg" />
                     </div>
                     {isExpanded && (
                         <div className="flex flex-col animate-in fade-in duration-300">

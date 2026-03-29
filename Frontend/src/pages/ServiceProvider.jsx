@@ -2353,7 +2353,7 @@ const ServiceProvider = () => {
                         <div className="flex items-center gap-4">
                             <div className="relative group">
                                 <div className="absolute inset-0 bg-sky-500 blur-[20px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full"></div>
-                                <img src="/favicon.png" alt="RentEase" className="min-w-15 min-h-15 object-contain relative right-2 top-0.5 z-10 drop-shadow-lg" />
+                                <img src="/favicon.png" alt="RentEase" className="w-16 h-16 object-contain relative right-2 top-0.5 z-10 drop-shadow-lg" />
                             </div>
                             <span className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter relative right-9">RentEase</span>
                         </div>

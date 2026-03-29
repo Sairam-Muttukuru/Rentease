@@ -28,7 +28,7 @@ const CATEGORY_IMAGES = {
     'default': 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=800&auto=format&fit=crop'
 };
 
-export default function TenantHomeServices({ toggleSidebar }) {
+export default function TenantHomeServices({ toggleSidebar, tenantData = {} }) {
     const { theme } = useTheme();
     const isDarkMode = theme === 'dark';
     const location = useLocation();
@@ -49,6 +49,8 @@ export default function TenantHomeServices({ toggleSidebar }) {
     const [isLoading, setIsLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [bookingStep, setBookingStep] = useState(0); // 0: None, 1: Details, 2: Success
+    const [visitDate, setVisitDate]     = useState('');
+    const [visitTime, setVisitTime]     = useState('09:00');
 
     // Fetch Categories on Mount
     useEffect(() => {
@@ -164,10 +166,17 @@ export default function TenantHomeServices({ toggleSidebar }) {
 
     const handleBookNow = (service) => {
         setSelectedService(service);
+        // Pre-fill today's date as default
+        const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+        setVisitDate(todayStr);
         setBookingStep(1);
     };
 
     const confirmBooking = () => {
+        if (!visitDate) {
+            toast.error('Please select a visit date.');
+            return;
+        }
         setTimeout(() => {
             setBookingStep(2);
             toast.success(`Booking Confirmed for ${selectedService.name}!`);
@@ -177,6 +186,8 @@ export default function TenantHomeServices({ toggleSidebar }) {
     const closeModals = () => {
         setBookingStep(0);
         setSelectedService(null);
+        setVisitDate('');
+        setVisitTime('09:00');
     };
 
     // Helper to get Icon
@@ -464,8 +475,9 @@ export default function TenantHomeServices({ toggleSidebar }) {
                     <div className={`w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
 
                         {bookingStep === 1 ? (
-                            // STEP 1: REVIEW
+                            // STEP 1: REVIEW + PRE-FILLED PROPERTY DETAILS
                             <>
+                                {/* Service Image Header */}
                                 <div className="relative h-32 bg-slate-100 dark:bg-slate-800">
                                     <img src={selectedService.image_url} className="w-full h-full object-cover opacity-50" />
                                     <div className="absolute inset-0 flex items-center justify-center">
@@ -473,29 +485,113 @@ export default function TenantHomeServices({ toggleSidebar }) {
                                             <Shield size={32} className="text-emerald-500" />
                                         </div>
                                     </div>
+                                    {/* Close button */}
+                                    <button onClick={closeModals} className="absolute top-3 right-3 p-1.5 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors">
+                                        <X size={16} />
+                                    </button>
                                 </div>
-                                <div className="p-8 text-center">
-                                    <h3 className={`text-2xl font-black mb-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Confirm Booking</h3>
-                                    <p className={`text-sm mb-8 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>You are booking <span className="font-bold text-violet-500">{selectedService.name}</span>.</p>
 
-                                    <div className={`p-4 rounded-xl text-left mb-8 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                                <div className="p-6">
+                                    <h3 className={`text-xl font-black mb-1 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Confirm Booking</h3>
+                                    <p className={`text-sm mb-5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                                        Booking: <span className="font-bold text-violet-500">{selectedService.name}</span>
+                                    </p>
+
+                                    {/* ── PRE-FILLED PROPERTY DETAILS ── */}
+                                    <div className={`rounded-2xl p-4 mb-5 border ${isDarkMode ? 'bg-violet-500/10 border-violet-500/20' : 'bg-violet-50 border-violet-100'}`}>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-violet-500 mb-3">📍 Service Location (Pre-filled)</p>
+                                        <div className="space-y-2">
+                                            <div className="flex items-start gap-3">
+                                                <span className={`text-xs font-bold w-20 shrink-0 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Property</span>
+                                                <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                                                    {tenantData.property_name || tenantData.propertyName || 'Your Property'}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-start gap-3">
+                                                <span className={`text-xs font-bold w-20 shrink-0 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Address</span>
+                                                <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                                                    {tenantData.address || tenantData.locality || 'Address on file'}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-start gap-3">
+                                                <span className={`text-xs font-bold w-20 shrink-0 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Landlord</span>
+                                                <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                                                    {tenantData.landlord || tenantData.landlord_name || 'Your Landlord'}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-start gap-3">
+                                                <span className={`text-xs font-bold w-20 shrink-0 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Tenant</span>
+                                                <span className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                                                    {tenantData.name || 'You'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* ── DATE & TIME PICKER ── */}
+                                    <div className={`rounded-2xl p-4 mb-5 border ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-violet-500 mb-3">🗓️ Schedule Visit</p>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className={`text-xs font-bold block mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Preferred Date</label>
+                                                <input
+                                                    type="date"
+                                                    value={visitDate}
+                                                    min={new Date().toLocaleDateString('en-CA')}
+                                                    onChange={(e) => {
+                                                        const sel = e.target.value;
+                                                        const today = new Date().toLocaleDateString('en-CA');
+                                                        if (sel < today) {
+                                                            toast.info('Please select today or a future date.');
+                                                            setVisitDate(today);
+                                                        } else {
+                                                            setVisitDate(sel);
+                                                        }
+                                                    }}
+                                                    className={`w-full px-3 py-2 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-violet-500
+                                                        ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-900'}`}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className={`text-xs font-bold block mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Preferred Time</label>
+                                                <select
+                                                    value={visitTime}
+                                                    onChange={(e) => setVisitTime(e.target.value)}
+                                                    className={`w-full px-3 py-2 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-violet-500
+                                                        ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-900'}`}
+                                                >
+                                                    {['08:00','09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00'].map(t => (
+                                                        <option key={t} value={t}>{t.replace(':','h ')+' '+(parseInt(t)<12?'AM':'PM')}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* ── PRICE BREAKDOWN ── */}
+                                    <div className={`rounded-xl p-4 mb-5 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-50'}`}>
                                         <div className="flex justify-between mb-2">
-                                            <span className="text-sm text-slate-500">Service Cost</span>
+                                            <span className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Service Cost</span>
                                             <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>₹{selectedService.base_price}</span>
                                         </div>
                                         <div className="flex justify-between mb-2">
-                                            <span className="text-sm text-slate-500">Service Fee</span>
-                                            <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>₹50.00</span>
+                                            <span className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Platform Fee</span>
+                                            <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>₹50</span>
                                         </div>
-                                        <div className="flex justify-between pt-2 border-t border-dashed border-slate-300 dark:border-slate-700">
-                                            <span className="font-bold text-slate-500">Total</span>
+                                        <div className={`flex justify-between pt-2 border-t border-dashed ${isDarkMode ? 'border-slate-700' : 'border-slate-300'}`}>
+                                            <span className={`font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Total</span>
                                             <span className="font-black text-xl text-violet-600">₹{parseFloat(selectedService.base_price) + 50}</span>
                                         </div>
                                     </div>
 
+                                    {/* ── ACTION BUTTONS ── */}
                                     <div className="grid grid-cols-2 gap-4">
-                                        <button onClick={closeModals} className={`py-3 font-bold rounded-xl ${isDarkMode ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Cancel</button>
-                                        <button onClick={confirmBooking} className="py-3 font-bold rounded-xl bg-violet-600 text-white hover:bg-violet-700 shadow-lg shadow-violet-500/20">Confirm</button>
+                                        <button onClick={closeModals} className={`py-3 font-bold rounded-xl transition-colors ${isDarkMode ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                                            Cancel
+                                        </button>
+                                        <button onClick={confirmBooking} className="py-3 font-bold rounded-xl bg-violet-600 text-white hover:bg-violet-700 shadow-lg shadow-violet-500/20 transition-colors">
+                                            Confirm Booking
+                                        </button>
                                     </div>
                                 </div>
                             </>
@@ -505,8 +601,16 @@ export default function TenantHomeServices({ toggleSidebar }) {
                                 <div className="w-24 h-24 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-in zoom-in duration-500">
                                     <CheckCircle2 size={48} />
                                 </div>
-                                <h3 className={`text-3xl font-black mb-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Booking Confirmed!</h3>
-                                <p className={`text-slate-500 mb-8`}>A professional has been assigned. They will arrive shortly.</p>
+                                <h3 className={`text-3xl font-black mb-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Booking Confirmed! 🎉</h3>
+                                <p className={`mb-2 font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                                    <span className="text-violet-500 font-bold">{selectedService.name}</span> has been booked.
+                                </p>
+                                <p className={`text-sm mb-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                    📅 {visitDate} at {visitTime}
+                                </p>
+                                <p className={`text-sm mb-8 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                                    📍 {tenantData.property_name || tenantData.propertyName || 'Your Property'}
+                                </p>
                                 <button onClick={closeModals} className="px-8 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200">
                                     Done
                                 </button>
