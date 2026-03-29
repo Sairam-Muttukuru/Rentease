@@ -42,13 +42,20 @@ const LandlordSidebar = ({ activeTab, setActiveTab, handleLogout, isDarkMode, is
                 {isExpanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
             </button>
 
-            <div className={`p-6 border-b flex flex-col items-center gap-0 min-h-[100px] justify-center ${isDarkMode ? 'border-slate-900' : 'border-slate-100'}`}>
+            <div className={`border-b flex flex-col items-center gap-0 min-h-[100px] justify-center transition-all duration-500 ease-in-out ${isExpanded ? 'p-6' : 'p-2'} ${isDarkMode ? 'border-slate-900' : 'border-slate-100'}`}>
                 <div className="flex items-center gap-3 w-full justify-center">
-                    <img src="/favicon.png" alt="RentEase Logo" className="w-16 h-16 object-contain shrink-0" />
+                    <div className="relative shrink-0 group">
+                        <div className="absolute inset-0 bg-emerald-500 blur-[18px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full" />
+                        <img 
+                            src="/favicon.png" 
+                            alt="RentEase Logo" 
+                            className={`object-contain relative z-10 drop-shadow-lg transition-all duration-500 ease-in-out ${isExpanded ? 'w-16 h-16' : 'w-14 h-14 scale-110 ml-0 hover:scale-125'}`} 
+                        />
+                    </div>
                     {isExpanded && (
-                        <div className="flex flex-col animate-in fade-in duration-300">
-                            <span className={`text-2xl font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>RentEase</span>
-                            <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-emerald-500">Landlord Portal</span>
+                        <div className="flex flex-col animate-in fade-in duration-300 w-full overflow-hidden">
+                            <span className={`text-3xl font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>RentEase</span>
+                            <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-500">Landlord Portal</span>
                         </div>
                     )}
                 </div>

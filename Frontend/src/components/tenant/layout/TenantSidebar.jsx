@@ -56,7 +56,7 @@ const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout
             <div className={`
                 flex items-center border-b overflow-hidden
                 transition-all duration-500 ease-in-out
-                ${isExpanded ? 'px-6 py-5 gap-3' : 'px-0 py-5 justify-center gap-0'}
+                ${isExpanded ? 'px-6 py-5 gap-3' : 'px-1 py-5 justify-center gap-0'}
                 ${isDarkMode ? 'border-white/5' : 'border-slate-100'}
             `}>
                 {/* Logo image — size transitions smoothly */}
@@ -68,7 +68,7 @@ const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout
                         className={`
                             object-contain relative z-10 drop-shadow-lg
                             transition-all duration-500 ease-in-out
-                            ${isExpanded ? 'w-16 h-16' : 'w-12 h-13'}
+                            ${isExpanded ? 'w-16 h-16' : 'w-14 h-14 scale-125 ml-0 hover:scale-[1.35]'}
                         `}
                     />
                 </div>
