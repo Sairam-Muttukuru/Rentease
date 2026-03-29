@@ -56,25 +56,32 @@ cron.schedule("25 10 * * *", async () => {
                 continue;
             }
 
-            // Calculate cycles: Current month + any month starting within 2 days
-            const monthsDiff = (today.getFullYear() - anchorDate.getFullYear()) * 12 + (today.getMonth() - anchorDate.getMonth());
-            const cyclesStarted = Math.max(1, monthsDiff + 1);
-            
-            // Check if next cycle is within 2 days
-            const twoDaysFromNow = new Date(today);
-            twoDaysFromNow.setDate(today.getDate() + 2);
-            const nextCycleStart = new Date(anchorDate);
-            nextCycleStart.setMonth(anchorDate.getMonth() + cyclesStarted);
-            
-            const effectiveCycles = (twoDaysFromNow >= nextCycleStart) ? cyclesStarted + 1 : cyclesStarted;
+            // Look 3 days into the future
+            const targetDate = new Date(today);
+            targetDate.setDate(today.getDate() + 3);
 
-            // 4. Calculate Expected vs Balance
+            let monthsDiff = (targetDate.getFullYear() - anchorDate.getFullYear()) * 12 
+                           + (targetDate.getMonth() - anchorDate.getMonth());
+            if (targetDate.getDate() >= anchorDate.getDate()) {
+                monthsDiff += 1;
+            }
+
+            let effectiveCycles = Math.max(1, monthsDiff + (startDate < anchorDate ? 1 : 0));
+
+            // 4. Calculate Expected vs Balance based on this 3-day future target
             const totalExpected = effectiveCycles * parseFloat(tenant.monthly_rent);
             const balanceDue = totalExpected - totalPaid;
 
             if (balanceDue > 0) {
                 // Determine display due date (First unpaid cycle)
                 let nDue = new Date(anchorDate);
+                const getYMD = (d) => {
+                    const year = d.getUTCFullYear();
+                    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+                    const day = String(d.getUTCDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                };
+
                 for (let i = 0; i < 48; i++) {
                     const cycleStart = new Date(anchorDate);
                     cycleStart.setMonth(anchorDate.getMonth() + i);
