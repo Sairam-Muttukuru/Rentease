@@ -68,14 +68,14 @@ const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout
                         className={`
                             object-contain relative z-10 drop-shadow-lg
                             transition-all duration-500 ease-in-out
-                            ${isExpanded ? 'w-16 h-16' : 'w-9 h-9'}
+                            ${isExpanded ? 'w-16 h-16' : 'w-12 h-13'}
                         `}
                     />
                 </div>
 
                 {/* Text — stays in DOM, fades and collapses horizontally */}
                 <div className={`
-                    flex flex-col relative right-7 overflow-hidden transition-all duration-500 ease-in-out
+                    flex flex-col relative right-5 overflow-hidden transition-all duration-500 ease-in-out
                     ${isExpanded ? 'max-w-[160px] opacity-100' : 'max-w-0 opacity-0'}
                 `}>
                     <span className={`text-2xl font-black tracking-tighter whitespace-nowrap ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
