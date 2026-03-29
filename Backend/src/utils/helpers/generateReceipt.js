@@ -27,9 +27,8 @@ module.exports = (res, payment) => {
   doc.rect(0, 0, doc.page.width, 140).fill("#1e1b4b"); // Deep indigo/slate
 
   if (faviconPath) {
-    // White circular background for logo to pop against dark header
-    doc.circle(90, 70, 35).fill("#ffffff");
-    doc.image(faviconPath, 65, 45, { width: 50 });
+    // Just render the logo directly without the white circle so it blends seamlessly
+    doc.image(faviconPath, 65, 45, { width: 55 });
   } else {
     doc.fillColor("#ffffff")
        .fontSize(32)
@@ -41,7 +40,7 @@ module.exports = (res, payment) => {
   doc.fillColor("#ffffff")
      .fontSize(28)
      .font("Helvetica-Bold")
-     .text("RentEase", 140, 55);
+     .text("RentEase", 135, 55);
 
   // Receipt Titles
   doc.fillColor("#ffffff")
@@ -86,7 +85,7 @@ module.exports = (res, payment) => {
 
   // Table Row
   doc.fillColor("#0f172a").fontSize(12).font("Helvetica").text(payment.property_title ? `Rent Payment - ${payment.property_title}` : "Monthly Rent Payment", 70, tableY + 55);
-  doc.font("Helvetica-Bold").text(`INR ${Number(payment.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}`, doc.page.width - 170, tableY + 55, { width: 100, align: "right" });
+  doc.font("Helvetica-Bold").text(`INR ${Number(payment.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}`, doc.page.width - 180, tableY + 55, { width: 110, align: "right" });
 
   // Divider
   doc.moveTo(50, tableY + 90).lineTo(doc.page.width - 50, tableY + 90).strokeColor("#e2e8f0").stroke();
@@ -100,10 +99,11 @@ module.exports = (res, payment) => {
   doc.fillColor("#4f46e5").fontSize(20).text(`INR ${Number(payment.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}`, doc.page.width - 265, boxY + 20, { width: 200, align: "right" });
 
   // --- PAID Stamp ---
-  doc.rotate(-15, { origin: [doc.page.width - 150, boxY + 120] });
-  doc.rect(doc.page.width - 180, boxY + 100, 120, 45).lineWidth(3).strokeColor("#10b981").stroke();
-  doc.fillColor("#10b981").fontSize(22).font("Helvetica-Bold").text("PAID IN FULL", doc.page.width - 175, boxY + 112, { width: 110, align: "center" });
-  doc.rotate(15, { origin: [doc.page.width - 150, boxY + 120] });
+  // A larger, clean crisp stamp that fits "PAID IN FULL" perfectly
+  doc.rotate(-12, { origin: [doc.page.width - 150, boxY + 120] });
+  doc.rect(doc.page.width - 200, boxY + 100, 160, 45).lineWidth(4).strokeColor("#10b981").stroke();
+  doc.fillColor("#10b981").fontSize(22).font("Helvetica-Bold").text("PAID IN FULL", doc.page.width - 200, boxY + 112, { width: 160, align: "center", characterSpacing: 2 });
+  doc.rotate(12, { origin: [doc.page.width - 150, boxY + 120] });
 
   // --- Footer ---
   const footerY = doc.page.height - 100;
