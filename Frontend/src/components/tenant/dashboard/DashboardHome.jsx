@@ -52,7 +52,9 @@ const DashboardHome = ({
                 <div className="flex items-center gap-4">
                     {/* Next Due Date Widget */}
                     <div className={`hidden md:flex flex-col items-end px-4 py-2 rounded-xl transition-all duration-500 border ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-slate-100/50 border-slate-200'}`}>
-                        <p className={`text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Next Due Date</p>
+                        <p className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                            {isPaid ? 'Upcoming Cycle' : 'Unpaid Cycle'}
+                        </p>
                         <div className="flex items-center gap-2">
                             <Calendar size={14} className={isDarkMode ? 'text-violet-400' : 'text-violet-600'} />
                             <p className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{nextDueDateDisplay}</p>
