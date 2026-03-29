@@ -34,7 +34,7 @@ const LandlordSidebar = ({ activeTab, setActiveTab, handleLogout, isDarkMode, is
 
     return (
         <aside className={`fixed inset-y-0 left-0 z-40 backdrop-blur-xl border-r transform transition-all duration-500 ease-in-out flex flex-col shrink-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:static ${isExpanded ? 'w-72' : 'w-20'} ${isDarkMode ? 'bg-slate-900/80 border-slate-900' : 'bg-white/90 border-slate-200'}`}>
-            
+
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
                 className={`hidden md:flex absolute -right-3 top-10 w-6 h-6 rounded-full items-center justify-center z-50 text-white shadow-md transition-transform hover:scale-110 ${isDarkMode ? 'bg-emerald-600' : 'bg-emerald-500'}`}
@@ -46,16 +46,16 @@ const LandlordSidebar = ({ activeTab, setActiveTab, handleLogout, isDarkMode, is
                 <div className="flex items-center gap-3 w-full justify-center">
                     <div className="relative shrink-0 group">
                         <div className="absolute inset-0 bg-emerald-500 blur-[18px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full" />
-                        <img 
-                            src="/favicon.png" 
-                            alt="RentEase Logo" 
-                            className={`object-contain relative z-10 drop-shadow-lg transition-all duration-500 ease-in-out ${isExpanded ? 'w-16 h-16' : 'w-14 h-14 scale-110 ml-0 hover:scale-125'}`} 
+                        <img
+                            src="/favicon.png"
+                            alt="RentEase Logo"
+                            className={`object-contain relative z-10 drop-shadow-lg transition-all duration-500 ease-in-out ${isExpanded ? 'w-16 h-16' : 'w-14 h-14'}`}
                         />
                     </div>
                     {isExpanded && (
-                        <div className="flex flex-col animate-in fade-in duration-300 w-full overflow-hidden">
-                            <span className={`text-3xl font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>RentEase</span>
-                            <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-500">Landlord Portal</span>
+                        <div className="flex flex-col animate-in fade-in duration-300 w-full overflow-hidden relative right-5">
+                            <span className={`text-2xl font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>RentEase</span>
+                            <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-500">Landlord Dashboard</span>
                         </div>
                     )}
                 </div>
@@ -88,8 +88,8 @@ const LandlordSidebar = ({ activeTab, setActiveTab, handleLogout, isDarkMode, is
                     <Users size={20} className="shrink-0" />
                     {isExpanded && <span className="text-sm font-bold whitespace-nowrap animate-in fade-in duration-300">Switch to Tenant</span>}
                 </Link>
-                <button 
-                    onClick={handleLogout} 
+                <button
+                    onClick={handleLogout}
                     title={!isExpanded ? "Logout" : ""}
                     className={`flex items-center rounded-2xl transition-all duration-300 text-slate-500 hover:text-rose-500 ${isExpanded ? 'w-full gap-3 px-4 py-3' : 'w-12 h-12 justify-center'}`}
                 >
