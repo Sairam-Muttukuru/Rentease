@@ -321,9 +321,21 @@ exports.toggleService = async (id, providerId) => {
 // --- CATALOG MANAGEMENT ---
 
 exports.getCategories = async (providerId) => {
-    // ALWAYS return all categories so providers can choose from them
-    const query = `SELECT * FROM service_categories ORDER BY name ASC`;
-    const params = [];
+    // 1. Get the provider's specific service specialty
+    const provRes = await db.query("SELECT service_type FROM service_providers WHERE id = $1", [providerId]);
+    const specialty = provRes.rows[0]?.service_type;
+
+    let query = `SELECT * FROM service_categories`;
+    let params = [];
+
+    // 2. Filter categories to ONLY show the one matching their specialty if set
+    if (specialty && specialty !== 'Others' && specialty !== 'All') {
+        // Find category where name matches specialty (e.g. 'Electrical')
+        query += ` WHERE name ILIKE $1`;
+        params.push(specialty);
+    }
+
+    query += ` ORDER BY name ASC`;
 
     const res = await db.query(query, params);
     return res.rows;

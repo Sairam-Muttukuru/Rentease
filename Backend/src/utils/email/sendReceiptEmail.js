@@ -23,18 +23,21 @@ const sendReceiptEmail = (tenantEmail, payment) => {
             const pdfData = Buffer.concat(buffers);
 
             try {
+                const sanitizedUser = (process.env.EMAIL_USER || '').replace(/"/g, '');
+                const sanitizedPass = (process.env.EMAIL_PASS || '').replace(/"/g, '');
+
                 // 2️⃣ Mail setup
                 const transporter = nodemailer.createTransport({
                     service: "gmail",
                     auth: {
-                        user: process.env.EMAIL_ADMIN,
-                        pass: process.env.EMAIL_ADMIN_PASS
+                        user: sanitizedUser,
+                        pass: sanitizedPass
                     }
                 });
 
                 // 3️⃣ Send email with attachment and inline logo
                 await transporter.sendMail({
-                    from: `"RentEase" <${process.env.EMAIL_ADMIN}>`,
+                    from: `"RentEase" <${sanitizedUser}>`,
                     to: tenantEmail,
                     subject: `🧾 Payment Confirmation: ₹${payment.amount.toLocaleString()} for ${payment.property_title}`,
                     html: `

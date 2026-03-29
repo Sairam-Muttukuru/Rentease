@@ -1,16 +1,19 @@
 const nodemailer = require('nodemailer');
 
-const sendServiceCompletionMail = async (email, userName, serviceName, providerName, amount, paymentMethod) => {
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-        }
-    });
+const sanitizedUser = (process.env.EMAIL_USER || '').replace(/"/g, '');
+const sanitizedPass = (process.env.EMAIL_PASS || '').replace(/"/g, '');
 
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: sanitizedUser,
+        pass: sanitizedPass
+    }
+});
+
+const sendServiceCompletionMail = async (email, userName, serviceName, providerName, amount, paymentMethod) => {
     const mailOptions = {
-        from: `"RentEase Services" <${process.env.EMAIL_USER}>`,
+        from: `"RentEase Services" <${sanitizedUser}>`,
         to: email,
         subject: `Service Completed: ${serviceName}`,
         html: `

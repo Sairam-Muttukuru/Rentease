@@ -2,8 +2,9 @@ const nodemailer = require("nodemailer");
 
 // Centralized email credentials handling heart
 const emailConfig = {
-    user: process.env.EMAIL_ADMIN || process.env.EMAIL_USER,
-    pass: process.env.EMAIL_ADMIN_PASS || process.env.EMAIL_PASS
+    // Strip any accidental double quotes from .env strings
+    user: (process.env.EMAIL_USER || process.env.EMAIL_ADMIN || '').replace(/"/g, ''),
+    pass: (process.env.EMAIL_PASS || process.env.EMAIL_ADMIN_PASS || '').replace(/"/g, '')
 };
 
 const transporter = nodemailer.createTransport({

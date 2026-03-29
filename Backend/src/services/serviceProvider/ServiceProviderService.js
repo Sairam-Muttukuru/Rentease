@@ -93,12 +93,14 @@ class ServiceProviderService {
 
         const { email, user_name, tenant_name, service_name, provider_name, provider_phone, booking_date, booking_time, address, amount, payment_method } = details;
         const recipientName = user_name || tenant_name;
+        
+        const upperStatus = status ? status.toUpperCase() : '';
 
-        if (status === 'Accepted' || status === 'Confirmed') {
+        if (upperStatus === 'ACCEPTED' || upperStatus === 'CONFIRMED') {
             await sendServiceAcceptanceMail(email, recipientName, service_name, provider_name, provider_phone, booking_date, booking_time, address, amount, payment_method);
-        } else if (status === 'Rejected') {
+        } else if (upperStatus === 'REJECTED') {
             await sendServiceRejectionMail(email, recipientName, service_name, provider_name, rejectionReason);
-        } else if (status === 'Completed') {
+        } else if (upperStatus === 'COMPLETED' || upperStatus === 'FINISHED') {
             await sendServiceCompletionMail(email, recipientName, service_name, provider_name, amount, payment_method);
         }
     }

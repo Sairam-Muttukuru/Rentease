@@ -8,13 +8,18 @@ const sendRentReminderEmail = async ({
     amount,
     daysRemaining
 }) => {
+    const sanitizedUser = (process.env.EMAIL_USER || '').replace(/"/g, '');
+    const sanitizedPass = (process.env.EMAIL_PASS || '').replace(/"/g, '');
+
     const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
+            user: sanitizedUser,
+            pass: sanitizedPass
         }
     });
+
+    const fromEmail = sanitizedUser;
 
     const getDaySuffix = (day) => {
         if (day > 3 && day < 21) return 'th';
@@ -52,7 +57,7 @@ const sendRentReminderEmail = async ({
     }
 
     const mailOptions = {
-        from: `"RentEase Assistant" <${process.env.EMAIL_USER}>`,
+        from: `"RentEase Assistant" <${fromEmail}>`,
         to: tenantEmail,
         subject: subject,
         html: `

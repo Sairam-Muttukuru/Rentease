@@ -3,10 +3,12 @@ const nodemailer = require("nodemailer");
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL_ADMIN,
-    pass: process.env.EMAIL_ADMIN_PASS
+    user: (process.env.EMAIL_USER || process.env.EMAIL_ADMIN || '').replace(/"/g, ''),
+    pass: (process.env.EMAIL_PASS || process.env.EMAIL_ADMIN_PASS || '').replace(/"/g, '')
   }
 });
+
+const fromEmail = (process.env.EMAIL_USER || process.env.EMAIL_ADMIN || '').replace(/"/g, '');
 
 module.exports = async (email, tenantName, serviceName, providerName, rejectionReason) => {
   try {
@@ -77,7 +79,7 @@ module.exports = async (email, tenantName, serviceName, providerName, rejectionR
     `;
 
     await transporter.sendMail({
-      from: `"RentEase Services" <${process.env.EMAIL_ADMIN}>`,
+      from: `"RentEase Services" <${fromEmail}>`,
       to: email,
       subject: subject,
       html: htmlContent
