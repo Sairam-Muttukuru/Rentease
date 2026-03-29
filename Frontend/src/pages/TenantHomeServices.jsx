@@ -472,7 +472,7 @@ export default function TenantHomeServices({ toggleSidebar, tenantData = {} }) {
             {/* Booking Confirmation / Status Modal */}
             {bookingStep > 0 && selectedService && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className={`w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
+                    <div className={`w-full max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide rounded-3xl shadow-2xl ${isDarkMode ? 'bg-slate-900' : 'bg-white'}`}>
 
                         {bookingStep === 1 ? (
                             // STEP 1: REVIEW + PRE-FILLED PROPERTY DETAILS
