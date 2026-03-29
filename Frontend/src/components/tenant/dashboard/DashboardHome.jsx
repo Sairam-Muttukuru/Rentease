@@ -125,7 +125,7 @@ const DashboardHome = ({
                         fetchTenantData={fetchTenantData}
                     />
 
-                    <VacateCard />
+                    <VacateCard tenantData={user} />
 
                     <RecentPaymentsPreview payments={payments} navigate={navigate} />
 

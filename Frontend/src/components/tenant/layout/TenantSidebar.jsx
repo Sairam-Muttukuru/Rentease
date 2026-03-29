@@ -26,16 +26,19 @@ const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout
                 {isExpanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
             </button>
 
-            {/* Logo Section */}
             <div className={`p-6 flex flex-col items-center gap-0 min-h-[100px] justify-center ${isDarkMode ? 'border-b border-white/5' : 'border-b border-slate-100'}`}>
                 <div className="flex items-center gap-4 w-full justify-center">
                     <div className="relative group shrink-0">
                         <div className={`absolute inset-0 bg-violet-500 blur-[20px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full`}></div>
-                        <img src="/favicon.png" alt="RentEase" className="w-16 h-16 object-contain relative z-10 drop-shadow-lg" />
+                        <img
+                            src="/favicon.png"
+                            alt="RentEase"
+                            className={`object-contain relative z-10 drop-shadow-lg transition-all duration-300 ${isExpanded ? 'w-20 h-20' : 'w-10 h-10'}`}
+                        />
                     </div>
                     {isExpanded && (
                         <div className="flex flex-col animate-in fade-in duration-300">
-                            <span className={`text-2xl font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>RentEase</span>
+                            <span className={`text-3xl font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>RentEase</span>
                             <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-violet-500">Tenant Dashboard</span>
                         </div>
                     )}

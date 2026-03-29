@@ -202,17 +202,17 @@ export default function TenantDashboard() {
       }
     } finally {
       const elapsedTime = Date.now() - startTime;
-      const hasLoadedBefore = sessionStorage.getItem(`tenant_loaded_${userName}`);
+      const hasLoadedBefore = localStorage.getItem(`tenant_loaded_${userName}`);
       const minWaitTime = hasLoadedBefore ? 0 : 5000;
       
       if (elapsedTime < minWaitTime) {
         setTimeout(() => {
           setIsLoading(false);
-          sessionStorage.setItem(`tenant_loaded_${userName}`, 'true');
+          localStorage.setItem(`tenant_loaded_${userName}`, 'true');
         }, minWaitTime - elapsedTime);
       } else {
         setIsLoading(false);
-        sessionStorage.setItem(`tenant_loaded_${userName}`, 'true');
+        localStorage.setItem(`tenant_loaded_${userName}`, 'true');
       }
     }
   };
