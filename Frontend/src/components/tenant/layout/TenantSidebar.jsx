@@ -10,14 +10,14 @@ const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout
     const [isExpanded, setIsExpanded] = useState(true);
 
     const navItems = [
-        { id: 'dashboard',    path: `/${userName}/tenant/dashboard`,            icon: Home,          label: 'Dashboard'     },
-        { id: 'notices',      path: `/${userName}/tenant/dashboard/notices`,     icon: Bell,          label: 'Notice Board'  },
-        { id: 'my-property',  path: `/${userName}/tenant/dashboard/my-property`, icon: Building,      label: 'My Property'   },
-        { id: 'services',     path: `/${userName}/tenant/dashboard/services`,    icon: Wrench,        label: 'Home Services' },
-        { id: 'payments',     path: `/${userName}/tenant/dashboard/payments`,    icon: CreditCard,    label: 'Payments'      },
-        { id: 'complaints',   path: `/${userName}/tenant/dashboard/complaints`,  icon: FileText,      label: 'Complaints'    },
-        { id: 'messages',     path: `/${userName}/tenant/dashboard/messages`,    icon: MessageSquare, label: 'Messages'      },
-        { id: 'settings',     path: `/${userName}/tenant/dashboard/settings`,    icon: Settings,      label: 'Settings'      },
+        { id: 'dashboard', path: `/${userName}/tenant/dashboard`, icon: Home, label: 'Dashboard' },
+        { id: 'notices', path: `/${userName}/tenant/dashboard/notices`, icon: Bell, label: 'Notice Board' },
+        { id: 'my-property', path: `/${userName}/tenant/dashboard/my-property`, icon: Building, label: 'My Property' },
+        { id: 'services', path: `/${userName}/tenant/dashboard/services`, icon: Wrench, label: 'Home Services' },
+        { id: 'payments', path: `/${userName}/tenant/dashboard/payments`, icon: CreditCard, label: 'Payments' },
+        { id: 'complaints', path: `/${userName}/tenant/dashboard/complaints`, icon: FileText, label: 'Complaints' },
+        { id: 'messages', path: `/${userName}/tenant/dashboard/messages`, icon: MessageSquare, label: 'Messages' },
+        { id: 'settings', path: `/${userName}/tenant/dashboard/settings`, icon: Settings, label: 'Settings' },
     ];
 
     // Shared label style — always rendered but smoothly fades and slides
@@ -75,7 +75,7 @@ const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout
 
                 {/* Text — stays in DOM, fades and collapses horizontally */}
                 <div className={`
-                    flex flex-col overflow-hidden transition-all duration-500 ease-in-out
+                    flex flex-col relative right-7 overflow-hidden transition-all duration-500 ease-in-out
                     ${isExpanded ? 'max-w-[160px] opacity-100' : 'max-w-0 opacity-0'}
                 `}>
                     <span className={`text-2xl font-black tracking-tighter whitespace-nowrap ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
