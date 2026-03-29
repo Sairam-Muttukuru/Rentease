@@ -38,10 +38,12 @@ const VacateCard = ({ tenantData }) => {
             }, { headers: { Authorization: `Bearer ${token}` } });
 
             setSubmitted(true);
+            setShowModal(false);
             toast.success('Vacate request sent to your landlord!');
         } catch (err) {
             // Even if API fails, show success (notification may not be wired)
             setSubmitted(true);
+            setShowModal(false);
             toast.success('Vacate request submitted! Your landlord will be notified.');
         } finally {
             setIsSubmitting(false);
