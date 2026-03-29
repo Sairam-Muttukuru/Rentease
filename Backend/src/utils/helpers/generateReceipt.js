@@ -3,7 +3,9 @@ const path = require("path");
 const fs = require("fs");
 
 module.exports = (res, payment) => {
+  try {
   const doc = new PDFDocument({ margin: 0, size: 'A4' });
+  
   // Stream PDF to response
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
@@ -113,5 +115,11 @@ module.exports = (res, payment) => {
   doc.text(`© ${new Date().getFullYear()} RentEase Home Management. All rights reserved.`, 50, footerY + 40, { align: "center", width: doc.page.width - 100 });
 
   doc.end();
+  } catch (error) {
+    console.error("[generateReceipt] CRITICAL ERROR generating PDF stream:", error);
+    if (!res.headersSent) {
+      res.status(500).send("Error generating PDF receipt");
+    }
+  }
 };
 
