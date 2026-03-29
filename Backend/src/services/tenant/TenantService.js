@@ -429,7 +429,7 @@ exports.getDashboardData = async (requesterId, targetUserName = null) => {
     const formatDateShort = (d) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
     // Scan ahead to find the next unpaid cycle
-    for (let i = -1; i < 36; i++) {
+    for (let i = -1; i < 48; i++) {
         const cycleStart = new Date(anchorDate);
         cycleStart.setMonth(anchorDate.getMonth() + i);
         
@@ -461,6 +461,22 @@ exports.getDashboardData = async (requesterId, targetUserName = null) => {
         }
         
         if (nextDueDateSet && getYMD(cycleStart) > getYMD(currentDate)) break;
+    }
+
+    // ✅ FIX: If ALL cycles are paid (nextDueDateSet === false),
+    // find the very next upcoming cycle AFTER today so the display is correct.
+    if (!nextDueDateSet) {
+        for (let i = 0; i < 24; i++) {
+            const cycleStart = new Date(anchorDate);
+            cycleStart.setMonth(anchorDate.getMonth() + i);
+            if (getYMD(cycleStart) > getYMD(currentDate)) {
+                const cycleEnd = new Date(cycleStart);
+                cycleEnd.setMonth(cycleStart.getMonth() + 1);
+                nextDueDate = cycleStart;
+                nextDueDateDisplay = `${formatDateShort(cycleStart)} - ${formatDateShort(cycleEnd)}`;
+                break;
+            }
+        }
     }
 
     // Return merged response for this property
