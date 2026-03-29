@@ -5,7 +5,14 @@ const fs = require("fs");
 
 const sendReceiptEmail = (tenantEmail, payment) => {
     return new Promise((resolve, reject) => {
-        const faviconPath = path.join(__dirname, "../../../../public/favicon.png");
+        const fallbackPaths = [
+            path.resolve(__dirname, "../../../../Frontend/public/favicon.png"),       
+            path.resolve(__dirname, "../../../../../../Frontend/public/favicon.png"), 
+            path.resolve(process.cwd(), "public/favicon.png"),                        
+            path.resolve(process.cwd(), "../Frontend/public/favicon.png"),            
+            path.join(__dirname, "../../../../public/favicon.png")                    
+        ];
+        const faviconPath = fallbackPaths.find(p => fs.existsSync(p));
         
         // 1️⃣ Create PDF in memory
         const doc = new PDFDocument({ margin: 50 });

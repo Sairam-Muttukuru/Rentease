@@ -4,21 +4,29 @@ const fs = require("fs");
 
 module.exports = (res, payment) => {
   const doc = new PDFDocument({ margin: 0, size: 'A4' });
-  const faviconPath = path.resolve(__dirname, "../../../../Frontend/public/favicon.png");
-
   // Stream PDF to response
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
     "Content-Disposition",
     `attachment; filename=Receipt_${payment.receipt_number || 'download'}.pdf`
   );
-
   doc.pipe(res);
+
+  // Robust multi-environment image locating strategy
+  const fallbackPaths = [
+    path.resolve(__dirname, "../../../../Frontend/public/favicon.png"),       // Local side-by-side
+    path.resolve(__dirname, "../../../../../../Frontend/public/favicon.png"), // Extra nested
+    path.resolve(process.cwd(), "public/favicon.png"),                        // Vercel / Root structure
+    path.resolve(process.cwd(), "../Frontend/public/favicon.png"),            // Run from Backend root
+    path.join(__dirname, "../../../../public/favicon.png")                    // V1 classic fallback
+  ];
+  
+  const faviconPath = fallbackPaths.find(p => fs.existsSync(p));
 
   // --- Beautiful Header Bar ---
   doc.rect(0, 0, doc.page.width, 140).fill("#1e1b4b"); // Deep indigo/slate
 
-  if (fs.existsSync(faviconPath)) {
+  if (faviconPath) {
     // White circular background for logo to pop against dark header
     doc.circle(90, 70, 35).fill("#ffffff");
     doc.image(faviconPath, 65, 45, { width: 50 });
