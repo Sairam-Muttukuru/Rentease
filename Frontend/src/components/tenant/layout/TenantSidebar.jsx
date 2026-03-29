@@ -7,7 +7,7 @@ const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout
     const { theme } = useTheme();
     const isDarkMode = theme === 'dark';
     const location = useLocation();
-    
+
     // Add state for expandable/collapsible sidebar
     const [isExpanded, setIsExpanded] = useState(true);
 
@@ -37,7 +37,7 @@ const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout
                         />
                     </div>
                     {isExpanded && (
-                        <div className="flex flex-col animate-in fade-in duration-300">
+                        <div className="flex flex-col relative right-5 animate-in fade-in duration-300">
                             <span className={`text-3xl font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>RentEase</span>
                             <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-violet-500">Tenant Dashboard</span>
                         </div>
