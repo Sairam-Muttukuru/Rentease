@@ -39,11 +39,6 @@ const RentOverviewCard = ({ isPaid, isOverdue, currentRentDue, unpaidMonthsCount
                                     <AlertCircle size={14} />
                                     {unpaidMonthsCount} {unpaidMonthsCount === 1 ? 'Month' : 'Months'} Pending
                                 </p>
-                                {pendingMonths && (pendingMonths.length > 0 || (pendingMonthsRanges && pendingMonthsRanges.length > 0)) && (
-                                    <p className={`text-[10px] font-medium opacity-70 ml-5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                                        ({(pendingMonthsRanges || pendingMonths).join(', ')})
-                                    </p>
-                                )}
                             </div>
                         )}
                         <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm opacity-80 mt-1">
