@@ -79,7 +79,10 @@ class ServiceProviderService {
         if (!booking) throw new Error("Booking not found or access denied");
 
         // Orchestrate Email Notifications
-        this._handleBookingStatusEmails(bookingId, status, rejectionReason).catch(err => console.error("Booking status emails failed:", err));
+        console.log(`[DEBUG] updateBookingStatus: Orchestrating emails for booking ${bookingId}, status: ${status}`);
+        this._handleBookingStatusEmails(bookingId, status, rejectionReason)
+            .then(() => console.log(`[DEBUG] updateBookingStatus: Email orchestration complete for ${bookingId}`))
+            .catch(err => console.error(`[ERROR] updateBookingStatus: Email orchestration failed for ${bookingId}:`, err));
 
         return booking;
     }
@@ -88,20 +91,31 @@ class ServiceProviderService {
      * Private helper for emails
      */
     async _handleBookingStatusEmails(bookingId, status, rejectionReason) {
+        console.log(`[DEBUG] _handleBookingStatusEmails: Fetching details for booking ${bookingId}`);
         const details = await ProviderModel.getBookingDetails(bookingId);
-        if (!details) return;
+        if (!details) {
+            console.error(`[ERROR] _handleBookingStatusEmails: No details found for booking ${bookingId}`);
+            return;
+        }
 
         const { email, user_name, tenant_name, service_name, provider_name, provider_phone, booking_date, booking_time, address, amount, payment_method } = details;
         const recipientName = user_name || tenant_name;
         
+        console.log(`[DEBUG] _handleBookingStatusEmails: Found details. Recipient: ${email}, Status: ${status}`);
+
         const upperStatus = status ? status.toUpperCase() : '';
 
         if (upperStatus === 'ACCEPTED' || upperStatus === 'CONFIRMED') {
+            console.log(`[DEBUG] _handleBookingStatusEmails: Sending Acceptance Mail to ${email}`);
             await sendServiceAcceptanceMail(email, recipientName, service_name, provider_name, provider_phone, booking_date, booking_time, address, amount, payment_method);
         } else if (upperStatus === 'REJECTED') {
+            console.log(`[DEBUG] _handleBookingStatusEmails: Sending Rejection Mail to ${email}`);
             await sendServiceRejectionMail(email, recipientName, service_name, provider_name, rejectionReason);
         } else if (upperStatus === 'COMPLETED' || upperStatus === 'FINISHED') {
+            console.log(`[DEBUG] _handleBookingStatusEmails: Sending Completion Mail to ${email}`);
             await sendServiceCompletionMail(email, recipientName, service_name, provider_name, amount, payment_method);
+        } else {
+            console.log(`[DEBUG] _handleBookingStatusEmails: Status ${upperStatus} does not trigger any email.`);
         }
     }
 

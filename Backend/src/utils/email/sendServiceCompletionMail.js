@@ -1,22 +1,10 @@
-const nodemailer = require('nodemailer');
-
-const sanitizedUser = (process.env.EMAIL_USER || '').replace(/"/g, '');
-const sanitizedPass = (process.env.EMAIL_PASS || '').replace(/"/g, '');
-
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: sanitizedUser,
-        pass: sanitizedPass
-    }
-});
+const sendMail = require("./sendMail");
+const path = require("path");
 
 const sendServiceCompletionMail = async (email, userName, serviceName, providerName, amount, paymentMethod) => {
-    const mailOptions = {
-        from: `"RentEase Services" <${sanitizedUser}>`,
-        to: email,
-        subject: `Service Completed: ${serviceName}`,
-        html: `
+    try {
+        const subject = `Service Completed: ${serviceName}`;
+        const html = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -75,16 +63,20 @@ const sendServiceCompletionMail = async (email, userName, serviceName, providerN
                     </div>
                 </div>
                 <div class="footer">
-                    <p>&copy; 2026 RentEase. All rights reserved.</p>
+                    <p>&copy; ${new Date().getFullYear()} RentEase. All rights reserved.</p>
                     <p>Premium Home Services & Property Management</p>
                 </div>
             </div>
         </body>
         </html>
         `
-    };
-
-    return transporter.sendMail(mailOptions);
+        await sendMail(email, subject, html);
+        console.log(`✅ Service completion email sent to ${email}`);
+    } catch (err) {
+        console.error(`❌ Failed to send service completion email to ${email}:`, err.message);
+        throw err;
+    }
 };
 
 module.exports = sendServiceCompletionMail;
+

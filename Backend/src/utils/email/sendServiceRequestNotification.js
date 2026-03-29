@@ -1,13 +1,46 @@
-const nodemailer = require("nodemailer");
+const sendMail = require("./sendMail");
+const ProviderModel = require("../../models/serviceProvider/ServiceProviderModel");
 
-async function sendServiceRequestNotification(to, requestDetails) {
-    const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
+async function sendServiceRequestNotification(requestOrEmail, requestDetails) {
+    let toEmail, details;
+
+    if (typeof requestOrEmail === 'object' && !requestDetails) {
+        // We received the request object as the only argument
+        const request = requestOrEmail;
+        console.log(`[DEBUG] sendServiceRequestNotification: Resolving details for request ${request.id}`);
+        
+        // Fetch full details for the email
+        const fullDetails = await ProviderModel.getBookingDetails(request.id);
+        if (!fullDetails) {
+            console.error(`[ERROR] sendServiceRequestNotification: No details found for request ${request.id}`);
+            return;
         }
-    });
+
+        // We need the PROVIDER'S email, not the user's
+        // getBookingDetails returns the USER'S email (requester).
+        // Let's get the provider's details separately.
+        const provider = await ProviderModel.getProviderById(request.assigned_provider_id);
+        if (!provider || !provider.email) {
+            console.error(`[ERROR] sendServiceRequestNotification: No provider email found for request ${request.id}`);
+            return;
+        }
+
+        toEmail = provider.email;
+        details = {
+            serviceName: fullDetails.service_name || "General Service",
+            providerName: fullDetails.provider_name || provider.first_name || "Provider",
+            tenantName: fullDetails.user_name || fullDetails.tenant_name || "Guest",
+            contactNumber: fullDetails.contact_number || "Not Provided",
+            address: fullDetails.address || "No address provided",
+            scheduledDate: fullDetails.booking_date ? new Date(fullDetails.booking_date).toLocaleDateString() : 'TBD',
+            scheduledTime: fullDetails.booking_time || 'TBD',
+            propertyImage: null // We don't have this in the current schema
+        };
+    } else {
+        // Standard call
+        toEmail = requestOrEmail;
+        details = requestDetails;
+    }
 
     const {
         serviceName,
@@ -18,15 +51,7 @@ async function sendServiceRequestNotification(to, requestDetails) {
         scheduledDate,
         scheduledTime,
         propertyImage
-    } = requestDetails;
-
-    // Construct image HTML if propertyImage exists
-    const imageHtml = propertyImage
-        ? `<div style="margin-top: 20px;">
-             <h3>Property Reference Image</h3>
-             <img src="${propertyImage}" alt="Property Image" style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #ddd;" />
-           </div>`
-        : '';
+    } = details;
 
     const htmlContent = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
@@ -61,8 +86,6 @@ async function sendServiceRequestNotification(to, requestDetails) {
                 </table>
             </div>
 
-            ${imageHtml}
-
             <div style="text-align: center; margin-top: 30px;">
                 <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/provider/dashboard" style="display: inline-block; background-color: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View Request</a>
             </div>
@@ -74,16 +97,12 @@ async function sendServiceRequestNotification(to, requestDetails) {
     `;
 
     try {
-        await transporter.sendMail({
-            from: `"RentEase Notifications" <${process.env.EMAIL_USER}>`,
-            to,
-            subject: `New Service Request: ${serviceName}`,
-            html: htmlContent
-        });
-        console.log("✅ Service Notification Email sent to:", to);
+        await sendMail(toEmail, `New Service Request: ${serviceName}`, htmlContent);
+        console.log("✅ Service Notification Email dispatched to provider:", toEmail);
     } catch (error) {
-        console.error("❌ Error sending notification email:", error);
+        console.error("❌ Error dispatching notification email:", error.message);
     }
 }
 
 module.exports = sendServiceRequestNotification;
+

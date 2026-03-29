@@ -1,14 +1,4 @@
-const nodemailer = require("nodemailer");
-
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: (process.env.EMAIL_USER || process.env.EMAIL_ADMIN || '').replace(/"/g, ''),
-    pass: (process.env.EMAIL_PASS || process.env.EMAIL_ADMIN_PASS || '').replace(/"/g, '')
-  }
-});
-
-const fromEmail = (process.env.EMAIL_USER || process.env.EMAIL_ADMIN || '').replace(/"/g, '');
+const sendMail = require("./sendMail");
 
 module.exports = async (email, tenantName, serviceName, providerName, rejectionReason) => {
   try {
@@ -78,15 +68,10 @@ module.exports = async (email, tenantName, serviceName, providerName, rejectionR
         </html>
     `;
 
-    await transporter.sendMail({
-      from: `"RentEase Services" <${fromEmail}>`,
-      to: email,
-      subject: subject,
-      html: htmlContent
-    });
-
+    await sendMail(email, subject, htmlContent);
     console.log(`❌ Service rejection email sent to ${email}`);
   } catch (err) {
     console.error(`❌ Failed to send service rejection email to ${email}:`, err.message);
   }
 };
+
