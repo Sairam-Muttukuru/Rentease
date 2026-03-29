@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TrendingUp } from 'lucide-react';
 import { Card } from '../../../ui/card';
 
 const RevenueLineChart = ({ isDarkMode, payments = [] }) => {
+    const [hoveredPoint, setHoveredPoint] = useState(null);
+
     // Process payments to get monthly totals for the last 6 months
     const last6Months = [];
     for (let i = 5; i >= 0; i--) {
@@ -39,7 +41,7 @@ const RevenueLineChart = ({ isDarkMode, payments = [] }) => {
 
     const maxVal = Math.max(...REVENUE_DATA.map(d => d.amount));
     const minVal = Math.min(...REVENUE_DATA.map(d => d.amount));
-    const range = maxVal - minVal;
+    const range = maxVal - minVal || 1000; // prevent div by zero
     const width = 1000;
     const height = 300;
     const padding = 60;
@@ -98,11 +100,50 @@ const RevenueLineChart = ({ isDarkMode, payments = [] }) => {
                     <path d={areaPath} fill="url(#areaGradient)" />
                     <path d={linePath} fill="none" stroke="url(#lineGradient)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" filter="url(#glow)" />
                     {points.map((p, i) => (
-                        <g key={i} className="group/dot cursor-pointer">
-                            <circle cx={p.x} cy={p.y} r="4" fill="white" stroke="#8b5cf6" strokeWidth="2" />
+                        <g 
+                            key={i} 
+                            className="cursor-pointer"
+                            onMouseEnter={() => setHoveredPoint(i)}
+                            onMouseLeave={() => setHoveredPoint(null)}
+                        >
+                            <circle 
+                                cx={p.x} 
+                                cy={p.y} 
+                                r={hoveredPoint === i ? "8" : "4"} 
+                                fill={hoveredPoint === i ? "#8b5cf6" : "white"} 
+                                stroke={hoveredPoint === i ? "white" : "#8b5cf6"} 
+                                strokeWidth="3" 
+                                className="transition-all duration-300" 
+                            />
+                            
+                            {/* Hover Tooltip SVG Render */}
+                            <g className={`transition-opacity duration-300 ${hoveredPoint === i ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                                <rect 
+                                    x={p.x - 55} 
+                                    y={p.y - 45} 
+                                    width="110" 
+                                    height="30" 
+                                    rx="6" 
+                                    fill={isDarkMode ? "#1e293b" : "#ffffff"} 
+                                    stroke={isDarkMode ? "#334155" : "#e2e8f0"}
+                                    strokeWidth="1"
+                                />
+                                <text 
+                                    x={p.x} 
+                                    y={p.y - 25} 
+                                    textAnchor="middle" 
+                                    className={`text-[13px] font-black tracking-widest ${isDarkMode ? "fill-white" : "fill-slate-800"}`}
+                                >
+                                    ₹{REVENUE_DATA[i].amount.toLocaleString()}
+                                </text>
+                            </g>
+
                             <text x={p.x} y={height - padding + 30} textAnchor="middle" className="text-xs font-black fill-slate-500 uppercase tracking-widest">
                                 {REVENUE_DATA[i].month}
                             </text>
+                            
+                            {/* Invisible expanded hit area for easier lingering */}
+                            <circle cx={p.x} cy={p.y} r="30" fill="transparent" />
                         </g>
                     ))}
                 </svg>

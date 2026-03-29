@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp } from 'lucide-react';
 import { Card } from '../../../ui/card';
 
 const RevenueTrendsChart = ({ isDarkMode, payments = [] }) => {
+    const [hoveredPoint, setHoveredPoint] = useState(null);
+
     // Process payments to get monthly totals
     const last6Months = [];
     for (let i = 5; i >= 0; i--) {
@@ -112,7 +114,12 @@ const RevenueTrendsChart = ({ isDarkMode, payments = [] }) => {
 
                     {/* Data Points and X-Axis Labels */}
                     {pointData.map((p, i) => (
-                        <g key={i}>
+                        <g 
+                            key={i}
+                            onMouseEnter={() => setHoveredPoint(i)}
+                            onMouseLeave={() => setHoveredPoint(null)}
+                            className="cursor-pointer"
+                        >
                             {/* X-Axis Label */}
                             <text
                                 x={p.x}
@@ -130,9 +137,37 @@ const RevenueTrendsChart = ({ isDarkMode, payments = [] }) => {
                                 transition={{ delay: 1.5 + (i * 0.1), duration: 0.5 }}
                                 cx={p.x}
                                 cy={p.y}
-                                r="6"
-                                className="fill-blue-500 stroke-white dark:stroke-slate-900 stroke-[3px] cursor-pointer hover:r-8 transition-all"
+                                r={hoveredPoint === i ? "10" : "6"}
+                                fill={hoveredPoint === i ? "#3b82f6" : (isDarkMode ? "#0f172a" : "#ffffff")}
+                                stroke="#3b82f6"
+                                strokeWidth="3"
+                                className="transition-all duration-300"
                             />
+
+                            {/* Hover Tooltip SVG Render */}
+                            <g className={`transition-opacity duration-300 ${hoveredPoint === i ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                                <rect 
+                                    x={p.x - 50} 
+                                    y={p.y - 45} 
+                                    width="100" 
+                                    height="30" 
+                                    rx="6" 
+                                    fill={isDarkMode ? "#1e293b" : "#ffffff"} 
+                                    stroke={isDarkMode ? "#334155" : "#e2e8f0"}
+                                    strokeWidth="1"
+                                />
+                                <text 
+                                    x={p.x} 
+                                    y={p.y - 25} 
+                                    textAnchor="middle" 
+                                    className={`text-[12px] font-black tracking-widest ${isDarkMode ? "fill-white" : "fill-slate-800"}`}
+                                >
+                                    ₹{p.amount.toLocaleString()}
+                                </text>
+                            </g>
+
+                            {/* Invisible expanded hit area for easier lingering */}
+                            <circle cx={p.x} cy={p.y} r="30" fill="transparent" />
                         </g>
                     ))}
                 </svg>
