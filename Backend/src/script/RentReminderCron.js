@@ -18,6 +18,7 @@ cron.schedule("25 10 * * *", async () => {
                 t.monthly_rent,
                 t.rent_due_date,
                 t.last_reminder_sent_at,
+                p.late_penalty_amount,
                 u.email as user_email,
                 tm.tenant_emailid as member_email,
                 u.first_name,
@@ -30,26 +31,39 @@ cron.schedule("25 10 * * *", async () => {
             LEFT JOIN tenant_members tm ON tm.tenant_id = t.id AND tm.is_primary = true
         `);
 
+        // Helper date format for late fee matching
+        const getYMD = (d) => {
+            if (!d) return null;
+            const istDate = new Date(d.getTime() + (5.5 * 60 * 60 * 1000));
+            const year = istDate.getUTCFullYear();
+            const month = String(istDate.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(istDate.getUTCDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
         for (const tenant of result.rows) {
             if (!tenant.rent_due_date || !tenant.start_date) continue;
 
             const targetEmail = tenant.member_email || tenant.user_email;
             if (!targetEmail) continue;
 
-            // 2. Calculate Total Paid
-            const paymentRes = await db.query("SELECT SUM(amount) as paid FROM rent_payments WHERE tenant_id = $1", [tenant.id]);
-            const totalPaid = parseFloat(paymentRes.rows[0].paid) || 0;
+            // 2. Calculate Total Paid and fetch all valid rent payments
+            const paymentRes = await db.query("SELECT amount, due_date FROM rent_payments WHERE tenant_id = $1 AND receipt_number NOT LIKE 'SEC-DEP%'", [tenant.id]);
+            const rentPayments = paymentRes.rows;
+            const totalPaid = rentPayments.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
 
             // 3. Billing Logic: Use Rent Due Date (Anchor Date)
             const anchorRaw = tenant.rent_due_date || tenant.start_date;
-            const anchorDate = new Date(anchorRaw);
-            anchorDate.setHours(12,0,0,0);
+            const anchorDateIST = new Date(new Date(anchorRaw).getTime() + (5.5 * 60 * 60 * 1000));
+            const anchorDate = new Date(Date.UTC(anchorDateIST.getUTCFullYear(), anchorDateIST.getUTCMonth(), anchorDateIST.getUTCDate(), 12, 0, 0, 0));
             
-            const startDate = new Date(tenant.start_date);
-            startDate.setHours(12,0,0,0);
+            const startDateRaw = new Date(tenant.start_date);
+            const startDateIST = new Date(startDateRaw.getTime() + (5.5 * 60 * 60 * 1000));
+            const startDate = new Date(Date.UTC(startDateIST.getUTCFullYear(), startDateIST.getUTCMonth(), startDateIST.getUTCDate(), 12, 0, 0, 0));
 
-            const today = new Date();
-            today.setHours(12,0,0,0);
+            const todayRaw = new Date();
+            const todayIST = new Date(todayRaw.getTime() + (5.5 * 60 * 60 * 1000));
+            const today = new Date(Date.UTC(todayIST.getUTCFullYear(), todayIST.getUTCMonth(), todayIST.getUTCDate(), 12, 0, 0, 0));
 
             if (today < startDate) {
                 console.log(`[RentReminderCron] Skipping Tenant ${tenant.id}: Lease starts in future (${tenant.start_date})`);
@@ -68,9 +82,27 @@ cron.schedule("25 10 * * *", async () => {
 
             let effectiveCycles = Math.max(1, monthsDiff + (startDate < anchorDate ? 1 : 0));
 
-            // 4. Calculate Expected vs Balance based on this 3-day future target
+            // Calculate Late Fees for *Current* cycles
+            const latePenalty = parseFloat(tenant.late_penalty_amount || 0);
+            let lateFees = 0;
+            const currentMonthsDiff = (today.getFullYear() - anchorDate.getFullYear()) * 12 + (today.getMonth() - anchorDate.getMonth());
+            const cyclesStartedCurrently = Math.max(0, currentMonthsDiff + 1);
+
+            for (let i = 0; i < cyclesStartedCurrently; i++) {
+                const cycleStart = new Date(anchorDate);
+                cycleStart.setMonth(anchorDate.getMonth() + i);
+                const cycleDateISO = getYMD(cycleStart);
+                
+                const isCyclePaid = rentPayments.some(p => p.due_date && getYMD(new Date(p.due_date)) === cycleDateISO);
+                if (!isCyclePaid && today > cycleStart) {
+                    const dDiff = Math.floor((today - cycleStart) / (1000 * 60 * 60 * 24));
+                    if (dDiff > 0) lateFees += dDiff * latePenalty;
+                }
+            }
+
+            // 4. Calculate Expected vs Balance based on this 3-day future target AND late fees
             const totalExpected = effectiveCycles * parseFloat(tenant.monthly_rent);
-            const balanceDue = totalExpected - totalPaid;
+            const balanceDue = totalExpected - totalPaid + lateFees;
 
             if (balanceDue > 0) {
                 // Determine display due date (First unpaid cycle)
