@@ -106,15 +106,38 @@ export default function TenantDashboard() {
 
   // --- Derived State (Improved for Accuracy) ---
   const today = new Date();
-  const rentDay = tenantData.rentDueDay || 5;
   const unpaidCount = tenantData.unpaid_months_count || 0;
   const isPaid = unpaidCount <= 0;
+  const isOverdue = !isPaid;
 
-  // Use backend calculation for Next Due Date
-  const dueDate = tenantData.next_due_date ? new Date(tenantData.next_due_date) : new Date();
-  
-  const isOverdue = today > dueDate && !isPaid;
-  const nextDueDateDisplay = tenantData.next_due_date_display || dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  // Compute next due date display reliably on the client using anchor date
+  const computeNextDueDateDisplay = () => {
+    const backend = tenantData.next_due_date_display;
+    const anchorRaw = tenantData.rent_due_date || tenantData.start_date;
+    if (!anchorRaw) return backend || '';
+
+    const anchor = new Date(anchorRaw);
+    const fmt = (d) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+    // Walk forward through billing cycles until we find the right one
+    for (let i = 0; i < 36; i++) {
+      const cs = new Date(anchor);
+      cs.setMonth(anchor.getMonth() + i);
+      const ce = new Date(cs);
+      ce.setMonth(cs.getMonth() + 1);
+
+      if (isPaid) {
+        // Show next FUTURE cycle (after today)
+        if (cs > today) return `${fmt(cs)} - ${fmt(ce)}`;
+      } else {
+        // Show the current active cycle (cs <= today < ce)
+        if (cs <= today && ce > today) return `${fmt(cs)} - ${fmt(ce)}`;
+      }
+    }
+    return backend || '';
+  };
+
+  const nextDueDateDisplay = computeNextDueDateDisplay();
   const activeComplaintsCount = complaints.filter(c => c.status !== 'Resolved').length;
 
   // --- Effects ---

@@ -445,8 +445,18 @@ export default function LandlordDashboard() {
     return isCurrentMonth && isNotSecurityDeposit;
   }).reduce((sum, p) => sum + parseFloat(p.amount), 0);
 
-  // Total outstanding balance across all tenants (cumulative - what's owed, not just one month)
-  const totalPendingBalance = tenants.reduce((sum, t) => sum + (parseFloat(t.balance_due) || 0), 0);
+  // Total outstanding balance across all tenants
+  const unpaidTenants = tenants.filter(t => (parseFloat(t.balance_due) || 0) > 0);
+  const totalPendingBalance = unpaidTenants.reduce((sum, t) => sum + parseFloat(t.balance_due), 0);
+  
+  let pendingText = '✓ All Tenants Paid';
+  if (unpaidTenants.length > 0) {
+      if (unpaidTenants.length <= 2) {
+          pendingText = unpaidTenants.map(t => `${t.full_name?.split(' ')[0] || 'Unknown'}: ₹${Math.round(t.balance_due)}`).join(', ');
+      } else {
+          pendingText = `${unpaidTenants.length} tenants owe ₹${Math.round(totalPendingBalance).toLocaleString()}`;
+      }
+  }
 
   const stats = [
     { label: 'Total Properties', value: landlordProperties.length, sub: `${landlordProperties.filter(p => !tenants.some(t => t.property_id === p.id)).length} Vacant Units`, icon: Building, color: 'bg-indigo-600' },
@@ -454,9 +464,7 @@ export default function LandlordDashboard() {
     { 
       label: `${currentMonthName} Collection`, 
       value: `₹${currentMonthCollected.toLocaleString()}`, 
-      sub: totalPendingBalance > 0 
-        ? `₹${Math.round(totalPendingBalance).toLocaleString()} Still Pending` 
-        : '✓ All Tenants Paid', 
+      sub: pendingText,
       icon: CreditCard, 
       color: 'bg-emerald-600' 
     },

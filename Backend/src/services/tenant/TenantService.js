@@ -293,9 +293,17 @@ exports.getAllTenants = async (landlordId) => {
     const totalPaid = rentPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
 
     const startDate = new Date(tenant.start_date);
-    const diffTime = Math.abs(today - startDate);
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    const monthsElapsed = Math.max(1, Math.floor(diffDays / 31) + 1);
+    const anchorSrc = new Date(tenant.rent_due_date || tenant.start_date);
+
+    // Use same formula as getDashboardData for consistency
+    let monthsDiff = (today.getFullYear() - anchorSrc.getFullYear()) * 12
+                   + (today.getMonth() - anchorSrc.getMonth());
+    if (today.getDate() >= anchorSrc.getDate()) {
+        monthsDiff += 1;
+    }
+    // Add 1 for move-in partial month only if startDate < anchorDate
+    const hasInitialMonth = startDate < anchorSrc ? 1 : 0;
+    const monthsElapsed = Math.max(1, monthsDiff + hasInitialMonth);
 
     const totalExpected = monthsElapsed * parseFloat(tenant.monthly_rent);
     const lateFees = _calculateLateFees(tenant, rentPayments, today);
@@ -400,15 +408,19 @@ exports.getDashboardData = async (requesterId, targetUserName = null) => {
     const anchorDateIST = new Date(anchorDateRaw.getTime() + (5.5 * 60 * 60 * 1000));
     const anchorDate = new Date(Date.UTC(anchorDateIST.getUTCFullYear(), anchorDateIST.getUTCMonth(), anchorDateIST.getUTCDate(), 12, 0, 0, 0));
 
-    // Calculate months elapsed: If moved in, we count the current cycle as expected rent
-    // Cycle 0: [move-in-date] up to [anchorDate]
-    // Even if today < anchorDate, if moved in, they owe for this first month.
+    // Calculate months elapsed: count every rent cycle whose start date has arrived
     let monthsElapsed = 0;
     if (getYMD(currentDate) >= getYMD(startDate)) {
-        // Calculate how many cycles have started up to today
-        // E.g. Mar 15 (StartDate) to Apr 15 (Anchor) -> monthsElapsed = 1 on Mar 15
-        const monthsDiff = (currentDate.getFullYear() - anchorDate.getFullYear()) * 12 + (currentDate.getMonth() - anchorDate.getMonth());
-        monthsElapsed = Math.max(1, monthsDiff + 1);
+        // Calendar month difference between anchorDate and today
+        let monthsDiff = (currentDate.getFullYear() - anchorDate.getFullYear()) * 12
+                       + (currentDate.getMonth() - anchorDate.getMonth());
+        // If today's day-of-month >= anchor's day-of-month, this month's cycle has ALSO started
+        if (currentDate.getDate() >= anchorDate.getDate()) {
+            monthsDiff += 1;
+        }
+        // Add 1 for the initial partial month ONLY if move-in was before the first anchor date
+        const hasInitialMonth = startDate < anchorDate ? 1 : 0;
+        monthsElapsed = Math.max(1, monthsDiff + hasInitialMonth);
     }
 
     const expectedRent = monthsElapsed * parseFloat(tenant.monthly_rent);

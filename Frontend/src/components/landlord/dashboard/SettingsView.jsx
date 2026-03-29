@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
-import { Settings, Edit2, LogOut, User, Phone, Mail, Camera, Save, X, Lock, Eye, EyeOff, Globe } from 'lucide-react';
+import { UserCircle, Plus, Globe, Sun, Moon, Settings, Lock, Eye, EyeOff } from 'lucide-react';
 import { Card } from '../../ui/card';
 import LandlordButton from '../common/LandlordButton';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import BASE_URL from '../../../utils/apiConfig';
+import { useTheme } from '../../../context/ThemeContext';
 
-const SettingsView = ({ user, isDarkMode, handleLogout, onUpdateUser }) => {
-    const [isEditing, setIsEditing] = useState(false);
-    const [uploading, setUploading] = useState(false);
+const SettingsView = ({ user, handleLogout, onUpdateUser }) => {
+    const { theme, setTheme } = useTheme();
+    const isDarkMode = theme === 'dark';
+
+    const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+    const [changingPassword, setChangingPassword] = useState(false);
     const [showPasswordSection, setShowPasswordSection] = useState(false);
+    
     const [showOldPass, setShowOldPass] = useState(false);
     const [showNewPass, setShowNewPass] = useState(false);
     const [showConfirmPass, setShowConfirmPass] = useState(false);
     const [passwordData, setPasswordData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
-    const [changingPassword, setChangingPassword] = useState(false);
 
     const nameParts = user.name ? user.name.split(' ') : ['', ''];
     const [formData, setFormData] = useState({
@@ -30,66 +34,46 @@ const SettingsView = ({ user, isDarkMode, handleLogout, onUpdateUser }) => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const uploadToCloudinary = async (file) => {
-        const fd = new FormData();
-        fd.append("file", file);
-        fd.append("upload_preset", "First_project");
-        const res = await fetch("https://api.cloudinary.com/v1_1/dghdwtef5/image/upload", { method: "POST", body: fd });
-        if (!res.ok) throw new Error("Cloudinary upload failed");
-        const data = await res.json();
-        return data.secure_url;
+    const handleSystemTheme = () => {
+        const isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        setTheme(isSystemDark ? 'dark' : 'light');
+        toast.success("Applied System Theme");
     };
 
-    const handleAvatarChange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        setUploading(true);
-        try {
-            const url = await uploadToCloudinary(file);
-            setFormData(prev => ({ ...prev, avatar_url: url }));
-            toast.success("Profile photo updated. Save to apply.");
-        } catch (err) {
-            toast.error("Image upload failed");
-        } finally {
-            setUploading(false);
-        }
-    };
-
-    const handleSaveChanges = async (e) => {
+    const handleUpdateProfile = async (e) => {
         e.preventDefault();
         const token = localStorage.getItem("accessToken");
         if (!token) return;
+        setIsUpdatingProfile(true);
         try {
             const response = await axios.put(`${BASE_URL}/api/auth/update-profile`, formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (response.status === 200) {
                 toast.success("Profile updated successfully!");
-                setIsEditing(false);
                 const updatedUser = {
                     ...user,
-                    name: `${formData.first_name} ${formData.last_name}`,
+                    name: `${formData.first_name} ${formData.last_name}`.trim(),
                     email: formData.email,
                     phone: formData.phone,
                     avatar_url: formData.avatar_url
                 };
                 onUpdateUser(updatedUser);
-                localStorage.setItem("user", JSON.stringify(updatedUser));
             }
         } catch (err) {
             toast.error(err.response?.data?.error || "Failed to update profile");
+        } finally {
+            setIsUpdatingProfile(false);
         }
     };
 
     const handleChangePassword = async (e) => {
         e.preventDefault();
         if (passwordData.newPassword !== passwordData.confirmPassword) {
-            toast.error("Passwords do not match");
-            return;
+            toast.error("Passwords do not match"); return;
         }
         if (passwordData.newPassword.length < 6) {
-            toast.error("Password must be at least 6 characters");
-            return;
+            toast.error("Password must be at least 6 characters"); return;
         }
         setChangingPassword(true);
         try {
@@ -108,184 +92,174 @@ const SettingsView = ({ user, isDarkMode, handleLogout, onUpdateUser }) => {
         }
     };
 
-    const inputBase = `w-full pl-10 pr-4 py-3.5 rounded-2xl border outline-none transition-all duration-300 text-sm font-medium
-        ${isDarkMode ? 'bg-slate-900/50 border-slate-700/50 text-white placeholder-slate-500 focus:border-violet-500 focus:bg-slate-900 focus:ring-4 focus:ring-violet-500/10' : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/5'}`;
-
-    const passInputBase = `w-full pl-10 pr-12 py-3.5 rounded-2xl border outline-none transition-all duration-300 text-sm font-medium
-        ${isDarkMode ? 'bg-slate-900/50 border-slate-700/50 text-white placeholder-slate-500 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10' : 'bg-white border-slate-200 text-slate-800 placeholder-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/5'}`;
-
-    const infoRow = (label, value, icon, color) => (
-        <div className={`group flex items-center gap-4 p-5 rounded-2xl border transition-all duration-300 ${isDarkMode ? 'border-slate-800 bg-slate-900/40 hover:bg-slate-900/60' : 'border-slate-100 bg-white hover:border-violet-100 hover:shadow-sm'}`}>
-            <div className={`p-3 rounded-xl ${isDarkMode ? `bg-${color}-500/10 text-${color}-400` : `bg-${color}-50 text-${color}-600`}`}>
-                {icon}
-            </div>
-            <div className="flex-1 min-w-0">
-                <p className={`text-[10px] font-black uppercase tracking-[0.1em] ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>{label}</p>
-                <p className={`text-base font-bold mt-1 truncate ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{value || 'Not provided'}</p>
-            </div>
-        </div>
-    );
+    const inputBaseStyle = `w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-violet-500 outline-none transition-colors duration-500 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'}`;
+    const passInputBase = `w-full pl-4 pr-10 py-2 rounded-lg border outline-none transition-colors duration-500 text-sm ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:border-violet-500' : 'bg-white border-slate-300 text-slate-900 focus:border-violet-500'}`;
 
     return (
-        <div className="max-w-5xl mx-auto space-y-8 pb-12 animate-in fade-in duration-700">
-
-            {/* Header Area */}
-            <div className="flex justify-between items-center px-2">
-                <div>
-                    <h2 className={`text-3xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Account Settings</h2>
-                    <p className={`text-sm font-medium ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>Manage your private information and security</p>
-                </div>
-                <div className="flex gap-4">
-                    {!isEditing && (
-                        <LandlordButton isDarkMode={isDarkMode} icon={Edit2} onClick={() => setIsEditing(true)}>
-                            Edit Profile
-                        </LandlordButton>
-                    )}
-                    <LandlordButton isDarkMode={isDarkMode} variant="danger" icon={LogOut} onClick={handleLogout}>
-                        Sign Out
-                    </LandlordButton>
-                </div>
+        <div className="space-y-8 animate-in fade-in duration-700">
+            <div>
+                <h2 className={`text-2xl font-bold transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Account Settings</h2>
+                <p className={`text-sm mt-1 transition-colors duration-500 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Manage your preferences and profile details</p>
             </div>
 
-            {/* Profile Section */}
-            <Card isDarkMode={isDarkMode} className="p-10 border-none shadow-xl">
-                <div className="flex flex-col md:flex-row items-center gap-10">
-                    {/* Avatar Container */}
-                    <div className="relative">
-                        <div className="w-40 h-40 rounded-[2.5rem] border-8 border-slate-100 dark:border-slate-800 overflow-hidden bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-5xl font-black text-white shadow-2xl">
-                            {formData.avatar_url ? (
-                                <img src={formData.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-                            ) : (
-                                (formData.first_name?.charAt(0) || user.name?.charAt(0) || 'U').toUpperCase()
-                            )}
-                        </div>
-                        {isEditing && (
-                            <label className="absolute -bottom-2 -right-2 p-4 bg-violet-600 text-white rounded-2xl cursor-pointer hover:bg-violet-700 transition-all shadow-xl border-4 border-white dark:border-slate-800">
-                                <Camera size={20} />
-                                <input type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} disabled={uploading} />
-                            </label>
-                        )}
-                        {uploading && (
-                            <div className="absolute inset-0 bg-black/60 rounded-[2.5rem] flex items-center justify-center backdrop-blur-sm">
-                                <div className="w-10 h-10 border-4 border-white/20 border-t-white rounded-full animate-spin" />
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Basic Info or Edit Form */}
-                    <div className="flex-1 w-full">
-                        {isEditing ? (
-                            <form onSubmit={handleSaveChanges} className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 ml-2">First Name</label>
-                                        <div className="relative">
-                                            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                            <input name="first_name" value={formData.first_name} onChange={handleInputChange} placeholder="First Name" className={inputBase} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Left Column: Profile */}
+                <div className="lg:col-span-2 space-y-6">
+                    <Card isDarkMode={isDarkMode} className="p-6">
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="relative group cursor-pointer" onClick={() => document.getElementById('landlord-profile-upload').click()}>
+                                <input
+                                    type="file"
+                                    id="landlord-profile-upload"
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={async (e) => {
+                                        const file = e.target.files[0];
+                                        if (!file) return;
+                                        const toastId = toast.loading("Uploading image...");
+                                        try {
+                                            const fd = new FormData();
+                                            fd.append("file", file);
+                                            fd.append("upload_preset", "First_project");
+                                            const res = await fetch("https://api.cloudinary.com/v1_1/dghdwtef5/image/upload", { method: "POST", body: fd });
+                                            if (!res.ok) throw new Error("Upload failed");
+                                            const data = await res.json();
+                                            setFormData(prev => ({ ...prev, avatar_url: data.secure_url }));
+                                            toast.update(toastId, { render: "Profile picture uploaded! Click Save to apply.", type: "success", isLoading: false, autoClose: 3000 });
+                                        } catch (err) {
+                                            toast.update(toastId, { render: "Failed to upload image", type: "error", isLoading: false, autoClose: 3000 });
+                                        }
+                                    }}
+                                />
+                                <div className={`w-16 h-16 rounded-full overflow-hidden border-2 transition-all duration-300 ${isDarkMode ? 'border-violet-500/50 group-hover:border-violet-400' : 'border-violet-200 group-hover:border-violet-300'}`}>
+                                    {formData.avatar_url ? (
+                                        <img src={formData.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className={`w-full h-full flex items-center justify-center ${isDarkMode ? 'bg-violet-500/20 text-violet-400' : 'bg-violet-100 text-violet-600'}`}>
+                                            <UserCircle size={40} />
                                         </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 ml-2">Last Name</label>
-                                        <div className="relative">
-                                            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                            <input name="last_name" value={formData.last_name} onChange={handleInputChange} placeholder="Last Name" className={inputBase} />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 ml-2">Email Address</label>
-                                        <div className="relative">
-                                            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                            <input name="email" value={formData.email} onChange={handleInputChange} placeholder="Email Address" className={inputBase} />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 ml-2">Phone Number</label>
-                                        <div className="relative">
-                                            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                            <input name="phone" value={formData.phone} onChange={handleInputChange} placeholder="Phone Number" className={inputBase} />
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
-                                <div className="flex gap-4 pt-4">
-                                    <LandlordButton type="button" className="flex-1 justify-center py-4 rounded-2xl" variant="secondary" isDarkMode={isDarkMode} onClick={() => setIsEditing(false)} icon={X}>
-                                        Cancel
-                                    </LandlordButton>
-                                    <LandlordButton type="submit" className="flex-1 justify-center py-4 rounded-2xl" isDarkMode={isDarkMode} icon={Save}>
-                                        Save Changes
+                                <div className={`absolute bottom-0 right-0 p-1.5 rounded-full shadow-lg transition-transform duration-300 group-hover:scale-110 ${isDarkMode ? 'bg-violet-600 text-white border-slate-800' : 'bg-violet-600 text-white border-white'}`}>
+                                    <Plus size={14} strokeWidth={3} />
+                                </div>
+                            </div>
+                            <div>
+                                <h3 className={`text-lg font-bold transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Profile Information</h3>
+                                <p className={`text-sm transition-colors duration-500 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Update your personal details</p>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleUpdateProfile} className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className={`block text-sm font-medium mb-1 transition-colors duration-500 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>First Name</label>
+                                    <input name="first_name" value={formData.first_name} onChange={handleInputChange} className={inputBaseStyle} />
+                                </div>
+                                <div>
+                                    <label className={`block text-sm font-medium mb-1 transition-colors duration-500 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Last Name</label>
+                                    <input name="last_name" value={formData.last_name} onChange={handleInputChange} className={inputBaseStyle} />
+                                </div>
+                                <div>
+                                    <label className={`block text-sm font-medium mb-1 transition-colors duration-500 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Email Address</label>
+                                    <input name="email" value={formData.email} onChange={handleInputChange} className={inputBaseStyle} />
+                                </div>
+                                <div>
+                                    <label className={`block text-sm font-medium mb-1 transition-colors duration-500 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Phone Number</label>
+                                    <input name="phone" value={formData.phone} onChange={handleInputChange} className={inputBaseStyle} />
+                                </div>
+                            </div>
+                            <div className="pt-2 flex flex-wrap gap-4">
+                                <LandlordButton type="submit" disabled={isUpdatingProfile} isDarkMode={isDarkMode}>
+                                    {isUpdatingProfile ? 'Saving...' : 'Save Changes'}
+                                </LandlordButton>
+                                <LandlordButton type="button" variant="secondary" onClick={() => setShowPasswordSection(!showPasswordSection)} isDarkMode={isDarkMode}>
+                                    {showPasswordSection ? 'Cancel Password Change' : 'Change Password'}
+                                </LandlordButton>
+                            </div>
+                        </form>
+                    </Card>
+
+                    {showPasswordSection && (
+                        <Card isDarkMode={isDarkMode} className="p-6">
+                            <div className="flex items-center gap-4 mb-4">
+                                <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600'}`}>
+                                    <Lock size={20} />
+                                </div>
+                                <h3 className={`text-lg font-bold transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Security</h3>
+                            </div>
+                            <form onSubmit={handleChangePassword} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {[
+                                    { label: 'Current Password', key: 'oldPassword', show: showOldPass, setShow: setShowOldPass },
+                                    { label: 'New Password', key: 'newPassword', show: showNewPass, setShow: setShowNewPass },
+                                    { label: 'Confirm Password', key: 'confirmPassword', show: showConfirmPass, setShow: setShowConfirmPass }
+                                ].map(({ label, key, show, setShow }) => (
+                                    <div key={key}>
+                                        <label className={`block text-xs font-bold mb-1 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{label}</label>
+                                        <div className="relative">
+                                            <input
+                                                type={show ? 'text' : 'password'}
+                                                value={passwordData[key]}
+                                                onChange={e => setPasswordData(prev => ({ ...prev, [key]: e.target.value }))}
+                                                className={passInputBase}
+                                                required
+                                            />
+                                            <button type="button" onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                                {show ? <EyeOff size={16} /> : <Eye size={16} />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                                <div className="md:col-span-3 pt-2">
+                                    <LandlordButton type="submit" disabled={changingPassword} isDarkMode={isDarkMode}>
+                                        {changingPassword ? 'Updating...' : 'Apply New Password'}
                                     </LandlordButton>
                                 </div>
                             </form>
-                        ) : (
-                            <div className="space-y-8">
-                                <div>
-                                    <h3 className={`text-4xl font-black tracking-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{user.name}</h3>
-                                    <p className="text-violet-500 font-bold tracking-widest uppercase text-xs mt-2 italic">Professional Landlord</p>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    {infoRow("Email Address", user.email, <Mail size={20} />, "blue")}
-                                    {infoRow("Phone Number", user.phone, <Phone size={20} />, "indigo")}
-                                    {infoRow("Region / Locale", "India", <Globe size={20} />, "violet")}
-                                    {infoRow("Account Status", "Fully Verified", <User size={20} />, "purple")}
+                        </Card>
+                    )}
+                </div>
+
+                {/* Right Column: Preferences */}
+                <div className="space-y-6">
+                    <Card isDarkMode={isDarkMode} className="p-6">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className={`p-2 rounded-lg transition-colors duration-500 ${isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'}`}>
+                                <Globe size={24} />
+                            </div>
+                            <h3 className={`text-lg font-bold transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Preferences</h3>
+                        </div>
+                        <div className="space-y-4">
+                            <div>
+                                <p className={`text-sm mb-3 font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>App Theme</p>
+                                <div className="grid grid-cols-3 gap-3">
+                                    <button
+                                        onClick={() => setTheme('light')}
+                                        className={`p-2 rounded-lg border flex flex-col items-center gap-2 transition-all ${theme === 'light' ? 'bg-violet-100 border-violet-500 text-violet-700' : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800'}`}
+                                    >
+                                        <Sun size={20} />
+                                        <span className="text-xs">Light</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setTheme('dark')}
+                                        className={`p-2 rounded-lg border flex flex-col items-center gap-2 transition-all ${theme === 'dark' ? 'bg-violet-500/20 border-violet-500 text-violet-400' : 'border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800'}`}
+                                    >
+                                        <Moon size={20} />
+                                        <span className="text-xs">Dark</span>
+                                    </button>
+                                    <button
+                                        onClick={handleSystemTheme}
+                                        className={`p-2 rounded-lg border flex flex-col items-center gap-2 transition-all border-slate-200 text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800`}
+                                    >
+                                        <Settings size={20} />
+                                        <span className="text-xs">System</span>
+                                    </button>
                                 </div>
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    </Card>
                 </div>
-            </Card>
-
-            {/* Security Section */}
-            <Card isDarkMode={isDarkMode} className="p-8 border-none shadow-xl">
-                <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center gap-4">
-                        <div className={`p-3 rounded-2xl ${isDarkMode ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
-                            <Lock size={24} />
-                        </div>
-                        <div>
-                            <h4 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Security Settings</h4>
-                            <p className="text-sm text-slate-500 font-medium">Keep your account safe by updating your password regularly</p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={() => setShowPasswordSection(p => !p)}
-                        className={`text-sm font-black uppercase tracking-widest px-6 py-3 rounded-2xl transition-all ${isDarkMode ? 'text-amber-400 bg-amber-500/10 hover:bg-amber-500/20' : 'text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200'}`}
-                    >
-                        {showPasswordSection ? 'Dismiss' : 'Update Password'}
-                    </button>
-                </div>
-
-                {showPasswordSection && (
-                    <form onSubmit={handleChangePassword} className="space-y-5 animate-in slide-in-from-top-4 duration-500">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                            {[
-                                { label: 'Current Password', key: 'oldPassword', show: showOldPass, setShow: setShowOldPass },
-                                { label: 'New Password', key: 'newPassword', show: showNewPass, setShow: setShowNewPass },
-                                { label: 'Confirm Password', key: 'confirmPassword', show: showConfirmPass, setShow: setShowConfirmPass }
-                            ].map(({ label, key, show, setShow }) => (
-                                <div key={key} className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 ml-2">{label}</label>
-                                    <div className="relative">
-                                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                        <input
-                                            type={show ? 'text' : 'password'}
-                                            placeholder="••••••••"
-                                            value={passwordData[key]}
-                                            onChange={e => setPasswordData(prev => ({ ...prev, [key]: e.target.value }))}
-                                            className={passInputBase}
-                                            required
-                                        />
-                                        <button type="button" onClick={() => setShow(s => !s)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors">
-                                            {show ? <EyeOff size={18} /> : <Eye size={18} />}
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        <LandlordButton type="submit" isDarkMode={isDarkMode} icon={Lock} className="w-full justify-center py-4 rounded-2xl shadow-xl shadow-amber-500/10" disabled={changingPassword}>
-                            {changingPassword ? 'Processing Request...' : 'Apply New Password'}
-                        </LandlordButton>
-                    </form>
-                )}
-            </Card>
+            </div>
         </div>
     );
 };
