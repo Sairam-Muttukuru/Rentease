@@ -256,7 +256,7 @@ const DashboardHome = ({
                                             <div className="flex justify-between items-start mb-3">
                                                 <p className="text-xs text-slate-500 flex items-center gap-1 min-w-0"><MapPin size={10} className="shrink-0" /> <span className="truncate">{property.address}</span></p>
                                                 {tenant && (
-                                                    <span className="text-[10px] font-bold text-violet-500 shrink-0 ml-2">👤 {tenant.name.split(' ')[0]}</span>
+                                                    <span className="text-[10px] font-bold text-violet-500 shrink-0 ml-2">👤 {(tenant.name || 'Tenant').split(' ')[0]}</span>
                                                 )}
                                             </div>
                                             <div className="flex items-center justify-between pt-3 border-t border-slate-800/50">

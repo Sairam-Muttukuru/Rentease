@@ -10,6 +10,7 @@ const RevenueTrendsChart = ({ isDarkMode, payments = [] }) => {
     const last6Months = [];
     for (let i = 5; i >= 0; i--) {
         const d = new Date();
+        d.setDate(1); // Set to 1st to prevent overflow (e.g. March 30 -> Feb 30 overflow)
         d.setMonth(d.getMonth() - i);
         last6Months.push({
             month: d.toLocaleString('default', { month: 'short' }),
