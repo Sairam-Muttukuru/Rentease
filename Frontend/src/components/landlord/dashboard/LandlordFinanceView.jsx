@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import BASE_URL from '../../../utils/apiConfig';
 import { toast } from 'react-toastify';
@@ -79,9 +80,28 @@ const LandlordFinanceView = ({ isDarkMode, tenants, onUpdateStatus }) => {
                 </Card>
                 <Card isDarkMode={isDarkMode} className="p-6 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><Users size={100} /></div>
-                    <p className="text-xs font-bold uppercase tracking-widest text-violet-500 mb-2">March Pending Payments</p>
-                    <h3 className={`text-3xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>₹{tenants.filter(t => t.status !== 'PAID').reduce((sum, t) => sum + (parseFloat(t.monthly_rent) || 0), 0).toLocaleString()}</h3>
-                    <p className="text-xs text-slate-500 mt-2">{tenants.filter(t => t.status !== 'PAID').length} Tenants Unpaid for {new Date().toLocaleString('default', { month: 'long' })}</p>
+                    <p className="text-xs font-bold uppercase tracking-widest text-violet-500 mb-2">
+                        {new Date().toLocaleString('default', { month: 'long' })} Pending Payments
+                    </p>
+                    <h3 className={`text-3xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                        ₹{tenants.filter(t => (parseFloat(t.balance_due) || 0) > 0).reduce((sum, t) => sum + (parseFloat(t.balance_due) || 0), 0).toLocaleString()}
+                    </h3>
+                    <div className="mt-4 pt-4 border-t border-slate-800/20 space-y-2">
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Unpaid Tenants</p>
+                        {tenants.filter(t => (parseFloat(t.balance_due) || 0) > 0).length === 0 ? (
+                             <p className="text-xs text-emerald-500 font-bold tracking-tight">✓ All Clean!</p>
+                        ) : (
+                            tenants.filter(t => (parseFloat(t.balance_due) || 0) > 0).slice(0, 4).map((t, i) => (
+                                <div key={i} className="flex justify-between items-center text-[11px]">
+                                    <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>{t.name || t.full_name || 'Tenant'}</span>
+                                    <span className={`font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>₹{Math.round(t.balance_due).toLocaleString()}</span>
+                                </div>
+                            ))
+                        )}
+                        {tenants.filter(t => (parseFloat(t.balance_due) || 0) > 0).length > 4 && (
+                            <Link to="/landlord/dashboard/tenants" className="text-[10px] text-violet-500 hover:underline">+{tenants.filter(t => (parseFloat(t.balance_due) || 0) > 0).length - 4} more...</Link>
+                        )}
+                    </div>
                 </Card>
                 <Card isDarkMode={isDarkMode} className="p-6 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><PieChart size={100} /></div>

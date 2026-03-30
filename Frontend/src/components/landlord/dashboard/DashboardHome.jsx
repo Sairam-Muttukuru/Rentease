@@ -195,6 +195,20 @@ const DashboardHome = ({
                                                 {allPaid ? '✓ All Paid' : `₹${Math.round(totalPending).toLocaleString()}`}
                                             </span>
                                         </div>
+                                        {!allPaid && tenants.filter(t => (parseFloat(t.balance_due) || 0) > 0).length > 0 && (
+                                            <div className={`mt-4 pt-4 border-t ${isDarkMode ? 'border-slate-800' : 'border-slate-100'} space-y-2`}>
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Detailed Dues</p>
+                                                {tenants.filter(t => (parseFloat(t.balance_due) || 0) > 0).slice(0, 3).map((t, idx) => (
+                                                    <div key={idx} className="flex justify-between items-center text-[11px]">
+                                                        <span className={isDarkMode ? 'text-slate-400' : 'text-slate-600'}>{t.name || t.full_name || 'Tenant'}</span>
+                                                        <span className={`font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-900'}`}>₹{Math.round(t.balance_due).toLocaleString()}</span>
+                                                    </div>
+                                                ))}
+                                                {tenants.filter(t => (parseFloat(t.balance_due) || 0) > 0).length > 3 && (
+                                                    <p className="text-[9px] text-slate-500 italic">+{tenants.filter(t => (parseFloat(t.balance_due) || 0) > 0).length - 3} more unpaid</p>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </>
                             );

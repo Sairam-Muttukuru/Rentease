@@ -451,14 +451,7 @@ export default function LandlordDashboard() {
   
   let pendingText = '✓ All Tenants Paid';
   if (unpaidTenants.length > 0) {
-      if (unpaidTenants.length <= 2) {
-          pendingText = unpaidTenants.map(t => {
-              const displayName = (t.name || t.full_name || 'Pending').split(' ')[0];
-              return `${displayName}: ₹${Math.round(t.balance_due)}`;
-          }).join(', ');
-      } else {
-          pendingText = `${unpaidTenants.length} tenants owe ₹${Math.round(totalPendingBalance).toLocaleString()}`;
-      }
+      pendingText = `${unpaidTenants.length} ${unpaidTenants.length === 1 ? 'Tenant' : 'Tenants'} Unpaid`;
   }
 
   const stats = [
