@@ -1,4 +1,4 @@
-const nodemailer = require("nodemailer");
+const sendMail = require("./sendMail");
 
 const sendTenantInvitationEmail = async ({
     tenantEmail,
@@ -12,15 +12,6 @@ const sendTenantInvitationEmail = async ({
     propertyImageUrl
 }) => {
     console.log("Preparing to send email to:", tenantEmail);
-    console.log("Property URL for Email:", propertyImageUrl);
-
-    const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-        }
-    });
 
     const getDaySuffix = (day) => {
         if (day > 3 && day < 21) return 'th';
@@ -134,7 +125,7 @@ const sendTenantInvitationEmail = async ({
     };
 
     try {
-        await transporter.sendMail(mailOptions);
+        await sendMail(tenantEmail, `Welcome Home! You've been invited to ${propertyName} 🏠`, html);
         console.log(`✅ Invitation Email sent to: ${tenantEmail}`);
     } catch (error) {
         console.error("❌ Error sending invitation email:", error);

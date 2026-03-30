@@ -1,11 +1,23 @@
 const nodemailer = require("nodemailer");
 
-// Centralized email credentials handling heart
+const fs = require("fs");
+const path = require("path");
+
+// Centralized email credentials handling
 const emailConfig = {
-    // Strip any accidental double quotes from .env strings
     user: (process.env.EMAIL_USER || process.env.EMAIL_ADMIN || '').replace(/"/g, ''),
     pass: (process.env.EMAIL_PASS || process.env.EMAIL_ADMIN_PASS || '').replace(/"/g, '')
 };
+
+// Robust Favicon Path Resolution
+const faviconPaths = [
+    path.resolve(__dirname, "../../../../Frontend/public/favicon.png"),       
+    path.resolve(__dirname, "../../../../../../Frontend/public/favicon.png"), 
+    path.resolve(process.cwd(), "public/favicon.png"),                        
+    path.resolve(process.cwd(), "../Frontend/public/favicon.png"),            
+    path.join(__dirname, "../../../../public/favicon.png")                    
+];
+const GlobalFaviconPath = faviconPaths.find(p => fs.existsSync(p));
 
 const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -28,6 +40,15 @@ async function sendMail(to, subject, htmlContent, attachments = []) {
         return;
     }
 
+    // Auto-attach favicon if CID is used but not attached
+    if (htmlContent.includes('cid:renteasefavicon') && !attachments.some(a => a.cid === 'renteasefavicon') && GlobalFaviconPath) {
+        attachments.push({
+            filename: 'favicon.png',
+            path: GlobalFaviconPath,
+            cid: 'renteasefavicon'
+        });
+    }
+
     try {
         await transporter.sendMail({
             from: `"RentEase" <${emailConfig.user}>`,
@@ -39,8 +60,9 @@ async function sendMail(to, subject, htmlContent, attachments = []) {
         console.log("✅ Email sent to:", to);
     } catch (error) {
         console.error("❌ Failed to send email to:", to, error.message);
-        throw error; // Re-throw for more specific error handling heart
+        throw error;
     }
 }
 
 module.exports = sendMail;
+module.exports.GlobalFaviconPath = GlobalFaviconPath;

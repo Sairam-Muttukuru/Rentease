@@ -1,13 +1,4 @@
-const nodemailer = require("nodemailer");
-
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_ADMIN,
-    pass: process.env.EMAIL_ADMIN_PASS
-  }
-});
-
+const sendMail = require("./sendMail");
 const { rentReminderTemplate } = require("./emailTemplates");
 
 module.exports = async (email, tenantName, amountDue, dueDate, propertyName, isOverdue = true) => {
@@ -35,7 +26,8 @@ module.exports = async (email, tenantName, amountDue, dueDate, propertyName, isO
         <body>
           <div class="container">
             <div class="header">
-              <h1 style="margin: 0;">Payment Reminder</h1>
+              <img src="cid:renteasefavicon" alt="RentEase" style="height: 40px; margin-bottom: 10px;">
+              <h1 style="margin: 0; color: white;">Payment Reminder</h1>
             </div>
             <div class="content">
               <p>Dear <strong>${tenantName}</strong>,</p>
@@ -51,7 +43,7 @@ module.exports = async (email, tenantName, amountDue, dueDate, propertyName, isO
               <p>Please clear your dues immediately to avoid further late fees or service interruptions.</p>
               
               <div style="text-align: center;">
-                <a href="http://localhost:5173/login" class="button">Pay Now</a>
+                <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" class="button">Pay Now</a>
               </div>
               
               <p style="margin-top: 30px; font-size: 14px;">If you have already made the payment, please ignore this email or contact support.</p>
@@ -70,13 +62,7 @@ module.exports = async (email, tenantName, amountDue, dueDate, propertyName, isO
       htmlContent = rentReminderTemplate(tenantName, amountDue.toLocaleString(), new Date(dueDate).toLocaleDateString(), "RentEase Team");
     }
 
-    await transporter.sendMail({
-      from: `"RentEase Reminders" <${process.env.EMAIL_ADMIN}>`,
-      to: email,
-      subject: subject,
-      html: htmlContent
-    });
-
+    await sendMail(email, subject, htmlContent);
     console.log(`✅ ${isOverdue ? "Overdue" : "Friendly"} rent reminder sent to ${email} for amount ₹${amountDue}`);
   } catch (err) {
     console.error(`❌ Failed to send reminder to ${email}:`, err.message);

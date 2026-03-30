@@ -83,8 +83,14 @@ const LoginPage = () => {
     setIsLoading(true);
 
     try {
+      // Dynamic API URL Resolution
+      const BASE_URL = import.meta.env.VITE_API_URL || 
+                      (window.location.hostname === 'localhost' 
+                        ? 'http://localhost:5000' 
+                        : 'https://rentease-1-pwm5.onrender.com');
+
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL || 'https://rentease-1-pwm5.onrender.com'}/api/auth/login`,
+        `${BASE_URL}/api/auth/login`,
         {
           email,
           password

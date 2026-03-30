@@ -8,8 +8,6 @@ const path = require("path");
  */
 const sendOtp = async (to, otp) => {
     try {
-        const faviconPath = path.join(__dirname, "../../../../public/favicon.png");
-        
         const html = `
             <div style="background-color: #fdfdfd; padding: 40px 0; font-family: 'Inter', sans-serif;">
                 <div style="max-width: 480px; margin: 0 auto; background: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);">
@@ -34,14 +32,7 @@ const sendOtp = async (to, otp) => {
             </div>
         `;
 
-        await sendMail(to, `RentEase Code: ${otp}`, html, [
-            {
-                filename: 'favicon.png',
-                path: faviconPath,
-                cid: 'renteasefavicon'
-            }
-        ]);
-
+        await sendMail(to, `RentEase Code: ${otp}`, html);
         console.log("✅ OTP successfully dispatched via central mailer.");
     } catch (error) {
         console.error("❌ Critical OTP dispatcher failure:", error);

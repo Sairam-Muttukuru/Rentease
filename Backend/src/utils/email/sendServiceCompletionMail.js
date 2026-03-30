@@ -3,7 +3,17 @@ const path = require("path");
 
 const sendServiceCompletionMail = async (email, userName, serviceName, providerName, amount, paymentMethod) => {
     try {
-        const subject = `Service Completed: ${serviceName}`;
+        console.log(`[DEBUG] sendServiceCompletionMail: Preparing email for ${email}`);
+        console.log(`[DEBUG] Parameters:`, { userName, serviceName, providerName, amount, paymentMethod });
+
+        // Fallbacks for critical data
+        const safeUserName = userName || 'Valued Customer';
+        const safeServiceName = serviceName || 'Service';
+        const safeProviderName = providerName || 'RentEase Partner';
+        const safeAmount = amount || '0.00';
+        const safePaymentMethod = paymentMethod || 'Online';
+
+        const subject = `✅ Service Completed: ${safeServiceName}`;
         const html = `
         <!DOCTYPE html>
         <html>
@@ -27,11 +37,12 @@ const sendServiceCompletionMail = async (email, userName, serviceName, providerN
         <body>
             <div class="container">
                 <div class="header">
-                    <h1 style="margin: 0; font-size: 24px;">Service Completed!</h1>
+                    <img src="cid:renteasefavicon" alt="RentEase" style="height: 50px; margin-bottom: 10px;">
+                    <h1 style="margin: 0; font-size: 24px; color: white;">Service Completed!</h1>
                     <div class="status-badge">Completed</div>
                 </div>
                 <div class="content">
-                    <p>Hello <strong>${userName}</strong>,</p>
+                    <p>Hello <strong>${safeUserName}</strong>,</p>
                     <p class="success-msg">Your service request has been successfully completed!</p>
                     <p>We hope you are satisfied with the work. Here are the final details of your service:</p>
                     
@@ -39,19 +50,19 @@ const sendServiceCompletionMail = async (email, userName, serviceName, providerN
                         <table class="details-table">
                             <tr class="detail-row">
                                 <td class="label">Service</td>
-                                <td class="value">${serviceName}</td>
+                                <td class="value">${safeServiceName}</td>
                             </tr>
                             <tr class="detail-row">
                                 <td class="label">Provider</td>
-                                <td class="value">${providerName}</td>
+                                <td class="value">${safeProviderName}</td>
                             </tr>
                             <tr class="detail-row">
                                 <td class="label">Total Amount</td>
-                                <td class="value">₹${amount}</td>
+                                <td class="value">₹${safeAmount}</td>
                             </tr>
                             <tr class="detail-row">
                                 <td class="label">Payment Method</td>
-                                <td class="value">${paymentMethod}</td>
+                                <td class="value">${safePaymentMethod}</td>
                             </tr>
                         </table>
                     </div>
@@ -59,7 +70,7 @@ const sendServiceCompletionMail = async (email, userName, serviceName, providerN
                     <p>If you have any feedback or issues regarding the service, please feel free to reach out to us or the provider directly.</p>
                     
                     <div style="text-align: center;">
-                        <a href="http://localhost:5173/tenant/dashboard" class="button">Rate Your Experience</a>
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" class="button">Rate Your Experience</a>
                     </div>
                 </div>
                 <div class="footer">
@@ -69,7 +80,8 @@ const sendServiceCompletionMail = async (email, userName, serviceName, providerN
             </div>
         </body>
         </html>
-        `
+        `;
+
         await sendMail(email, subject, html);
         console.log(`✅ Service completion email sent to ${email}`);
     } catch (err) {
@@ -79,4 +91,3 @@ const sendServiceCompletionMail = async (email, userName, serviceName, providerN
 };
 
 module.exports = sendServiceCompletionMail;
-

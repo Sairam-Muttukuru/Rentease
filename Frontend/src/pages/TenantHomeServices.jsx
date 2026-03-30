@@ -172,15 +172,41 @@ export default function TenantHomeServices({ toggleSidebar, tenantData = {} }) {
         setBookingStep(1);
     };
 
-    const confirmBooking = () => {
+    const confirmBooking = async () => {
         if (!visitDate) {
             toast.error('Please select a visit date.');
             return;
         }
-        setTimeout(() => {
-            setBookingStep(2);
-            toast.success(`Booking Confirmed for ${selectedService.name}!`);
-        }, 1500);
+
+        setIsLoading(true);
+        try {
+            const bookingData = {
+                service_id: selectedService.id,
+                provider_id: selectedService.provider_id,
+                amount: selectedService.price || selectedService.base_price,
+                booking_date: visitDate,
+                booking_time: visitTime,
+                address: tenantData.address || tenantData.locality || "Address on file",
+                service_type: selectedCategory?.name || "Home Service",
+                priority: "Normal",
+                payment_method: "Cash" // Default for now
+            };
+
+            const res = await axios.post(`${BASE_URL}/api/tenants/service-request`, bookingData, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
+            });
+
+            if (res.status === 201) {
+                setBookingStep(2);
+                toast.success(`Booking Confirmed for ${selectedService.name}!`);
+                if (typeof tenantData.onRefresh === 'function') tenantData.onRefresh();
+            }
+        } catch (error) {
+            console.error("Booking Error:", error);
+            toast.error(error.response?.data?.error || "Failed to confirm booking.");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const closeModals = () => {

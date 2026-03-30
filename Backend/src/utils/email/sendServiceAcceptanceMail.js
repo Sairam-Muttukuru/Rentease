@@ -32,7 +32,8 @@ module.exports = async (email, tenantName, serviceName, providerName, providerPh
         <body>
           <div class="container">
             <div class="header">
-              <h1 style="margin: 0; font-size: 24px;">Service Request Accepted!</h1>
+              <img src="cid:renteasefavicon" alt="RentEase" style="height: 50px; margin-bottom: 10px;">
+              <h1 style="margin: 0; font-size: 24px; color: white;">Service Request Accepted!</h1>
               <div class="status-badge">Confirmed</div>
             </div>
             <div class="content">

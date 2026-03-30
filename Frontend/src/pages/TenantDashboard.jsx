@@ -184,7 +184,7 @@ export default function TenantDashboard() {
       const [userRes, paymentsRes, complaintsRes] = await Promise.all([
         axios.get(`${BASE_URL}/api/tenants/dashboard${userName ? `?userName=${userName}` : ''}`, { headers }),
         axios.get(`${BASE_URL}/api/tenants/payments${userName ? `?userName=${userName}` : ''}`, { headers }),
-        axios.get(`${BASE_URL}/api/complaints/tenant`, { headers })
+        axios.get(`${BASE_URL}/api/tenants/complaints${userName ? `?userName=${userName}` : ''}`, { headers })
       ]);
 
       setTenantData({

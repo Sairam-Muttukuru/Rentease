@@ -1,27 +1,8 @@
-const nodemailer = require("nodemailer");
-
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_ADMIN,
-    pass: process.env.EMAIL_ADMIN_PASS
-  }
-});
-
-console.log("📧 Email Config Check:", {
-  user_set: !!process.env.EMAIL_ADMIN,
-  pass_set: !!process.env.EMAIL_ADMIN_PASS,
-  user: process.env.EMAIL_ADMIN
-});
-
+const sendMail = require("./sendMail");
 
 module.exports = async (email, password) => {
   try {
-    await transporter.sendMail({
-      from: `"RentEase Team" <${process.env.EMAIL_ADMIN}>`,
-      to: email,
-      subject: "🎉 Welcome to RentEase - Your Service Provider Account is Ready!",
-      html: `
+    const html = `
         <!DOCTYPE html>
         <html>
         <head>
@@ -110,11 +91,11 @@ module.exports = async (email, password) => {
           </div>
         </body>
         </html>
-      `
-    });
+      `;
+
+    await sendMail(email, "🎉 Welcome to RentEase - Your Service Provider Account is Ready!", html);
     console.log(`✅ Credentials email sent to ${email}`);
   } catch (err) {
     console.error(`❌ Failed to send credentials email to ${email}:`, err.message);
-    // Suppress error so provider creation can continue
   }
 };

@@ -3,8 +3,7 @@ const path = require("path");
 
 const sendWelcomeEmail = async (userEmail, userName) => {
     try {
-        const faviconPath = path.join(__dirname, "../../../../public/favicon.png");
-        const cleanName = userName.replace(/undefined/g, "").trim() || "Valued Merchant";
+        const cleanName = (userName || "").replace(/undefined/g, "").trim() || "Valued Merchant";
 
         const html = `
             <head>
@@ -42,14 +41,7 @@ const sendWelcomeEmail = async (userEmail, userName) => {
             </div>
         `;
 
-        await sendMail(userEmail, "Welcome to RentEase! 🏠", html, [
-            {
-                filename: 'favicon.png',
-                path: faviconPath,
-                cid: 'renteasefavicon'
-            }
-        ]);
-
+        await sendMail(userEmail, "Welcome to RentEase! 🏠", html);
         console.log(`✅ Welcome email successfully dispatched via central mailer to ${userEmail}`);
     } catch (error) {
         console.error("❌ Critical Welcome dispatcher failure:", error);

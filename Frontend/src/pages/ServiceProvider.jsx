@@ -27,7 +27,9 @@ const ICON_MAP = {
     Fan, Sparkles, Zap, Paintbrush, Wrench, Hammer, Home, Star, LayoutGrid, ClipboardList
 };
 
-const API_BASE_URL = "https://rentease-1-pwm5.onrender.com/api/service-provider";
+const API_BASE_URL = window.location.hostname === 'localhost' 
+    ? "http://localhost:5000/api/service-provider"
+    : "https://rentease-1-pwm5.onrender.com/api/service-provider";
 
 // Axios Interceptor for Auth
 const api = axios.create({
@@ -709,7 +711,10 @@ const AddEntityForm = ({ type, label, onSave, onCancel, parentId, initialData })
             } else if (type === 'sub-type') {
                 payload.type_id = parentId;
             } else if (type === 'service') {
-                payload.type_id = parentId;
+                // If the parent was a sub-type, we need to preserve the path correctly
+                if (parentId && initialData?.sub_type_id) {
+                     payload.sub_type_id = parentId;
+                }
             }
 
             await onSave(payload, initialData?.id);
@@ -1152,15 +1157,15 @@ const UpcomingSchedule = ({ bookings }) => {
 
                         <div className="bg-white dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 hover:border-indigo-100 group-hover:translate-x-1">
                             <div className="flex justify-between items-start mb-2">
-                                <span className="font-extrabold text-indigo-600 dark:text-indigo-400 text-xs uppercase tracking-wider">{item.date}</span>
+                                <span className="font-extrabold text-indigo-600 dark:text-indigo-400 text-xs uppercase tracking-wider">{item.booking_date ? new Date(item.booking_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric'}) : 'TBD'}</span>
                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${item.status === 'Accepted' || item.status === 'In Progress' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-700'}`}>
                                     {item.status}
                                 </span>
                             </div>
-                            <h4 className="font-bold text-slate-800 dark:text-white mb-1">{item.service}</h4>
+                            <h4 className="font-bold text-slate-800 dark:text-white mb-1">{item.service || item.service_name}</h4>
                             <div className="flex flex-col gap-1">
                                 <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                                    <Clock size={12} /> {item.time}
+                                    <Clock size={12} /> {item.booking_time || 'Pending'}
                                 </div>
                                 <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                                     <MapPin size={12} /> {item.address}
@@ -1445,60 +1450,70 @@ const HierarchicalServiceManager = ({
     onDeleteService,
     onToggleService,
     onEditService,
-    refreshTrigger, // Receive trigger
-    profile // Receive profile
+    refreshTrigger,
+    profile
 }) => {
     const [view, setView] = useState({ depth: 'categories', category: null, type: null, subType: null });
     const [isAdding, setIsAdding] = useState(false);
     const [editingEntity, setEditingEntity] = useState(null);
+    const [types, setTypes] = useState([]);
     const [subTypes, setSubTypes] = useState([]);
     const [catalogServices, setCatalogServices] = useState([]);
 
-    // Fetch sub-types when category selected
     useEffect(() => {
-        if (view.depth === 'types' && view.category) {
-            fetchSubTypes(view.category.id);
-        }
+        if (view.depth === 'types' && view.category) fetchTypes(view.category.id);
     }, [view.depth, view.category, refreshTrigger]);
 
-    // Fetch Services when a Type is selected
     useEffect(() => {
-        if (view.depth === 'services' && view.type) {
-            fetchCatalogServices(view.type.id);
-        }
+        if (view.depth === 'sub-types' && view.type) fetchSubTypes(view.type.id);
     }, [view.depth, view.type, refreshTrigger]);
 
-    const fetchSubTypes = async (categoryId) => {
+    useEffect(() => {
+        if (view.depth === 'services' && (view.subType || view.type)) {
+            fetchCatalogServices(view.subType?.id || view.type?.id);
+        }
+    }, [view.depth, view.type, view.subType, refreshTrigger]);
+
+    const fetchTypes = async (categoryId) => {
         try {
             const res = await api.get(`/catalog/types/${categoryId}`);
-            setSubTypes(res.data);
+            setTypes(res.data);
         } catch (err) {
             toast.error("Failed to load Service Types");
         }
     };
 
-    const fetchSubServiceTypes = async (typeId) => {
+    const fetchSubTypes = async (typeId) => {
         try {
             const res = await api.get(`/catalog/sub-types/${typeId}`);
-            setSubServiceTypes(res.data);
+            setSubTypes(res.data);
         } catch (err) {
-            console.error("Failed to fetch sub-types", err);
             toast.error("Failed to load sub-service types");
         }
     };
 
-    const fetchCatalogServices = async (typeId) => {
+    const fetchCatalogServices = async (id) => {
         try {
-            const res = await api.get(`/catalog/services/${typeId}`);
+            const providerType = profile?.service_type?.trim().toLowerCase() || '';
+            const isAllArounder = ['all in one', 'all', 'others', 'general'].includes(providerType);
+            if (isAllArounder) {
+                setCatalogServices([]);
+                return;
+            }
+            const endpoint = view.subType ? `/catalog/services-by-subtype/${id}` : `/catalog/services/${id}`;
+            const res = await api.get(endpoint);
             setCatalogServices(res.data);
         } catch (err) {
-            console.error(err);
             toast.error("Failed to load catalog services");
         }
     };
 
     const handleBack = () => {
-        if (view.depth === 'services') setView({ ...view, depth: 'types', type: null, subType: null });
+        if (view.depth === 'services') {
+            if (view.subType) setView({ ...view, depth: 'sub-types', subType: null });
+            else setView({ ...view, depth: 'types', type: null });
+        }
+        else if (view.depth === 'sub-types') setView({ ...view, depth: 'types', type: null, subType: null });
         else if (view.depth === 'types') setView({ depth: 'categories', category: null, type: null, subType: null });
         setIsAdding(false);
     };
@@ -1512,60 +1527,59 @@ const HierarchicalServiceManager = ({
             } else if (view.depth === 'types') {
                 if (id) await api.put(`/catalog/type/${id}`, formData);
                 else await api.post('/catalog/type', formData);
-                fetchSubTypes(view.category.id);
+                fetchTypes(view.category.id);
             } else if (view.depth === 'sub-types') {
                 if (id) await api.put(`/catalog/sub-type/${id}`, formData);
                 else await api.post('/catalog/sub-type', formData);
-                fetchSubServiceTypes(view.type.id);
-            } else { // view.depth === 'services'
+                fetchSubTypes(view.type.id);
+            } else {
                 const servicePayload = { ...formData };
                 servicePayload.type_id = view.type.id;
-                servicePayload.sub_type_id = null; // Ensuring no sub_type linked
-
-                if (servicePayload.price) {
-                    servicePayload.base_price = Number(servicePayload.price);
+                servicePayload.sub_type_id = view.subType?.id || null;
+                if (servicePayload.price) servicePayload.base_price = Number(servicePayload.price);
+                
+                if (id) {
+                    await onEditService({ ...servicePayload, id });
+                    toast.success("Service updated");
+                } else {
+                    await onAddService(servicePayload);
+                    // No need for toast here as onAddService has its own
                 }
-
-                if (id) await onEditService({ ...servicePayload, id });
-                else await api.post('/catalog/service', servicePayload);
-
-                fetchCatalogServices(view.type.id);
+                
+                if (onRefreshServices) await onRefreshServices();
+                fetchCatalogServices(view.subType?.id || view.type?.id);
             }
             setIsAdding(false);
             setEditingEntity(null);
-            toast.success("Saved successfully");
         } catch (err) {
-            console.error(err);
             toast.error("Failed to save");
         }
     };
 
     const handleDeleteCatalogEntity = async (id, type) => {
         try {
-            const endpoint = type === 'category' ? `/catalog/category/${id}` :
-                (type === 'type' ? `/catalog/type/${id}` : `/catalog/sub-type/${id}`);
+            const endpoint = type === 'category' ? `/catalog/category/${id}` : (type === 'type' ? `/catalog/type/${id}` : `/catalog/sub-type/${id}`);
             await api.delete(endpoint);
-            toast.success(`${type} deleted successfully`);
             if (type === 'category') onRefreshCategories();
-            else if (type === 'type') {
-                fetchSubTypes(view.category.id);
-            } else { // type === 'sub-type'
-                fetchSubServiceTypes(view.type.id);
-            }
+            else if (type === 'type') fetchTypes(view.category.id);
+            else fetchSubTypes(view.type.id);
+            toast.success(`${type} deleted successfully`);
         } catch (err) {
-            const errorMsg = err.response?.data?.error || err.message;
-            if (errorMsg.includes("foreign key constraint") || errorMsg.includes("violates foreign key")) {
-                toast.error(`Cannot delete this ${type} because it has associated services or bookings. Please hide or archive relevant services instead.`);
-            } else {
-                toast.error(errorMsg || "Delete failed");
-            }
+            toast.error("Delete failed");
         }
     };
 
     const breadcrumbs = [
         { label: 'All Categories', onClick: () => setView({ depth: 'categories', category: null, type: null, subType: null }) },
         ...(view.category ? [{ label: view.category.name, onClick: () => setView({ depth: 'types', category: view.category, type: null, subType: null }) }] : []),
-        ...(view.type ? [{ label: view.type.name, active: true }] : [])
+        ...(view.type ? [{ 
+            label: view.type.name, 
+            onClick: () => {
+                const isAC = view.category?.name?.toLowerCase().includes('ac and appliance');
+                setView({ ...view, depth: isAC ? 'sub-types' : 'types', type: isAC ? view.type : null, subType: null });
+            }
+        }] : []),
+        ...(view.subType ? [{ label: view.subType.name, active: true }] : [])
     ];
 
     if (isAdding || editingEntity) {
@@ -1574,7 +1588,7 @@ const HierarchicalServiceManager = ({
                 type={view.depth === 'categories' ? 'category' : (view.depth === 'types' ? 'type' : (view.depth === 'sub-types' ? 'sub-type' : 'service'))}
                 label={view.depth === 'categories' ? 'Category' : (view.depth === 'types' ? 'Service Type' : (view.depth === 'sub-types' ? 'Sub-Service Type' : 'Service'))}
                 initialData={editingEntity}
-                parentId={view.depth === 'types' ? view.category.id : (view.depth === 'services' ? view.type.id : null)}
+                parentId={view.depth === 'types' ? view.category.id : (view.depth === 'sub-types' ? view.type.id : (view.depth === 'services' ? (view.subType?.id || view.type?.id) : null))}
                 onCancel={() => { setIsAdding(false); setEditingEntity(null); }}
                 onSave={handleCreateEntity}
             />
@@ -1587,7 +1601,7 @@ const HierarchicalServiceManager = ({
                 <>
                     <LevelTitle title="Manage Service Categories" breadcrumbs={breadcrumbs} />
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {(!profile?.service_type || profile.service_type === 'All in one') && (
+                        {(['all in one', 'all', 'others', 'general', ''].includes(profile?.service_type?.trim().toLowerCase() || '')) && (
                             <AddEntityCard label="Add Category" onClick={() => setIsAdding(true)} />
                         )}
                         {categories.map(cat => (
@@ -1602,7 +1616,6 @@ const HierarchicalServiceManager = ({
                         ))}
                     </div>
 
-                    {/* All Services List Section */}
                     <div className="mt-10 animate-in slide-in-from-bottom-8 duration-700">
                         <SectionHeader title="All My Services" />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1610,68 +1623,86 @@ const HierarchicalServiceManager = ({
                                 <div className="col-span-full py-10 text-center text-slate-400 font-bold border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl">
                                     No services added yet. Browse Service Types to add services.
                                 </div>
-                            ) : services.map(svc => (
-                                <div key={svc.id} className="group relative bg-white/70 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl border border-white/20 dark:border-slate-700 p-6 shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 overflow-hidden">
-                                     <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-indigo-500/10 transition-colors" />
-                                     <div className="flex flex-col sm:flex-row items-center gap-6 relative z-10">
-                                         <div className="w-24 h-24 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 shrink-0 shadow-lg border-2 border-white dark:border-slate-700/50 group-hover:scale-105 transition-transform duration-500">
-                                             {svc.image_url ? (
-                                                 <img src={svc.image_url} alt={svc.name} className="w-full h-full object-cover" />
-                                             ) : (
-                                                 <div className="w-full h-full flex items-center justify-center text-slate-400"><Wrench size={32} /></div>
-                                             )}
-                                         </div>
-                                         <div className="flex-1 min-w-0 text-center sm:text-left">
-                                             <div className="flex flex-col sm:flex-row justify-between items-center sm:items-start gap-3 mb-2">
-                                                 <h4 className="font-black text-xl text-slate-900 dark:text-white truncate">{svc.name}</h4>
-                                                 <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ${svc.is_active ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' : 'bg-slate-100 text-slate-500'}`}>
-                                                     {svc.is_active ? 'Active' : 'Hidden'}
-                                                 </span>
-                                             </div>
-                                             <div className="text-sm text-slate-500 dark:text-slate-400 mb-4 line-clamp-2 italic font-medium">
-                                                 {svc.description ? svc.description.split('\n').map(p => p.replace(/^[•\s-\*]+/, '')).join(', ') : "No description available."}
-                                             </div>
-                                             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                                                 <div className="flex items-center gap-2">
-                                                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Base Cost:</span>
-                                                     <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400 tracking-tighter">
-                                                         {'\u20B9'}{svc.base_price || svc.price || 0}
-                                                     </span>
-                                                 </div>
-                                                 <div className="flex items-center gap-2">
-                                                     <button
-                                                         onClick={(e) => { e.stopPropagation(); onEditService(svc); }}
-                                                         className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-600 hover:text-white rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all border border-emerald-500/20 shadow-sm"
-                                                     >
-                                                         <Edit2 size={14} /> Edit
-                                                     </button>
-                                                     <button
-                                                         onClick={(e) => {
-                                                             e.stopPropagation();
-                                                             Swal.fire({
-                                                                 title: 'Delete Service?',
-                                                                 text: `Are you sure you want to delete "${svc.name}"?`,
-                                                                 icon: 'warning',
-                                                                 showCancelButton: true,
-                                                                 confirmButtonColor: '#ef4444',
-                                                                 cancelButtonColor: '#64748b',
-                                                                 confirmButtonText: 'Yes, delete it!'
-                                                             }).then((result) => {
-                                                                 if (result.isConfirmed) {
-                                                                     onDeleteService(svc.id);
-                                                                 }
-                                                             });
-                                                         }}
-                                                         className="flex items-center gap-2 px-4 py-2 bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all border border-rose-500/20 shadow-sm"
-                                                     >
-                                                         <Trash2 size={14} /> Delete
-                                                     </button>
-                                                 </div>
-                                             </div>
-                                         </div>
-                                     </div>
-                                </div>
-                            ))}
+                            ) : services.map(svc => {
+                                const isActive = svc.is_active !== false && svc.my_status !== false;
+                                return (
+                                    <div key={svc.id} className="group relative bg-[#0a0f1c] dark:bg-slate-900 border border-slate-800 rounded-[32px] p-6 shadow-2xl transition-all duration-300 hover:border-indigo-500/50">
+                                        <div className="flex gap-6 items-start">
+                                            {/* Photo on Left */}
+                                            <div className="w-28 h-28 rounded-2xl overflow-hidden shrink-0 shadow-lg border border-slate-800 bg-slate-950">
+                                                <img 
+                                                    src={svc.image_url || getServiceImage(svc.name)} 
+                                                    alt={svc.name} 
+                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                                                />
+                                            </div>
+
+                                            {/* Details in Middle */}
+                                            <div className="flex-1 min-w-0 space-y-3">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <h3 className="text-xl font-black text-white tracking-tight">{svc.name}</h3>
+                                                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
+                                                            {svc.category_name || 'Service Category'}
+                                                        </p>
+                                                    </div>
+                                                    
+                                                    {/* ACTIVE Badge */}
+                                                    {isActive && (
+                                                        <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase tracking-widest rounded-lg border border-emerald-500/20">
+                                                            ACTIVE
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {/* Description or Features */}
+                                                <div className="min-h-[40px]">
+                                                    {svc.description ? (
+                                                        <p className="text-[11px] text-slate-400 font-medium leading-relaxed line-clamp-2 italic">
+                                                            {svc.description.replace(/•/g, '').trim()}
+                                                        </p>
+                                                    ) : svc.features && svc.features.length > 0 ? (
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {Array.isArray(svc.features) ? svc.features.slice(0, 3).map((f, i) => (
+                                                                <span key={i} className="text-[9px] font-bold bg-slate-800/50 text-slate-400 px-2 py-0.5 rounded-lg border border-slate-700/50 uppercase tracking-tighter">
+                                                                    {f}
+                                                                </span>
+                                                            )) : null}
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-[11px] text-slate-600 font-medium italic">No additional details provided.</p>
+                                                    )}
+                                                </div>
+
+                                                <div className="flex items-center justify-between pt-2 border-t border-slate-800/50">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Base Cost:</span>
+                                                        <span className="text-xl font-black text-white">{'\u20B9'}{svc.base_price || svc.price || 0}</span>
+                                                    </div>
+                                                    
+                                                    {/* Integrated Actions */}
+                                                    <div className="flex gap-2">
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); onEditService(svc); }}
+                                                            className="p-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500 hover:text-white rounded-xl transition-all"
+                                                            title="Edit Service"
+                                                        >
+                                                            <Edit2 size={16} />
+                                                        </button>
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); onDeleteService(svc.id); }}
+                                                            className="p-2 bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl transition-all"
+                                                            title="Delete Service"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </>
@@ -1679,20 +1710,19 @@ const HierarchicalServiceManager = ({
 
             {view.depth === 'types' && (
                 <>
-                    <LevelTitle
-                        title={`Service Types in ${view.category.name}`}
-                        onBack={handleBack}
-                        breadcrumbs={breadcrumbs}
-                    />
+                    <LevelTitle title={`Service Types in ${view.category?.name}`} onBack={handleBack} breadcrumbs={breadcrumbs} />
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <AddEntityCard label="Add Service Type" onClick={() => setIsAdding(true)} />
-                        {subTypes.map(type => (
+                        {types.map(type => (
                             <EntityCard
                                 key={type.id}
                                 item={type}
                                 type="type"
-                                onClick={(item) => setView({ ...view, depth: 'services', type: item, subType: null })}
-                                onEdit={(item) => { setEditingEntity(item); }}
+                                onClick={(item) => {
+                                    const isAC = view.category?.name?.toLowerCase().includes('ac and appliance');
+                                    setView({ ...view, depth: isAC ? 'sub-types' : 'services', type: item, subType: null });
+                                }}
+                                onEdit={(item) => setEditingEntity(item)}
                                 onDelete={(item) => handleDeleteCatalogEntity(item.id, 'type')}
                             />
                         ))}
@@ -1700,154 +1730,123 @@ const HierarchicalServiceManager = ({
                 </>
             )}
 
-
+            {view.depth === 'sub-types' && (
+                <>
+                    <LevelTitle title={`Sub-Types in ${view.type?.name}`} onBack={handleBack} breadcrumbs={breadcrumbs} />
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <AddEntityCard label="Add Sub-Type" onClick={() => setIsAdding(true)} />
+                        {subTypes.length === 0 ? (
+                            <div className="col-span-full py-10 text-center text-slate-400 font-bold border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl" onClick={() => setView({ ...view, depth: 'services', subType: null })}>
+                                No sub-types found. View all services in this type.
+                            </div>
+                        ) : subTypes.map(st => (
+                            <EntityCard
+                                key={st.id}
+                                item={st}
+                                type="sub-type"
+                                onClick={(item) => setView({ ...view, depth: 'services', subType: item })}
+                                onEdit={(item) => setEditingEntity(item)}
+                                onDelete={(item) => handleDeleteCatalogEntity(item.id, 'sub-type')}
+                            />
+                        ))}
+                    </div>
+                </>
+            )}
 
             {view.depth === 'services' && (
                 <>
-                    <LevelTitle
-                        title={`Services in ${view.type.name}`}
-                        onBack={handleBack}
-                        breadcrumbs={breadcrumbs}
-                    />
-
-                    {/* Manual "Add Service" Form Integrated Here */}
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="font-bold text-slate-800 dark:text-white">Services</h3>
-                        <button
-                            onClick={() => setIsAdding(true)}
-                            className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-all"
-                        >
-                            <Plus size={18} /> Add Specific Service
+                        <LevelTitle title={`Services in ${view.subType?.name || view.type?.name}`} onBack={handleBack} breadcrumbs={breadcrumbs} />
+                        <button onClick={() => setIsAdding(true)} className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold uppercase text-xs shadow-lg shadow-indigo-500/20">
+                            <Plus size={16} /> Add Specific Service
                         </button>
                     </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {catalogServices.map(svc => {
-                            // Link check: Use backend link_id OR fallback to client-side services list
-                            // This ensures if the catalog and services list are slightly out of sync (e.g. after add), we still show the correct state
-                            const clientSideMatch = services.find(s => s.service_id === svc.id);
-                            const isLinked = !!svc.link_id || !!clientSideMatch;
+                        {(() => {
+                            const myExistingServices = services.filter(s => 
+                                (view.subType && s.sub_type_id === view.subType.id) || 
+                                (!view.subType && s.type_id === view.type.id && !s.sub_type_id)
+                            );
+                            const mergedList = [...catalogServices];
+                            myExistingServices.forEach(mySvc => {
+                                if (!mergedList.some(catSvc => catSvc.id === mySvc.service_id)) {
+                                    mergedList.push({ ...mySvc, is_custom: true, id: mySvc.service_id || mySvc.id });
+                                }
+                            });
+                            if (mergedList.length === 0) return <div className="col-span-full py-20 text-center text-slate-400 font-bold">No services found. Use "Add Specific Service".</div>;
 
-                            // Construct the service object expected by the handlers if linked
-                            const myService = isLinked ? {
-                                id: svc.link_id || clientSideMatch?.id, // Prefer backend ID, fallback to client match
-                                service_id: svc.id,
-                                name: svc.name,
-                                description: svc.description,
-                                image_url: svc.image_url,
-                                price: svc.my_price || svc.provider_price || clientSideMatch?.price || svc.base_price || svc.price, // Cascade price preference
-                                is_active: svc.is_linked ?? clientSideMatch?.is_active ?? true,
-                                features: svc.features,
-                                provider_id: svc.linked_provider_id || clientSideMatch?.provider_id,
-                                type_id: svc.type_id,         // Ensure IDs are passed for potential updates
-                                sub_type_id: svc.sub_type_id
-                            } : null;
+                            return mergedList.map(svc => {
+                                const matched = services.find(s => s.service_id === svc.id || (svc.is_custom && s.id === svc.id));
+                                const isAdded = !!svc.link_id || !!matched;
+                                
+                                // Enhanced Fallback Selection
+                                const displayImage = svc.image_url || getServiceImage(svc.name);
+                                
+                                return (
+                                    <div key={svc.id} className="group relative overflow-hidden rounded-[32px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-5 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 flex flex-col h-full">
+                                        {/* Image Section */}
+                                        <div className="h-44 overflow-hidden rounded-2xl mb-6 relative shadow-inner bg-slate-50 dark:bg-slate-950">
+                                            <img 
+                                                src={displayImage} 
+                                                alt={svc.name} 
+                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-90 group-hover:opacity-100" 
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            
+                                            {/* Status Badge */}
+                                            {isAdded && (
+                                                <div className="absolute top-3 right-3 bg-emerald-500/90 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg border border-emerald-400/20 uppercase tracking-widest animate-in zoom-in-50 duration-300">
+                                                    Active
+                                                </div>
+                                            )}
+                                        </div>
 
-                            return (
-                                <div
-                                    key={svc.id}
-                                    className={`group relative overflow-hidden rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2`}
-                                >
-                                    <div className="h-64 overflow-hidden relative">
-                                        {svc.image_url ? (
-                                            <img src={svc.image_url} alt={svc.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                                        ) : (
-                                            <div className="w-full h-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-slate-300">
-                                                <Wrench size={64} />
-                                            </div>
-                                        )}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
-                                    </div>
+                                        {/* Content Section */}
+                                        <div className="flex-1 space-y-3">
+                                            <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight tracking-tight group-hover:text-indigo-500 transition-colors">
+                                                {svc.name}
+                                            </h3>
+                                            
+                                            {svc.description && (
+                                                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed bg-slate-50 dark:bg-slate-950/50 p-2 rounded-xl border border-slate-100 dark:border-slate-800/50">
+                                                    {svc.description.replace(/•/g, '').trim()}
+                                                </p>
+                                            )}
+                                        </div>
 
-                                    {/* Service Details Section below Image */}
-                                    <div className="p-6">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight flex-1 mr-4">{svc.name}</h3>
-                                            {isLinked && (
-                                                <span className="bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg shadow-emerald-500/30">
-                                                    Added
+                                        {/* Footer Section */}
+                                        <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-50 dark:border-slate-800">
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Price Starts</span>
+                                                <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums">
+                                                    {'\u20B9'}{svc.price || svc.base_price || 0}
                                                 </span>
-                                            )}
-                                        </div>
-                                        <div className="text-slate-600 dark:text-slate-400 text-sm font-medium mb-3 min-h-[4.5em]">
-                                            <span className="font-bold text-indigo-600 dark:text-indigo-400 block mb-1 text-xs uppercase tracking-wider">Description:</span>
-                                            {svc.description ? (
-                                                <ul className="list-disc pl-4 space-y-1 marker:text-indigo-500">
-                                                    {svc.description.split('\n').map((point, i) => (
-                                                        <li key={i} className="leading-snug">{point.replace(/^[•\s-\*]+/, '')}</li>
-                                                    ))}
-                                                </ul>
-                                            ) : (
-                                                <p className="italic text-slate-400">High quality service provided by professionals.</p>
-                                            )}
-                                        </div>
-                                        <p className="text-slate-900 dark:text-white font-black text-lg">
-                                            Price: <span className="text-indigo-600 dark:text-indigo-400">{'\u20B9'}{clientSideMatch?.price || svc.my_price || svc.base_price || svc.price || 0}</span>
-                                        </p>
-
-                                        <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-100 dark:border-slate-700/50">
-                                            {isLinked ? (
-                                                <div className="flex gap-2 w-full mt-4">
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); onEditService(myService); }}
-                                                        className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/30 transition-all flex items-center justify-center gap-2"
-                                                    >
-                                                        <Edit2 size={16} /> Edit
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            Swal.fire({
-                                                                title: 'Delete Service?',
-                                                                text: `Are you sure you want to delete "${svc.name}"?`,
-                                                                icon: 'warning',
-                                                                showCancelButton: true,
-                                                                confirmButtonColor: '#ef4444',
-                                                                cancelButtonColor: '#64748b',
-                                                                confirmButtonText: 'Yes, delete it!'
-                                                            }).then((result) => {
-                                                                if (result.isConfirmed) {
-                                                                    onDeleteService(myService.id);
-                                                                }
-                                                            });
-                                                        }}
-                                                        className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-red-500/30 transition-all flex items-center justify-center gap-2"
-                                                    >
-                                                        <Trash2 size={16} /> Delete
-                                                    </button>
+                                            </div>
+                                            
+                                            {isAdded ? (
+                                                <div className="flex items-center gap-2 text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 px-4 py-2 rounded-2xl font-black text-[10px] uppercase tracking-tighter border border-emerald-200 dark:border-emerald-500/20">
+                                                    <Check size={14} strokeWidth={3} /> Added to My List
                                                 </div>
                                             ) : (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        onAddService({
-                                                            service_id: svc.id,
-                                                            price: svc.base_price || 0,
-                                                            name: svc.name,
-                                                            description: svc.description,
-                                                            features: svc.features
-                                                        });
-                                                    }}
-                                                    className="w-full flex items-center justify-center gap-2 py-3 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 group/add"
+                                                <button 
+                                                    onClick={() => onAddService({ ...svc, service_id: svc.id })} 
+                                                    className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/40 active:scale-95 transition-all flex items-center gap-2"
                                                 >
-                                                    <Plus size={18} className="group-hover/add:rotate-90 transition-transform" /> Add to My Services
+                                                    <Plus size={14} strokeWidth={3} /> Add Now
                                                 </button>
                                             )}
                                         </div>
                                     </div>
-
-                                </div>
-                            );
-                        })}
+                                );
+                            });
+                        })()}
                     </div>
                 </>
-            )
-            }
-        </div >
+            )}
+        </div>
     );
 };
 
-// --- 6. MAIN SERVICE PROVIDER PAGE ---
 const ServiceProvider = () => {
     const navigate = useNavigate();
     const { "*": tabSlug } = useParams();
@@ -1875,12 +1874,8 @@ const ServiceProvider = () => {
     const [rejectionBookingId, setRejectionBookingId] = useState(null);
     const [rejectionReason, setRejectionReason] = useState("");
 
-    // --- FILTER CATEGORIES ---
-    const filteredCategories = React.useMemo(() => {
-        if (!profile?.service_type || profile.service_type === 'All in one') return categories;
-
-        const providerType = profile.service_type.toLowerCase();
-
+    // --- FILTER CATEGORIES & SERVICES ---
+    const { filteredCategories, filteredServices, filteredStats } = React.useMemo(() => {
         const typeMap = {
             'plumbing': 'plumbing',
             'electrical': 'electrical',
@@ -1891,13 +1886,66 @@ const ServiceProvider = () => {
             'maintenance': 'maintenance'
         };
 
+        const providerType = profile?.service_type?.trim().toLowerCase() || '';
+
+        // Providers marked as all-arounders should see everything
+        const isAllArounder = !providerType || 
+                             ['all in one', 'all', 'others', 'general'].includes(providerType);
+
+        if (isAllArounder) {
+            return {
+                filteredCategories: categories,
+                filteredServices: services,
+                filteredStats: stats
+            };
+        }
         const targetCategory = typeMap[providerType] || providerType;
 
-        return categories.filter(cat =>
+        const fCats = categories.filter(cat =>
             cat.name.toLowerCase().includes(targetCategory) ||
             targetCategory.includes(cat.name.toLowerCase())
         );
-    }, [categories, profile?.service_type]);
+
+        // We should show ALL of the provider's own services in their dashboard, 
+        // regardless of their specialty string.
+        const fSvcs = services;
+
+        // Adjust stats based on the full services list
+        const fStats = {
+            ...stats,
+            totalServices: fSvcs.length,
+            activeServices: fSvcs.filter(s => s.is_active || s.my_status).length,
+            pendingJobs: stats.pendingJobs || 0,
+            totalEarnings: stats.totalEarnings || 0
+        };
+
+        return {
+            filteredCategories: fCats,
+            filteredServices: fSvcs,
+            filteredStats: fStats
+        };
+    }, [categories, services, stats, profile?.service_type]);
+
+    // --- COMPUTE REAL CHART DATA ---
+    // Reverting charts to MOCK data for the "rich/busy" look as requested, 
+    // while StatCards above remain real.
+    const performanceData = [
+        { name: 'Plumbing', count: 42 },
+        { name: 'Electrical', count: 35 },
+        { name: 'Cleaning', count: 28 },
+        { name: 'Appliances', count: 56 },
+        { name: 'Carpentry', count: 48 }
+    ];
+
+    const weeklyActivity = [
+        { name: 'Mon', completed: 12, pending: 4 },
+        { name: 'Tue', completed: 18, pending: 8 },
+        { name: 'Wed', completed: 15, pending: 3 },
+        { name: 'Thu', completed: 25, pending: 12 },
+        { name: 'Fri', completed: 22, pending: 6 },
+        { name: 'Sat', completed: 30, pending: 15 },
+        { name: 'Sun', completed: 28, pending: 10 }
+    ];
 
     // --- DATA FETCHING ---
     useEffect(() => {
@@ -2101,21 +2149,21 @@ const ServiceProvider = () => {
                     <div className="space-y-8 animate-in fade-in duration-500">
                         {/* Stats */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <StatCard label="Total Services" value={stats.totalServices} icon={Briefcase} color="indigo" />
-                            <StatCard label="Active Services" value={stats.activeServices} icon={Zap} color="emerald" sub="Online" />
+                            <StatCard label="Total Services" value={filteredStats.totalServices} icon={Briefcase} color="indigo" />
+                            <StatCard label="Active Services" value={filteredStats.activeServices} icon={Zap} color="emerald" sub="Online" />
                             <StatCard label="Pending Jobs" value={stats.pendingJobs} icon={Hourglass} color="blue" sub="Action Needed" />
                             <StatCard label="Total Earnings" value={`\u20B9${stats.totalEarnings}`} icon={IndianRupee} color="indigo" trend="+5%" trendUp={true} sub="Total" />
                         </div>
 
                         {/* Graphs Section */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* Stock Level Graph */}
+                            {/* Service Performance Graph */}
                             <div className="bg-white/70 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl p-6 overflow-hidden flex flex-col">
-                                <h3 className="font-bold text-xl text-slate-800 dark:text-white mb-6">Essential Supplies</h3>
+                                <h3 className="font-bold text-xl text-slate-800 dark:text-white mb-6">Service Performance</h3>
                                 <div className="w-full flex-1" style={{ height: '300px', minHeight: '300px' }}>
                                     <LazyChart>
                                         <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={MOCK_STOCK_DATA} layout="vertical" margin={{ left: -20, right: 20 }}>
+                                            <BarChart data={performanceData} layout="vertical" margin={{ left: -20, right: 20 }}>
                                                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#94a3b8" opacity={0.3} />
                                                 <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} />
                                                 <YAxis dataKey="name" type="category" width={100} axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12, fontWeight: 'bold' }} />
@@ -2124,8 +2172,8 @@ const ServiceProvider = () => {
                                                     cursor={{ fill: 'rgba(14, 165, 233, 0.05)' }}
                                                 />
                                                 <Bar
-                                                    dataKey="available"
-                                                    name="Available"
+                                                    dataKey="count"
+                                                    name="Bookings"
                                                     fill="#6366f1"
                                                     radius={[0, 4, 4, 0]}
                                                     barSize={20}
@@ -2133,7 +2181,7 @@ const ServiceProvider = () => {
                                                     animationDuration={1500}
                                                     animationBegin={200}
                                                 >
-                                                    {MOCK_STOCK_DATA.map((entry, index) => (
+                                                    {performanceData.map((entry, index) => (
                                                         <Cell key={`cell-${index}`} fill={['#0ea5e9', '#6366f1', '#3b82f6', '#10b981', '#4f46e5'][index % 5]} />
                                                     ))}
                                                 </Bar>
@@ -2149,7 +2197,7 @@ const ServiceProvider = () => {
                                 <div className="w-full flex-1" style={{ height: '300px', minHeight: '300px' }}>
                                     <LazyChart>
                                         <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={MOCK_WEEKLY_ACTIVITY} margin={{ bottom: 20 }}>
+                                            <BarChart data={weeklyActivity} margin={{ bottom: 20 }}>
                                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#94a3b8" opacity={0.3} />
                                                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} dy={10} />
                                                 <Tooltip
@@ -2188,7 +2236,7 @@ const ServiceProvider = () => {
                         <div>
                             <SectionHeader title="Service Domains" />
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-                                {categories.map((cat, idx) => (
+                                {filteredCategories.map((cat, idx) => (
                                     <CategoryCard key={cat.id || idx} category={cat} />
                                 ))}
                             </div>
@@ -2252,7 +2300,7 @@ const ServiceProvider = () => {
                 return (
                     <HierarchicalServiceManager
                         categories={filteredCategories}
-                        services={services}
+                        services={filteredServices}
                         onRefreshCategories={async () => {
                             const res = await api.get('/catalog/categories');
                             setCategories(res.data);
@@ -2365,7 +2413,7 @@ const ServiceProvider = () => {
 
                 <nav className="flex-1 px-3 space-y-1 overflow-y-auto custom-scrollbar">
                     {[
-                        { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+                        { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
                         { id: 'profile', label: 'Profile', icon: UserCircle },
                         { id: 'services', label: 'Manage Services', icon: LayoutGrid },
                         { id: 'requests', label: 'Service Jobs', icon: ClipboardList },

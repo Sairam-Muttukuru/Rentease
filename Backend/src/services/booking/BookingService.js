@@ -68,13 +68,22 @@ class BookingService {
 
     // --- Home Service Bookings (Service Requests) ---
     async createServiceRequest(userId, data) {
-        const tenant = await TenantModel.getByUserId(userId);
+        const tenantResult = await TenantModel.getByUserId(userId);
+        const tenant = Array.isArray(tenantResult) ? tenantResult[0] : tenantResult;
+        const user = await UserModel.findUserById(userId);
 
-        const request = await ServiceRequestModel.create({
+        // Auto-fill property and landlord details if it's a tenant
+        const enrichedData = {
             ...data,
             user_id: userId,
-            tenant_id: tenant ? tenant.id : null
-        });
+            tenant_id: tenant ? tenant.id : null,
+            property_id: (data.property_id || (tenant ? tenant.property_id : null)),
+            landlord_id: (data.landlord_id || (tenant ? tenant.landlord_id : null)),
+            customer_email: user ? user.email : null,
+            provider_service_id: data.provider_service_id || null // Remove incorrect service_id fallback
+        };
+
+        const request = await ServiceRequestModel.create(enrichedData);
 
         // Trigger Async Notification
         this._handleServiceRequestNotification(request).catch(err => console.error("Service request notification failed:", err));

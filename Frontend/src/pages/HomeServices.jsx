@@ -505,6 +505,7 @@ const HomeServices = () => {
     // State for Dynamic Data
     const [categories, setCategories] = useState([]);
     const [types, setTypes] = useState([]);
+    const [subTypes, setSubTypes] = useState([]);
     const [services, setServices] = useState([]);
     const [featuredServices, setFeaturedServices] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -513,6 +514,7 @@ const HomeServices = () => {
     const [viewState, setViewState] = useState('CATEGORIES'); // CATEGORIES, SERVICES
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [selectedType, setSelectedType] = useState(null);
+    const [selectedSubType, setSelectedSubType] = useState(null);
     const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);
 
     // Booking State
@@ -568,9 +570,41 @@ const HomeServices = () => {
         try {
             const res = await axios.get(`${import.meta.env.VITE_API_URL || 'https://rentease-1-pwm5.onrender.com'}/api/tenants/catalog/services/${typeId}`);
             setServices(res.data);
+            setSubTypes([]);
+            setSelectedSubType(null);
             setViewState('SERVICES');
         } catch (error) {
             console.error("Error fetching services:", error);
+            toast.error("Failed to load services.");
+        } finally {
+            setLoading(false);
+        }
+    };
+ 
+    const fetchSubTypes = async (typeId) => {
+        setLoading(true);
+        try {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || 'https://rentease-1-pwm5.onrender.com'}/api/tenants/catalog/sub-types/${typeId}`);
+            setSubTypes(res.data);
+            setServices([]);
+            setSelectedSubType(null);
+            setViewState('SERVICES');
+        } catch (error) {
+            console.error("Error fetching sub-types:", error);
+            toast.error("Failed to load sub-categories.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchServicesBySubType = async (subTypeId) => {
+        setLoading(true);
+        try {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL || 'https://rentease-1-pwm5.onrender.com'}/api/tenants/catalog/services-by-subtype/${subTypeId}`);
+            setServices(res.data);
+            setViewState('SERVICES');
+        } catch (error) {
+            console.error("Error fetching services by subtype:", error);
             toast.error("Failed to load services.");
         } finally {
             setLoading(false);
@@ -598,18 +632,33 @@ const HomeServices = () => {
  
     const handleTypeSelect = (type) => {
         setSelectedType(type);
-        setViewState('SERVICES');
-        fetchServices(type.id);
+        const isAC = selectedCategory?.name?.toLowerCase().includes('ac and appliance');
+        if (isAC) {
+            fetchSubTypes(type.id);
+        } else {
+            fetchServices(type.id);
+        }
     };
  
-    // handleSubCategorySelect is deprecated/removed in this flow
+    const handleSubTypeSelect = (subType) => {
+        setSelectedSubType(subType);
+        fetchServicesBySubType(subType.id);
+    };
  
     const handleBack = () => {
+        if (selectedSubType) {
+            setSelectedSubType(null);
+            setServices([]);
+            // Don't go all the way back, just clear subtype
+            return;
+        }
         setViewState('CATEGORIES');
         setSelectedCategory(null);
         setSelectedType(null);
+        setSelectedSubType(null);
         setServices([]);
         setTypes([]);
+        setSubTypes([]);
     };
  
     const handleServiceClick = (service) => {
@@ -786,12 +835,12 @@ const HomeServices = () => {
 
                         {/* SERVICES VIEW - LIST OF CARDS */}
                         {viewState === 'SERVICES' && (
-                            <motion.div key="services" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-2">
-                                <div className="flex flex-col gap-2 mb-2">
+                            <motion.div key="services" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+                                <div className="flex flex-col gap-8">
                                     {/* Header & Types */}
-                                    <div className="flex flex-col gap-4">
+                                    <div className="flex flex-col gap-6">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-700">
+                                            <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-700 bg-slate-100">
                                                 <img src={selectedCategory?.image_url} className="w-full h-full object-cover" alt={selectedCategory?.name} />
                                             </div>
                                             <div>
@@ -828,20 +877,27 @@ const HomeServices = () => {
                                     </div>
 
                                     {/* Services Count Banner */}
-                                    <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
-                                        <h3 className="text-xl font-black text-slate-900 dark:text-white">Available Services</h3>
-                                        <span className="bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-4 py-2 rounded-xl font-black text-xs border border-slate-200 dark:border-slate-700 shadow-sm">
+                                    <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm">
+                                        <div className="flex flex-col">
+                                            <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                                                {selectedSubType ? selectedSubType.name : (subTypes.length > 0 ? "Select a Sub-Category" : "Available Services")}
+                                            </h3>
+                                            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1">
+                                                {selectedCategory?.name} {selectedType ? `> ${selectedType.name}` : ''} {selectedSubType ? `> ${selectedSubType.name}` : ''}
+                                            </p>
+                                        </div>
+                                        <span className="bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white px-5 py-2.5 rounded-2xl font-black text-xs border border-slate-200 dark:border-slate-700 shadow-inner">
                                             {services.length} Services
                                         </span>
                                     </div>
                                 </div>
 
-                                {services.filter(s => s.name?.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
+                                {services.length === 0 && subTypes.length === 0 ? (
                                     <div className="text-center py-20 bg-slate-50 dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700">
                                         <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
                                             <Search size={32} />
                                         </div>
-                                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">No results for "{searchTerm}"</h3>
+                                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">No results found</h3>
                                         <p className="text-slate-500 font-medium max-w-sm mx-auto">Try a different search term or clear the search to see all available services in {selectedCategory?.name}.</p>
                                         <button
                                             onClick={() => setSearchTerm('')}
@@ -849,6 +905,32 @@ const HomeServices = () => {
                                         >
                                             Clear Search
                                         </button>
+                                    </div>
+                                ) : subTypes.length > 0 && services.length === 0 ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
+                                        {subTypes.filter(st => st.name.toLowerCase().includes(searchTerm.toLowerCase())).map((st) => (
+                                            <div
+                                                key={st.id}
+                                                onClick={() => handleSubTypeSelect(st)}
+                                                className="group relative overflow-hidden rounded-[32px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-5 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer h-72 flex flex-col"
+                                            >
+                                                <div className="h-44 overflow-hidden rounded-2xl mb-4 relative bg-slate-50 dark:bg-slate-950">
+                                                    <img 
+                                                        src={st.image_url || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=2669&auto=format&fit=crop"} 
+                                                        alt={st.name} 
+                                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                                    />
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+                                                    <div className="absolute bottom-4 left-4 flex items-center gap-2">
+                                                        <div className="flex items-center gap-1 text-[10px] font-black text-white bg-indigo-600 px-3 py-1.5 rounded-lg uppercase tracking-wider">
+                                                            Explore Now
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <h3 className="text-xl font-black text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{st.name}</h3>
+                                                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mt-1 opacity-70">Professional Repair & Care</p>
+                                            </div>
+                                        ))}
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-20">

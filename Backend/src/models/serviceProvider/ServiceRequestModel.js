@@ -41,7 +41,13 @@ const ensureSchema = async () => {
             'service_type VARCHAR(50)',
             'priority VARCHAR(20) DEFAULT \'Normal\'',
             'comment TEXT',
-            'rating INTEGER CHECK (rating >= 1 AND rating <= 5)'
+            'rating INTEGER CHECK (rating >= 1 AND rating <= 5)',
+            'landlord_id INTEGER',
+            'property_id INTEGER',
+            'provider_service_id INTEGER',
+            'customer_email CHARACTER VARYING(150)',
+            'booking_date DATE',
+            'booking_time CHARACTER VARYING(50)'
         ];
 
         for (const col of columns) {
@@ -71,15 +77,21 @@ exports.create = async (data) => {
     const {
         tenant_id, user_id, service_id, provider_id,
         address, contact_number, payment_method, amount, booking_date, booking_time,
-        service_type, priority
+        service_type, priority, landlord_id, property_id, provider_service_id, customer_email
     } = data;
 
     const res = await db.query(
         `INSERT INTO service_requests 
-        (tenant_id, user_id, service_id, assigned_provider_id, address, contact_number, payment_method, amount, scheduled_date, scheduled_time, service_type, priority, comment, status)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'Pending')
+        (tenant_id, user_id, service_id, assigned_provider_id, address, contact_number, payment_method, 
+         amount, scheduled_date, scheduled_time, service_type, priority, comment, status,
+         landlord_id, property_id, provider_service_id, customer_email, booking_date, booking_time)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'Pending', $14, $15, $16, $17, $18, $19)
         RETURNING *`,
-        [tenant_id, user_id, service_id, provider_id, address, contact_number, payment_method, amount, booking_date, booking_time, service_type, priority, data.comment || null]
+        [
+            tenant_id, user_id, service_id, provider_id, address, contact_number, payment_method, 
+            amount, booking_date, booking_time, service_type, priority, data.comment || null,
+            landlord_id, property_id, provider_service_id, customer_email, booking_date, booking_time
+        ]
     );
     return res.rows[0];
 };

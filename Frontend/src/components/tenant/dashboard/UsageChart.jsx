@@ -86,9 +86,9 @@ const UsageChart = ({ user, isPaid, payments = [] }) => {
                     <p className={`text-sm mt-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>6-Month Rent Activity</p>
                 </div>
             </div>
-            <div className={`flex-1 min-h-[300px] w-full ${isDarkMode ? 'bg-slate-900/40 border border-slate-800' : 'bg-slate-50/80 border border-slate-100'} rounded-2xl p-4 overflow-hidden`}>
-                {isMounted && (
-                    <ResponsiveContainer width="100%" height="100%">
+            <div className={`flex-1 relative min-h-[300px] w-full ${isDarkMode ? 'bg-slate-900/40 border border-slate-800' : 'bg-slate-50/80 border border-slate-100'} rounded-2xl p-4 overflow-hidden`}>
+                {isMounted && chartData.length > 0 && (
+                    <ResponsiveContainer width="99%" height="100%">
                         <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? '#334155' : '#e2e8f0'} />
                             <XAxis

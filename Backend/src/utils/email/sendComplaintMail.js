@@ -1,21 +1,10 @@
-const nodemailer = require("nodemailer");
+const sendMail = require("./sendMail");
 
 const sendComplaintMail = async ({ landlordEmail, landlordName, tenantName, propertyName, propertyImage, complaint }) => {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_ADMIN,
-      pass: process.env.EMAIL_ADMIN_PASS
-    }
-  });
-
   const heroImage = propertyImage || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80";
 
-  const mailOptions = {
-    from: `"RentEase Alerts" <${process.env.EMAIL_ADMIN}>`,
-    to: landlordEmail,
-    subject: `🚨 Action Required: New Issue at ${propertyName || 'Your Property'}`,
-    html: `
+  const subject = `🚨 Action Required: New Issue at ${propertyName || 'Your Property'}`;
+  const html = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -59,6 +48,7 @@ const sendComplaintMail = async ({ landlordEmail, landlordName, tenantName, prop
                   letter-spacing:.08em;
                   text-transform:uppercase;
                 ">
+                  URGENT
                 </span>
               </div>
             </td>
@@ -227,14 +217,12 @@ const sendComplaintMail = async ({ landlordEmail, landlordName, tenantName, prop
   </table>
 </body>
 </html>
-
-    `
-  };
+    `;
 
   try {
     console.log(`📧 Attempting to send complaint email to: ${landlordEmail}`);
-    const info = await transporter.sendMail(mailOptions);
-    console.log("✅ Complaint Email sent: %s", info.messageId);
+    await sendMail(landlordEmail, subject, html);
+    console.log("✅ Complaint Email sent successfully");
   } catch (error) {
     console.error("❌ Error sending complaint email:", error);
     throw error;

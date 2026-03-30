@@ -1,14 +1,6 @@
-const nodemailer = require("nodemailer");
+const sendMail = require("./sendMail");
 
 async function sendBookingStatusNotification(to, bookingDetails) {
-    const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-        }
-    });
-
     const {
         tenantName,
         propertyName,
@@ -51,6 +43,7 @@ async function sendBookingStatusNotification(to, bookingDetails) {
     const htmlContent = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
             <div style="text-align: center; border-bottom: 2px solid ${color}; padding-bottom: 20px; margin-bottom: 20px;">
+                <img src="cid:renteasefavicon" alt="RentEase" style="height: 50px; margin-bottom: 10px;">
                 <h1 style="color: ${color}; margin: 0;">${title}</h1>
                 <p style="color: #666; font-size: 16px; margin-top: 10px;">Hi <strong>${tenantName}</strong>, ${message}</p>
             </div>
@@ -80,7 +73,7 @@ async function sendBookingStatusNotification(to, bookingDetails) {
             ${contentHtml}
 
             <div style="text-align: center; margin-top: 30px;">
-                <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/tenant/dashboard" style="display: inline-block; background-color: ${color}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View My Bookings</a>
+                <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" style="display: inline-block; background-color: ${color}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View My Bookings</a>
             </div>
 
             <p style="text-align: center; color: #9ca3af; font-size: 12px; margin-top: 30px;">
@@ -90,12 +83,7 @@ async function sendBookingStatusNotification(to, bookingDetails) {
     `;
 
     try {
-        await transporter.sendMail({
-            from: `"RentEase Notifications" <${process.env.EMAIL_USER}>`,
-            to,
-            subject: `Booking Update: ${propertyName} - ${status}`,
-            html: htmlContent
-        });
+        await sendMail(to, `Booking Update: ${propertyName} - ${status}`, htmlContent);
         console.log(`✅ Booking Status Email (${status}) sent to:`, to);
     } catch (error) {
         console.error("❌ Error sending booking status email:", error);

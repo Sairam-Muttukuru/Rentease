@@ -85,7 +85,7 @@ exports.updateProfile = async (userId, data) => {
 exports.getServices = async (providerId) => {
     const res = await db.query(
         `SELECT DISTINCT ON (s.name) ps.*, s.name, s.description, s.image_url, s.features, 
-                st.name as type_name, sc.name as category_name
+                s.type_id, s.sub_type_id, st.name as type_name, sc.name as category_name
          FROM provider_services ps
          JOIN services s ON ps.service_id = s.id
          JOIN service_types st ON s.type_id = st.id
@@ -174,7 +174,8 @@ exports.createAndAddService = async (providerId, data) => {
             image_url,
             features,
             category_id: finalCategoryId,
-            type_id: finalTypeId
+            type_id: finalTypeId,
+            sub_type_id: data.sub_type_id || null
         };
     } catch (e) {
         await client.query('ROLLBACK');
@@ -329,7 +330,10 @@ exports.getCategories = async (providerId) => {
     let params = [];
 
     // 2. Filter categories to ONLY show the one matching their specialty if set
-    if (specialty && specialty !== 'Others' && specialty !== 'All') {
+    const isSpecialist = specialty && 
+                        !['others', 'all', 'all in one'].includes(specialty.toLowerCase());
+
+    if (isSpecialist) {
         // Find category where name matches specialty (e.g. 'Electrical')
         query += ` WHERE name ILIKE $1`;
         params.push(specialty);
@@ -396,11 +400,13 @@ exports.getCatalogServicesBySubType = async (subTypeId, providerId) => {
                  ORDER BY s.name ASC`;
         params = [subTypeId, providerId];
     } else {
-        // Validation/Marketplace View (No user context)
-        query = `SELECT s.*, sp.company_name as provider_name
+        // Validation/Marketplace View (All provider offerings for this subtype)
+        query = `SELECT ps.price, s.*, sp.company_name as provider_name, ps.provider_id
                  FROM services s
-                 LEFT JOIN service_providers sp ON s.provider_id = sp.id
+                 JOIN provider_services ps ON s.id = ps.service_id
+                 JOIN service_providers sp ON ps.provider_id = sp.id
                  WHERE s.sub_type_id = $1
+                 AND ps.is_active = true
                  ORDER BY s.name ASC`;
         params = [subTypeId];
     }
@@ -499,10 +505,6 @@ exports.getSubTypes = async (typeId) => {
     return res.rows;
 };
 
-exports.getCatalogServicesBySubType = async (subTypeId) => {
-    const res = await db.query("SELECT * FROM services WHERE sub_type_id = $1 ORDER BY name ASC", [subTypeId]);
-    return res.rows;
-};
 
 exports.addCatalogService = async (data) => {
     const { type_id, name, description, base_price, image_url, features } = data;
@@ -523,7 +525,7 @@ exports.getBookings = async (providerId) => {
                 COALESCE(st.name, 'Standard') as type_name
          FROM service_requests sr
          LEFT JOIN tenants t ON sr.tenant_id = t.id
-         JOIN users u ON sr.user_id = u.id
+         LEFT JOIN users u ON u.id = COALESCE(sr.user_id, t.user_id)
          LEFT JOIN services s ON sr.service_id = s.id
          LEFT JOIN service_types st ON s.type_id = st.id
          LEFT JOIN service_categories sc ON st.category_id = sc.id
@@ -549,8 +551,19 @@ exports.getStats = async (providerId) => {
          WHERE ps.provider_id = $1 AND ps.is_active = true`,
         [providerId]
     );
-    const pendingJobs = await db.query("SELECT COUNT(*) FROM service_requests WHERE assigned_provider_id = $1 AND status = 'Assigned'", [providerId]);
-    const totalEarnings = await db.query("SELECT SUM(amount) FROM service_requests WHERE assigned_provider_id = $1 AND status = 'Completed'", [providerId]);
+
+    // Pending jobs should include anything not completed/cancelled
+    const pendingJobs = await db.query(
+        `SELECT COUNT(*) FROM service_requests 
+         WHERE assigned_provider_id = $1 
+         AND status IN ('Pending', 'Assigned', 'Accepted', 'In Progress')`, 
+        [providerId]
+    );
+
+    const totalEarnings = await db.query(
+        "SELECT SUM(amount) FROM service_requests WHERE assigned_provider_id = $1 AND status = 'Completed'", 
+        [providerId]
+    );
 
     return {
         totalServices: parseInt(services.rows[0].count),
@@ -571,27 +584,41 @@ exports.updateBookingStatus = async (bookingId, providerId, status, rejectionRea
 };
 
 exports.getBookingDetails = async (bookingId) => {
-    const res = await db.query(
-        `SELECT sr.id, sr.tenant_id, sr.user_id, sr.service_id, sr.assigned_provider_id, sr.status, sr.priority,
-                sr.address, sr.payment_method, sr.amount, sr.scheduled_date as booking_date, sr.scheduled_time as booking_time,
-                sr.created_at,
-                u.email, u.first_name || ' ' || u.last_name as user_name,
-                s.name as service_name,
-                COALESCE(sc.name, 'General') as category_name,
-                COALESCE(st.name, 'Standard') as type_name,
-                sp.company_name as provider_name,
-                sp.phone as provider_phone,
-                sp.phone_number as provider_phone_alt
-         FROM service_requests sr
-         JOIN users u ON sr.user_id = u.id
-         LEFT JOIN services s ON sr.service_id = s.id
-         LEFT JOIN service_types st ON s.type_id = st.id
-         LEFT JOIN service_categories sc ON st.category_id = sc.id
-         JOIN service_providers sp ON sr.assigned_provider_id = sp.id
-         WHERE sr.id = $1`,
-        [bookingId]
-    );
-    return res.rows[0];
+    try {
+        console.log(`[DATABASE DEBUG] getBookingDetails: Querying for booking ${bookingId}`);
+        const res = await db.query(
+            `SELECT sr.id, sr.tenant_id, sr.user_id, sr.service_id, sr.assigned_provider_id, sr.status, sr.priority,
+                    sr.address, sr.payment_method, sr.amount, sr.scheduled_date as booking_date, sr.scheduled_time as booking_time,
+                    sr.created_at,
+                    u.email, u.first_name || ' ' || u.last_name as user_name,
+                    COALESCE(s.name, 'Service') as service_name,
+                    COALESCE(sc.name, 'General') as category_name,
+                    COALESCE(st.name, 'Standard') as type_name,
+                    COALESCE(sp.company_name, 'RentEase Partner') as provider_name,
+                    COALESCE(sp.phone, 'Contact Support') as provider_phone,
+                    sp.phone_number as provider_phone_alt
+             FROM service_requests sr
+             LEFT JOIN tenants t ON sr.tenant_id = t.id
+             LEFT JOIN users u ON u.id = COALESCE(sr.user_id, t.user_id)
+             LEFT JOIN services s ON sr.service_id = s.id
+             LEFT JOIN service_types st ON s.type_id = st.id
+             LEFT JOIN service_categories sc ON st.category_id = sc.id
+             LEFT JOIN service_providers sp ON sr.assigned_provider_id = sp.id
+             WHERE sr.id = $1`,
+            [bookingId]
+        );
+        
+        if (res.rows.length === 0) {
+            console.warn(`[DATABASE WARNING] getBookingDetails: No record found for booking ${bookingId}`);
+            return null;
+        }
+
+        console.log(`[DATABASE DEBUG] getBookingDetails: Successfully retrieved data for ${bookingId}. Recipient email: ${res.rows[0].email}`);
+        return res.rows[0];
+    } catch (err) {
+        console.error(`[DATABASE ERROR] getBookingDetails failed for ${bookingId}:`, err);
+        throw err;
+    }
 };
 exports.getReviews = async (providerId) => {
     const res = await db.query(
