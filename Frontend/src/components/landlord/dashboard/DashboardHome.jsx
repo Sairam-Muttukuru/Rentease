@@ -9,7 +9,8 @@ import {
     Plus,
     Wrench,
     Bell,
-    Check
+    Check,
+    Home
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Card } from '../../ui/card';
@@ -27,7 +28,8 @@ const DashboardHome = ({
     setActiveTab,
     tenants,
     complaints = [],
-    payments = []
+    payments = [],
+    bookings = []
 }) => {
     return (
         <div className="space-y-8 fade-in-up">
@@ -67,13 +69,29 @@ const DashboardHome = ({
                         </div>
                         <Card isDarkMode={isDarkMode} className="p-0 overflow-hidden">
                             <div className="divide-y divide-slate-800/10 dark:divide-slate-800/50">
-                                {payments.length === 0 && notifications.length === 0 ? (
+                                {payments.length === 0 && notifications.length === 0 && bookings.length === 0 ? (
                                     <div className="text-center py-12">
-                                        <p className="text-sm text-slate-500">No recent activity or payments found.</p>
+                                        <p className="text-sm text-slate-500">No recent activity found.</p>
                                     </div>
                                 ) : (
                                     <>
-                                        {/* Payments take priority as "Visible Data" */}
+                                        {/* New Bookings (Priority) */}
+                                        {bookings.filter(b => b.status === 'PENDING').slice(0, 3).map((b, i) => (
+                                            <div key={`booking-${b.id || i}`} className={`p-4 flex items-center justify-between transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 border-l-4 border-violet-500`}>
+                                                <div className="flex items-center gap-4">
+                                                    <div className="p-2 rounded-xl bg-violet-500/10 text-violet-500">
+                                                        <Home size={20} />
+                                                    </div>
+                                                    <div>
+                                                        <p className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>New Visit Request for {b.propertyName}</p>
+                                                        <p className="text-[10px] text-slate-500">By {b.tenantName} • {new Date(b.created_at).toLocaleDateString()}</p>
+                                                    </div>
+                                                </div>
+                                                <LandlordButton variant="outline" className="text-[9px] h-6 px-2 font-bold" onClick={() => setActiveTab('bookings')}>Review</LandlordButton>
+                                            </div>
+                                        ))}
+
+                                        {/* Payments */}
                                         {payments.slice(0, 3).map((p, i) => (
                                             <div key={`pay-${p.id || i}`} className={`p-4 flex items-center justify-between transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50`}>
                                                 <div className="flex items-center gap-4">
@@ -89,7 +107,7 @@ const DashboardHome = ({
                                             </div>
                                         ))}
                                         
-                                        {/* Notifications / Other activity */}
+                                        {/* Other Notifications */}
                                         {notifications.slice(0, 3).map((n) => (
                                             <div key={`notif-${n.id}`} className="p-4 flex items-center gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                                 <div className={`p-2 rounded-xl ${n.type === 'complaint' ? 'bg-blue-500/10 text-blue-500' : 'bg-slate-500/10 text-slate-500'}`}>

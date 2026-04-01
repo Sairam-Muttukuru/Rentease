@@ -5,7 +5,8 @@ import { toast } from "react-toastify";
 
 import {
   Mail, Lock, User, ArrowRight, Home, Key,
-  Sun, Moon, ShieldCheck, Building
+  Sun, Moon, ShieldCheck, Building, MessageSquare, BarChart3, Zap,
+  Search, Wrench, CreditCard, Layout, Users
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
@@ -52,7 +53,7 @@ const Signup = () => {
   // Role Selector Styles
   const getRoleCardClass = (role) => {
     const isSelected = selectedRole === role;
-    const baseClass = "cursor-pointer p-4 rounded-xl border-2 transition-all duration-300 flex flex-col items-center gap-2";
+    const baseClass = "cursor-pointer p-4 rounded-2xl border-2 transition-all duration-300 flex flex-col items-center gap-2";
 
     if (isSelected) {
       return `${baseClass} ${isDark ? 'border-indigo-500 bg-indigo-900/20' : 'border-indigo-600 bg-indigo-50'}`;
@@ -117,27 +118,65 @@ const Signup = () => {
         <div className="absolute top-10 right-10 w-64 h-64 bg-blue-500/20 rounded-full blur-[80px]"></div>
 
         <div className="relative z-10 text-white max-w-lg px-12">
-          <a href="/" className="inline-flex items-center gap-2 mb-8 hover:opacity-80 transition-opacity">
-            <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm"><Home size={24} className="text-white" /></div>
-            <span className="font-bold text-xl">RentEase</span>
+          <a href="/" className="inline-flex items-center gap-4 mb-10  group">
+            <div className="relative shrink-0">
+              <div className="absolute inset-0 bg-white blur-[20px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full" />
+              <img src="/favicon.png" alt="RentEase Logo" className="w-17 h-16 relative z-10  transition-transform duration-500 group-hover:scale-110" />
+            </div>
+            <span className="font-black text-3xl relative right-8 tracking-tighter">RentEase</span>
           </a>
           <h2 className="text-5xl font-bold mb-6 leading-tight">Join the Future of <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-blue-300">Rental Management</span></h2>
 
-          <div className="space-y-6 mt-12">
-            <div className="flex items-center gap-4 p-4 bg-white/10 rounded-xl backdrop-blur-sm border border-white/5">
-              <div className="bg-blue-500/20 p-3 rounded-lg"><ShieldCheck size={24} className="text-blue-200" /></div>
-              <div>
-                <h3 className="font-bold">Secure & Verified</h3>
-                <p className="text-sm text-indigo-100 opacity-80">Bank-grade encryption for all your data.</p>
+          <div className="space-y-6 mt-12 min-h-[360px]">
+            {selectedRole === 'tenant' ? (
+              <div key="tenant-features" className="animate-in fade-in slide-in-from-left-8 duration-700 space-y-6">
+                <div className="flex items-center gap-4 p-5 bg-white/10 rounded-[2rem] backdrop-blur-md border border-white/10 hover:bg-white/15 transition-all duration-300 group">
+                  <div className="bg-blue-500/30 p-4 rounded-2xl group-hover:scale-110 transition-transform duration-500"><Search size={24} className="text-blue-200" /></div>
+                  <div>
+                    <h3 className="font-bold text-lg">Easy Bookings</h3>
+                    <p className="text-sm text-indigo-100 opacity-80">Find and book your dream home instantly.</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 p-5 bg-white/10 rounded-[2rem] backdrop-blur-md border border-white/10 hover:bg-white/15 transition-all duration-300 group">
+                  <div className="bg-amber-500/30 p-4 rounded-2xl group-hover:scale-110 transition-transform duration-500"><Wrench size={24} className="text-amber-200" /></div>
+                  <div>
+                    <h3 className="font-bold text-lg">Maintenance Portal</h3>
+                    <p className="text-sm text-indigo-100 opacity-80">Report issues and track repairs in real-time.</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 p-5 bg-white/10 rounded-[2rem] backdrop-blur-md border border-white/10 hover:bg-white/15 transition-all duration-300 group">
+                  <div className="bg-emerald-500/30 p-4 rounded-2xl group-hover:scale-110 transition-transform duration-500"><CreditCard size={24} className="text-emerald-200" /></div>
+                  <div>
+                    <h3 className="font-bold text-lg">Digital Payments</h3>
+                    <p className="text-sm text-indigo-100 opacity-80">Pay rent securely and track your receipts.</p>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-4 p-4 bg-white/10 rounded-xl backdrop-blur-sm border border-white/5">
-              <div className="bg-pink-500/20 p-3 rounded-lg"><Building size={24} className="text-pink-200" /></div>
-              <div>
-                <h3 className="font-bold">All-in-One Platform</h3>
-                <p className="text-sm text-indigo-100 opacity-80">Payments, maintenance, and agreements.</p>
+            ) : (
+              <div key="landlord-features" className="animate-in fade-in slide-in-from-right-8 duration-700 space-y-6">
+                <div className="flex items-center gap-4 p-5 bg-white/10 rounded-[2rem] backdrop-blur-md border border-white/10 hover:bg-white/15 transition-all duration-300 group">
+                  <div className="bg-emerald-500/30 p-4 rounded-2xl group-hover:scale-110 transition-transform duration-500"><BarChart3 size={24} className="text-emerald-200" /></div>
+                  <div>
+                    <h3 className="font-bold text-lg">Revenue Analytics</h3>
+                    <p className="text-sm text-indigo-100 opacity-80">Track your earnings and monthly growth charts.</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 p-5 bg-white/10 rounded-[2rem] backdrop-blur-md border border-white/10 hover:bg-white/15 transition-all duration-300 group">
+                  <div className="bg-blue-500/30 p-4 rounded-2xl group-hover:scale-110 transition-transform duration-500"><Users size={24} className="text-blue-200" /></div>
+                  <div>
+                    <h3 className="font-bold text-lg">Tenant Insights</h3>
+                    <p className="text-sm text-indigo-100 opacity-80">Manage your community and tenant details easily.</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 p-5 bg-white/10 rounded-[2rem] backdrop-blur-md border border-white/10 hover:bg-white/15 transition-all duration-300 group">
+                  <div className="bg-indigo-500/30 p-4 rounded-2xl group-hover:scale-110 transition-transform duration-500"><Layout size={24} className="text-indigo-200" /></div>
+                  <div>
+                    <h3 className="font-bold text-lg">Property Controls</h3>
+                    <p className="text-sm text-indigo-100 opacity-80">Control all your listings from one central hub.</p>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -178,10 +217,10 @@ const Signup = () => {
               </div>
 
               {/* Admin */}
-              <div onClick={() => setSelectedRole('admin')} className={getRoleCardClass('admin')}>
+              {/* <div onClick={() => setSelectedRole('admin')} className={getRoleCardClass('admin')}>
                 <ShieldCheck className={getRoleIconColor('admin')} />
                 <span className={`font-bold ${selectedRole === 'admin' ? (isDark ? 'text-indigo-300' : 'text-indigo-700') : 'text-slate-500'}`}>ADMIN</span>
-              </div>
+              </div> */}
             </div>
           </div>
 

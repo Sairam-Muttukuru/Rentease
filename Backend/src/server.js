@@ -17,4 +17,5 @@ server.listen(PORT, () => {
     console.log(`Server running on port ${PORT} with WebSockets`);
     // Start Cron Jobs
     initRentScheduler();
+    require("./script/RentReminderCron");
 });

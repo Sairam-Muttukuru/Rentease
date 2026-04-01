@@ -86,10 +86,6 @@ exports.getPropertiesByLandlord = async (landlordId) => {
 exports.getPropertyDetails = async (propertyId) => {
   const property = await Property.getPropertyById(propertyId);
   if (!property) throw new Error("Property not found");
-
-  property.images = await Images.getImagesByProperty(propertyId);
-  property.amenities = await Amenities.getAmenitiesByProperty(propertyId);
-
   return property;
 };
 

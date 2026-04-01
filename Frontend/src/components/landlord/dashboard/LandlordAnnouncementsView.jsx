@@ -3,6 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import { Megaphone, Trash2, Calendar, AlertCircle, Plus, X } from 'lucide-react';
+import BASE_URL from '../../../utils/apiConfig';
 
 const LandlordAnnouncementsView = ({ isDarkMode, properties = [] }) => {
     const [announcements, setAnnouncements] = useState([]);
@@ -38,7 +39,7 @@ const LandlordAnnouncementsView = ({ isDarkMode, properties = [] }) => {
 
         try {
             const token = localStorage.getItem("accessToken");
-            const res = await axios.get(`https://rentease-1-pwm5.onrender.com/api/tenants/property/${propertyId}`, {
+            const res = await axios.get(`${BASE_URL}/api/tenants/property/${propertyId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setTenants(res.data);
@@ -51,7 +52,7 @@ const LandlordAnnouncementsView = ({ isDarkMode, properties = [] }) => {
     const fetchAnnouncements = async () => {
         try {
             const token = localStorage.getItem("accessToken");
-            const res = await axios.get('https://rentease-1-pwm5.onrender.com/api/announcement/landlord', {
+            const res = await axios.get(`${BASE_URL}/api/announcement/landlord`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setAnnouncements(res.data);
@@ -67,7 +68,7 @@ const LandlordAnnouncementsView = ({ isDarkMode, properties = [] }) => {
         e.preventDefault();
         try {
             const token = localStorage.getItem("accessToken");
-            await axios.post('https://rentease-1-pwm5.onrender.com/api/announcement', formData, {
+            await axios.post(`${BASE_URL}/api/announcement`, formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success("Announcement posted successfully!");
@@ -96,7 +97,7 @@ const LandlordAnnouncementsView = ({ isDarkMode, properties = [] }) => {
         if (result.isConfirmed) {
             try {
                 const token = localStorage.getItem("accessToken");
-                await axios.delete(`https://rentease-1-pwm5.onrender.com/api/announcement/${id}`, {
+                await axios.delete(`${BASE_URL}/api/announcement/${id}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setAnnouncements(prev => prev.filter(a => a.id !== id));
@@ -202,13 +203,15 @@ const LandlordAnnouncementsView = ({ isDarkMode, properties = [] }) => {
                                     className={`w-full px-4 py-2.5 rounded-xl border ${isDarkMode ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'} outline-none`}
                                 >
                                     <option value="">-- Choose Property --</option>
-                                    {properties.map(prop => (
-                                        <option key={prop.id} value={prop.id}>{prop.title}</option>
+                                    {properties.filter(prop => prop.tenant_count > 0).map(prop => (
+                                        <option key={prop.id} value={prop.id}>
+                                            {prop.title} {prop.flat_number ? `(${prop.flat_number})` : ''}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
 
-                            {formData.property_id && (
+                            {formData.property_id && properties.find(p => p.id == formData.property_id)?.tenant_count > 1 && (
                                 <div>
                                     <label className={`block text-sm font-medium mb-1.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Target Audience</label>
                                     <div className="flex gap-4 mt-2">

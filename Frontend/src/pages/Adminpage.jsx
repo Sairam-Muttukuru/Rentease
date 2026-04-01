@@ -19,6 +19,8 @@ import {
 import { useTheme } from '../context/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
 import logo from "/favicon.png";
+import AdminLoader from '../components/AdminLoader';
+
 // --- THEME TOGGLE (Reused) ---
 const ThemeToggle = ({ theme, toggleTheme }) => (
     <button
@@ -30,6 +32,7 @@ const ThemeToggle = ({ theme, toggleTheme }) => (
         </div>
     </button>
 );
+
 // --- CONFIG ---
 const API_URL = `${import.meta.env.VITE_API_URL || 'https://rentease-1-pwm5.onrender.com'}/api/admin`;
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']; // Indigo-based palette
@@ -207,7 +210,7 @@ const Overview = ({ stats }) => {
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDarkMode ? "#334155" : "#e2e8f0"} strokeOpacity={0.5} />
                                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8', fontWeight: 'bold' }} dy={10} />
-                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} width={45} />
                                 <Tooltip
                                     cursor={{ fill: isDarkMode ? '#1e293b' : '#f1f5f9', opacity: 0.4 }}
                                     contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', backgroundColor: isDarkMode ? '#1e293b' : '#fff' }}
@@ -324,12 +327,71 @@ const UserManagement = () => {
         } catch (err) { toast.error("Failed to load users"); }
     };
     useEffect(() => { fetchUsers(); }, []);
-    const toggleStatus = async (id) => {
-        try {
-            await axios.put(`${API_URL}/users/${id}/status`, {}, getAuthConfig());
-            toast.success("User status updated");
-            fetchUsers();
-        } catch (err) { toast.error("Action failed"); }
+    const toggleStatus = async (user) => {
+        const isBlocking = user.status === 'Active';
+        
+        if (isBlocking) {
+            const { value: reason } = await Swal.fire({
+                title: 'Block User account?',
+                text: `You are about to suspend ${user.first_name} ${user.last_name}. They will lose all access to the RentEase platform immediately.`,
+                icon: 'warning',
+                input: 'textarea',
+                inputLabel: 'Provide Reason for Blocking',
+                inputPlaceholder: 'Enter the violation details or reason for suspension...',
+                inputAttributes: {
+                    'aria-label': 'Reason for blocking'
+                },
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Confirm Block',
+                cancelButtonText: 'Cancel',
+                customClass: {
+                    popup: 'rounded-3xl border border-white/20 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl',
+                    title: 'text-2xl font-black text-slate-900 dark:text-white',
+                    input: 'rounded-xl border-slate-200 dark:border-slate-700 focus:ring-rose-500/20 focus:border-rose-500 dark:bg-slate-800 dark:text-white'
+                },
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'A reason is required to notify the user!';
+                    }
+                }
+            });
+
+            if (reason) {
+                try {
+                    await axios.put(`${API_URL}/users/${user.id}/status`, { reason }, getAuthConfig());
+                    toast.success(`User ${user.first_name} has been blocked`);
+                    fetchUsers();
+                } catch (err) { toast.error("Action failed"); }
+            }
+        } else {
+            const { value: message } = await Swal.fire({
+                title: 'Reactivate User Account?',
+                text: `You are about to restore full access for ${user.first_name}.`,
+                icon: 'question',
+                input: 'textarea',
+                inputLabel: 'Reactivation Message (sent to user)',
+                inputPlaceholder: 'Welcome back! Your account has been reviewed...',
+                inputValue: 'Your account access has been restored. You can now login and use RentEase normally. Welcome back!',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                confirmButtonText: 'Restore Access',
+                customClass: {
+                    popup: 'rounded-3xl border border-white/20 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl',
+                    title: 'text-2xl font-black text-slate-900 dark:text-white',
+                    input: 'rounded-xl border-slate-200 dark:border-slate-700 focus:ring-emerald-500/20 focus:border-emerald-500 dark:bg-slate-800 dark:text-white'
+                }
+            });
+
+            if (message) {
+                try {
+                    await axios.put(`${API_URL}/users/${user.id}/status`, { reason: message }, getAuthConfig());
+                    toast.success("User access restored and notified");
+                    fetchUsers();
+                } catch (err) { toast.error("Action failed"); }
+            }
+        }
     };
     const filteredUsers = users.filter(u =>
         (roleFilter === "All" || u.role === roleFilter) &&
@@ -395,7 +457,7 @@ const UserManagement = () => {
                                 <td className="px-8 py-5 text-sm text-slate-600 dark:text-slate-300 font-medium">{new Date(u.created_at).toLocaleDateString()}</td>
                                 <td className="px-8 py-5"><Badge variant={u.status === 'Active' ? 'success' : 'danger'}>{u.status}</Badge></td>
                                 <td className="px-8 py-5 text-right">
-                                    <button onClick={() => toggleStatus(u.id)} className={`p-2.5 rounded-xl transition-all shadow-sm ${u.status === 'Active' ? 'bg-white dark:bg-slate-800 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 border border-slate-200 dark:border-slate-700 hover:border-rose-200' : 'bg-white dark:bg-slate-800 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 border border-slate-200 dark:border-slate-700 hover:border-emerald-200'}`}>
+                                    <button onClick={() => toggleStatus(u)} className={`p-2.5 rounded-xl transition-all shadow-sm ${u.status === 'Active' ? 'bg-white dark:bg-slate-800 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 border border-slate-200 dark:border-slate-700 hover:border-rose-200' : 'bg-white dark:bg-slate-800 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 border border-slate-200 dark:border-slate-700 hover:border-emerald-200'}`}>
                                         {u.status === 'Active' ? <Ban size={18} /> : <CheckCircle size={18} />}
                                     </button>
                                 </td>
@@ -427,6 +489,31 @@ const PropertyManagement = () => {
             fetchProps();
         } catch (err) { toast.error("Action failed"); }
     };
+    const toggleFake = async (property) => {
+        const isCurrentlyFake = property.is_fake;
+        const result = await Swal.fire({
+            title: isCurrentlyFake ? 'Remove Fake Flag?' : 'Flag as Fake/Policy Violation?',
+            text: isCurrentlyFake 
+                ? `Do you want to restore the reputation of "${property.title}"?` 
+                : `Flagging "${property.title}" will show a warning to all users and suspend it immediately.`,
+            icon: isCurrentlyFake ? 'question' : 'warning',
+            showCancelButton: true,
+            confirmButtonColor: isCurrentlyFake ? '#10b981' : '#ef4444',
+            confirmButtonText: isCurrentlyFake ? 'Restore Reputation' : 'Flag as Fake',
+            customClass: {
+                popup: 'rounded-3xl border border-white/20 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl',
+                title: 'text-2xl font-black text-slate-900 dark:text-white',
+            }
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await axios.put(`${API_URL}/properties/${property.id}/flag-fake`, {}, getAuthConfig());
+                toast.success(isCurrentlyFake ? "Flag removed" : "Property flagged as fake");
+                fetchProps();
+            } catch (err) { toast.error("Action failed"); }
+        }
+    };
     return (
         <div className="space-y-6">
             <SectionHeader title="Property Management" />
@@ -446,7 +533,10 @@ const PropertyManagement = () => {
                         {properties.map(p => (
                             <tr key={p.id} className="hover:bg-indigo-50/30 transition-colors duration-150">
                                 <td className="px-8 py-5">
-                                    <div className="font-bold text-slate-900 dark:text-white text-lg">{p.title}</div>
+                                    <div className="font-bold text-slate-900 dark:text-white text-lg flex items-center gap-2">
+                                        {p.title}
+                                        {p.is_fake && <ShieldCheck size={16} className="text-rose-500" title="Flagged as Fake" />}
+                                    </div>
                                     <div className="text-xs text-slate-500 dark:text-slate-400 font-medium bg-slate-100 dark:bg-slate-700 inline-block px-2 py-0.5 rounded-md mt-1">{p.property_type}</div>
                                 </td>
                                 <td className="px-8 py-5 text-sm text-slate-600 dark:text-slate-300 font-medium flex items-center gap-1">
@@ -454,7 +544,12 @@ const PropertyManagement = () => {
                                 </td>
                                 <td className="px-8 py-5 text-sm font-semibold text-slate-700 dark:text-slate-300">{p.first_name} {p.last_name}</td>
                                 <td className="px-8 py-5 text-sm font-extrabold text-slate-900 dark:text-white">₹{p.price.toLocaleString()}</td>
-                                <td className="px-8 py-5"><Badge variant={p.status === 'Occupied' ? 'success' : p.status === 'Suspended' ? 'danger' : 'warning'}>{p.status}</Badge></td>
+                                <td className="px-8 py-5">
+                                    <div className="flex flex-col gap-1">
+                                        <Badge variant={p.status === 'Occupied' ? 'success' : p.status === 'Suspended' ? 'danger' : 'warning'}>{p.status}</Badge>
+                                        {p.is_fake && <span className="text-[10px] font-black text-rose-500 uppercase tracking-tighter self-center">FAKE REPORTED</span>}
+                                    </div>
+                                </td>
                                 <td className="px-8 py-5 text-right flex justify-end gap-3">
                                     <button onClick={() => { setSelectedProp(p); setCurrentImgIdx(0); }} className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 dark:hover:border-indigo-700 hover:shadow-md rounded-xl transition-all">
                                         <Eye size={18} />
@@ -462,9 +557,7 @@ const PropertyManagement = () => {
                                     <button onClick={() => toggleStatus(p.id)} className={`p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:shadow-md transition-all ${p.status === 'Suspended' ? 'text-emerald-500 hover:border-emerald-200' : 'text-rose-500 hover:border-rose-200'}`}>
                                         {p.status === 'Suspended' ? <CheckCircle size={18} /> : <Ban size={18} />}
                                     </button>
-                                    <button onClick={() => {
-                                        if (window.confirm("Flag this property as Fake/Violating Policy? This will suspend it.")) toggleStatus(p.id);
-                                    }} className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:border-rose-200 hover:shadow-md rounded-xl transition-all" title="Flag as Fake">
+                                    <button onClick={() => toggleFake(p)} className={`p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:shadow-md rounded-xl transition-all ${p.is_fake ? 'bg-rose-500 text-white border-rose-500' : 'text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:border-rose-200'}`} title={p.is_fake ? "Remove Fake Flag" : "Flag as Fake"}>
                                         <AlertCircle size={18} />
                                     </button>
                                 </td>
@@ -798,7 +891,7 @@ const ServiceProviders = () => {
         }
 
         return sorted.slice(0, 5).map(p => ({
-            name: p.first_name,
+            name: p.company_name,
             jobs: p.active_jobs_count || 0,
             service: p.service_type
         }));
@@ -1295,6 +1388,9 @@ const Adminpage = () => {
     const navigate = useNavigate();
     const { "*": tabSlug } = useParams();
     const activeView = tabSlug || 'overview';
+    const [showInitialLoader, setShowInitialLoader] = useState(() => {
+        return !sessionStorage.getItem('admin_loaded');
+    });
 
     const setActiveView = (view) => {
         navigate(`/admin/dashboard/${view}`);
@@ -1356,6 +1452,13 @@ const Adminpage = () => {
             toast.error("Logout failed");
         }
     };
+
+    if (showInitialLoader) {
+        return <AdminLoader onComplete={() => {
+            setShowInitialLoader(false);
+            sessionStorage.setItem('admin_loaded', 'true');
+        }} isDarkMode={theme === 'dark'} />;
+    }
 
     return (
         <div className="min-h-screen bg-[#f8fafc] dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 flex overflow-hidden relative transition-colors duration-500">

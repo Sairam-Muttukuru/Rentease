@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Megaphone, Calendar, X } from 'lucide-react';
+import BASE_URL from '../../../utils/apiConfig';
 
 const TenantAnnouncementsWidget = ({ isDarkMode }) => {
     const [announcements, setAnnouncements] = useState([]);
@@ -14,7 +15,7 @@ const TenantAnnouncementsWidget = ({ isDarkMode }) => {
     const fetchAnnouncements = async () => {
         try {
             const token = localStorage.getItem("accessToken");
-            const res = await axios.get('https://rentease-1-pwm5.onrender.com/api/announcement/tenant', {
+            const res = await axios.get(`${BASE_URL}/api/announcement/tenant`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setAnnouncements(res.data);

@@ -22,10 +22,18 @@ exports.getFullTenantByProperty = async (propertyId, landlordId) => {
   console.log("Fetching tenants for propertyId:", propertyId, "landlordId:", landlordId);
   return (await db.query(
     `
-    SELECT t.id, t.user_id, t.property_id, t.monthly_rent, tm.full_name as name, tm.tenant_emailid as email, tm.phone
+    SELECT 
+      t.id, 
+      t.user_id, 
+      t.property_id, 
+      t.monthly_rent, 
+      COALESCE(tm.full_name, CONCAT(u.first_name, ' ', u.last_name)) as name, 
+      COALESCE(tm.tenant_emailid, u.email) as email, 
+      COALESCE(tm.phone, u.phone) as phone
     FROM tenants t
-    JOIN tenant_members tm ON tm.tenant_id = t.id
-    WHERE t.property_id=$1 AND t.landlord_id=$2 AND tm.is_primary = true
+    JOIN users u ON u.id = t.user_id
+    LEFT JOIN tenant_members tm ON tm.tenant_id = t.id AND tm.is_primary = true
+    WHERE t.property_id=$1 AND t.landlord_id=$2
     `,
     [propertyId, landlordId]
   )).rows;

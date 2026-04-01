@@ -7,15 +7,32 @@ async function sendBookingStatusNotification(to, bookingDetails) {
         status,
         visitSlot,
         landlordName,
-        propertyAddress
+        propertyAddress,
+        propertyImage
     } = bookingDetails;
 
-    const isApproved = status === 'Approved';
-    const color = isApproved ? '#10b981' : '#ef4444'; // Emerald or Red
-    const title = isApproved ? 'Booking Approved! 🎉' : 'Booking Update';
-    const message = isApproved
-        ? `Great news! Your booking request has been accepted by the landlord.`
-        : `Your booking request has been updated.`;
+    const upperStatus = status.toUpperCase();
+    const isApproved = upperStatus === 'APPROVED' || upperStatus === 'CONFIRMED';
+    const isRejected = upperStatus === 'REJECTED' || upperStatus === 'CANCELLED';
+    const isRescheduled = upperStatus === 'RESCHEDULED';
+    
+    let color = '#3b82f6'; // Default Blue for informational/rescheduled
+    let title = 'Booking Update';
+    let message = 'Your booking request has been updated.';
+
+    if (isApproved) {
+        color = '#10b981'; // Emerald
+        title = 'Booking Approved';
+        message = 'Great news! Your booking request has been accepted by the landlord.';
+    } else if (isRejected) {
+        color = '#ef4444'; // Red
+        title = 'Booking Declined';
+        message = 'Your booking request has been declined by the landlord.';
+    } else if (isRescheduled) {
+        color = '#f59e0b'; // Amber
+        title = 'Booking Rescheduled';
+        message = 'Your booking has been rescheduled to a new time slot.';
+    }
 
     let contentHtml = '';
 
@@ -24,14 +41,14 @@ async function sendBookingStatusNotification(to, bookingDetails) {
         const time = new Date(visitSlot).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
         contentHtml = `
-            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 20px; margin: 20px 0;">
-                <h3 style="color: #166534; margin-top: 0;">Scheduled Visit</h3>
-                <p style="margin: 5px 0; color: #15803d; font-size: 16px;"><strong>Date:</strong> ${date}</p>
-                <p style="margin: 5px 0; color: #15803d; font-size: 16px;"><strong>Time:</strong> ${time}</p>
-                <p style="margin-top: 15px; font-size: 14px; color: #166534;">Please arrive on time at the property location.</p>
+            <div style="background-color: ${isRescheduled ? '#fffbeb' : '#f0fdf4'}; border: 1px solid ${isRescheduled ? '#fde68a' : '#bbf7d0'}; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                <h3 style="color: ${isRescheduled ? '#b45309' : '#166534'}; margin-top: 0;">${isRescheduled ? 'New Time Slot' : 'Scheduled Visit'}</h3>
+                <p style="margin: 5px 0; color: ${isRescheduled ? '#b45309' : '#15803d'}; font-size: 16px;"><strong>Date:</strong> ${date}</p>
+                <p style="margin: 5px 0; color: ${isRescheduled ? '#b45309' : '#15803d'}; font-size: 16px;"><strong>Time:</strong> ${time}</p>
+                <p style="margin-top: 15px; font-size: 14px; color: ${isRescheduled ? '#b45309' : '#166534'};">Please arrive on time at the property location.</p>
             </div>
         `;
-    } else if (status === 'Rejected') {
+    } else if (isRejected) {
         contentHtml = `
             <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 20px; margin: 20px 0;">
                 <h3 style="color: #991b1b; margin-top: 0;">Request Declined</h3>
@@ -49,6 +66,7 @@ async function sendBookingStatusNotification(to, bookingDetails) {
             </div>
 
             <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px;">
+                ${propertyImage ? `<img src="${propertyImage}" alt="Property Image" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 20px;">` : ''}
                 <h2 style="color: #1f2937; margin-top: 0;">Property Details</h2>
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr>

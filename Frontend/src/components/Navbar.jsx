@@ -68,7 +68,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="fixed inset-x-0 top-0 z-50">
+    <nav className="fixed inset-x-0 top-0 z-[1001]">
       <RevealOnScroll delay={80} duration={520} distance={-18} threshold={0.01} className="w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
           <div

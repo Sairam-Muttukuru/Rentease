@@ -1,4 +1,6 @@
 const TenantService = require("../../services/tenant/TenantService");
+const AuditService = require("../../services/common/AuditService");
+
 const ServiceProviderService = require("../../services/serviceProvider/ServiceProviderService");
 const BookingService = require("../../services/booking/BookingService");
 const logger = require("../../utils/logger");
@@ -13,6 +15,8 @@ exports.addTenant = async (req, res) => {
       propertyId,
       req.body
     );
+
+    await AuditService.logTenantAction(landlordId, tenant.id, propertyId, "Added", `Tenant Name: ${tenant.name}`);
 
     res.status(201).json(tenant);
   } catch (err) {
@@ -37,6 +41,7 @@ exports.updateTenant = async (req, res) => {
 exports.deleteTenant = async (req, res) => {
   try {
     await TenantService.deleteTenant(req.user.id, req.params.tenantId);
+    await AuditService.logTenantAction(req.user.id, req.params.tenantId, "N/A", "Deleted");
     res.json({ message: "Tenant deleted successfully" });
   } catch (err) {
     res.status(403).json({ error: err.message });

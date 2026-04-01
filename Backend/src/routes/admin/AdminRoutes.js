@@ -18,6 +18,7 @@ router.put("/users/:id/status", ctrl.toggleUserStatus);
 // Property Monitoring
 router.get("/properties", ctrl.getProperties);
 router.put("/properties/:id/status", ctrl.togglePropertyStatus);
+router.put("/properties/:id/flag-fake", ctrl.flagPropertyFake);
 
 // Complaint Management
 router.get("/complaints", ctrl.getComplaints);

@@ -101,6 +101,9 @@ exports.userGrowthChart = async () =>
 exports.getUsers = async (adminId) =>
   (await db.query("SELECT * FROM users WHERE id != $1", [adminId])).rows;
 
+exports.getUserById = async (id) =>
+  (await db.query("SELECT * FROM users WHERE id = $1", [id])).rows[0];
+
 exports.toggleUserStatus = async (id) =>
   db.query(`UPDATE users SET status = CASE WHEN status='Active' THEN 'Blocked' ELSE 'Active' END WHERE id=$1`, [id]);
 
@@ -120,6 +123,9 @@ exports.getProperties = async () =>
 
 exports.togglePropertyStatus = async (id) =>
   db.query(`UPDATE properties SET status = CASE WHEN status='Suspended' THEN 'Available' ELSE 'Suspended' END WHERE id=$1`, [id]);
+
+exports.togglePropertyFake = async (id) =>
+  db.query(`UPDATE properties SET is_fake = NOT is_fake WHERE id=$1`, [id]);
 
 exports.getComplaints = async () =>
   (await db.query(`

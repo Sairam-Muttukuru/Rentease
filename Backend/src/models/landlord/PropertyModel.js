@@ -491,7 +491,7 @@ exports.deletePropertyWithRelations = async (propertyId, landlordId) => {
     // ✅ 1. Delete Service Related (Reviews, Updates, Earnings, Slots)
     // These reference service_requests. Clear by property_id OR tenant_id subquery.
     await client.query(`
-      DELETE FROM service_reviews WHERE user_id IN (SELECT user_id FROM tenants WHERE property_id=$1)
+      DELETE FROM reviews WHERE user_id IN (SELECT user_id FROM tenants WHERE property_id=$1)
     `, [propertyId]);
 
     await client.query(`

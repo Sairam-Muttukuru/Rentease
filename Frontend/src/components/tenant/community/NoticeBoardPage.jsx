@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useTheme } from "../../../context/ThemeContext";
 import Card from '../ui/Card';
 import { Bell, Calendar, Pin, AlertTriangle, PartyPopper, Wrench, Clock, Search } from 'lucide-react';
+import BASE_URL from '../../../utils/apiConfig';
 
 const NoticeBoardPage = () => {
     const { theme } = useTheme();
@@ -16,7 +17,7 @@ const NoticeBoardPage = () => {
         const fetchNotices = async () => {
             try {
                 const token = localStorage.getItem("accessToken");
-                const res = await axios.get('https://rentease-1-pwm5.onrender.com/api/announcement/tenant', {
+                const res = await axios.get(`${BASE_URL}/api/announcement/tenant`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 // Map backend fields to frontend expected fields if necessary

@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const controller = require("../../controllers/serviceProvider/ServiceProviderController");
+const slotController = require("../../controllers/booking/SlotController");
+
 const { upload } = require("../../config/cloudinary");
 const protect = require("../../middlewares/AuthMiddleware");
 const role = require("../../middlewares/RoleMiddleware");
@@ -20,6 +22,8 @@ router.delete("/services/:id", controller.deleteService);
 router.patch("/services/:id/toggle", controller.toggleService);
 router.get("/bookings", controller.getBookings);
 router.patch("/bookings/:id/status", controller.updateBookingStatus);
+router.post("/slots", slotController.createSlot);
+
 
 // Catalog Routes
 router.get("/catalog/categories", controller.getCategories);

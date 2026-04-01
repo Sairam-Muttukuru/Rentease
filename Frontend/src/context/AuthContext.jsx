@@ -37,15 +37,19 @@ export const AuthProvider = ({ children }) => {
     const login = (userData, token) => {
         localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('accessToken', token);
+        // Clear landlord and admin loader flags so the animation runs on new login
+        sessionStorage.removeItem('landlord_loaded');
+        sessionStorage.removeItem('admin_loaded');
         setUser(userData);
     };
 
     const logout = () => {
         localStorage.removeItem('user');
         localStorage.removeItem('accessToken');
-        localStorage.removeItem('selectedTenantId'); // Added for cleanliness heart
+        localStorage.removeItem('selectedTenantId');
+        sessionStorage.removeItem('landlord_loaded');
+        sessionStorage.removeItem('admin_loaded');
         setUser(null);
-        // window.location.reload(); // Removed to prevent blinking; navigation handles it heart
     };
 
     useEffect(() => {
@@ -53,8 +57,8 @@ export const AuthProvider = ({ children }) => {
         const interceptor = axios.interceptors.response.use(
             (response) => response,
             (error) => {
-                if (error.response && error.response.status === 401) {
-                    console.warn('401 Unauthorized detected. Logging out user.');
+                if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+                    console.warn(`${error.response.status} Forbidden/Unauthorized detected. Logging out user.`);
                     logout();
                 }
                 return Promise.reject(error);

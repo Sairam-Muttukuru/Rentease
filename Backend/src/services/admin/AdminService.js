@@ -1,6 +1,7 @@
 const model = require("../../models/admin/AdminModel");
 const bcrypt = require("bcryptjs");
 const sendMail = require("../../utils/email/sendCredentialsMail");
+const sendUserBlockEmail = require("../../utils/email/sendUserBlockEmail");
 const sendProviderDeletionEmail = require("../../utils/email/sendProviderDeletionEmail");
 
 exports.getOverview = async () => {
@@ -29,16 +30,41 @@ exports.getOverview = async () => {
 };
 
 exports.getUsers = (adminId) => model.getUsers(adminId);
-exports.toggleUserStatus = async (id, adminId) => {
-  const res = await model.toggleUserStatus(id);
-  await model.logAction(adminId, `Updated User status (ID: ${id})`);
-  return res;
+exports.toggleUserStatus = async (id, reason, adminId) => {
+  const user = await model.getUserById(id);
+  if (!user) throw new Error("User not found.");
+
+  const oldStatus = user.status;
+  const newStatus = oldStatus === 'Active' ? 'Blocked' : 'Active';
+
+  await model.toggleUserStatus(id);
+  await model.logAction(adminId, `${newStatus} User Access: ${user.email} (Reason: ${reason || 'N/A'})`);
+
+  // Background dispatch (Removing await for instant response)
+  console.log(`[StatusUpdate] Dispatching ${newStatus === 'Blocked' ? 'Block' : 'Action'} notification...`);
+  
+  sendUserBlockEmail(user.email, user.first_name, reason, newStatus === 'Blocked')
+    .then(isSent => {
+        if (isSent) console.log(`[StatusUpdate] ✅ Success: Email delivered to ${user.email}`);
+        else console.error(`[StatusUpdate] ❌ Error: sendMail returned false for ${user.email}`);
+    })
+    .catch(err => {
+        console.error(`[StatusUpdate] 🔥 Critical failure in background task for ${user.email}:`, err.message);
+    });
+
+  return { message: `User status changed from ${oldStatus} to ${newStatus}`, newStatus };
 };
 
 exports.getProperties = () => model.getProperties();
 exports.togglePropertyStatus = async (id, adminId) => {
   const res = await model.togglePropertyStatus(id);
-  await model.logAction(adminId, `Updated Property status (ID: ${id})`);
+  await model.logAction(adminId, `Changed Property Visibility (ID: ${id})`);
+  return res;
+};
+
+exports.flagPropertyFake = async (id, adminId) => {
+  const res = await model.togglePropertyFake(id);
+  await model.logAction(adminId, `Flagged Property (ID: ${id}) as SCAM/FAKE`);
   return res;
 };
 
@@ -93,7 +119,7 @@ exports.addProvider = async (data, adminId) => {
     // 5. Send Welcome Email
     sendMail(normalizedData.email, tempPass).catch(e => console.error("Background Email Error:", e));
 
-    await model.logAction(adminId, `Added Service Provider: ${normalizedData.company_name}`);
+    await model.logAction(adminId, `Registered New Service Provider: ${normalizedData.company_name} (${normalizedData.service_type})`);
 
     return provider;
   } catch (err) {
@@ -114,7 +140,7 @@ exports.deleteProvider = async (id, reason, adminId) => {
       console.error("Failed to send deletion email:", e);
     });
 
-    await model.logAction(adminId, `Deleted Service Provider: ${provider.company_name} (Reason: ${reason})`);
+    await model.logAction(adminId, `Permanently Deleted Provider: ${provider.company_name} (Reason: ${reason})`);
     return { message: "Provider deleted successfully" };
   } catch (err) {
     if (err.message.includes("foreign key constraint")) {
@@ -127,7 +153,7 @@ exports.deleteProvider = async (id, reason, adminId) => {
 
 exports.toggleProviderStatus = async (id, adminId) => {
   const res = await model.toggleProviderStatus(id);
-  await model.logAction(adminId, `Updated Provider status (ID: ${id})`);
+  await model.logAction(adminId, `Toggled Service Provider Active Status (ID: ${id})`);
   return res;
 };
 

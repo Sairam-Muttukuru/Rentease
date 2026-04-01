@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { Home, UserCheck, UserX } from 'lucide-react';
+import { Home, UserCheck, UserX, Eye, X } from 'lucide-react';
 import { Card } from '../../ui/card';
 
 const LandlordBookingsView = ({ isDarkMode, bookings, onUpdateStatus, onRentToApplicant }) => {
     const [filter, setFilter] = useState('All');
     const [isApproveModalOpen, setIsApproveModalOpen] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState(null);
+    const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+    const [selectedMessage, setSelectedMessage] = useState('');
     const [visitDate, setVisitDate] = useState('');
     const [visitTime, setVisitTime] = useState('');
 
@@ -28,8 +30,8 @@ const LandlordBookingsView = ({ isDarkMode, bookings, onUpdateStatus, onRentToAp
 
     const confirmApproval = () => {
         if (!visitDate || !visitTime) return;
-        const visitSlot = new Date(`${visitDate}T${visitTime}`);
-        onUpdateStatus(selectedBooking.id, 'Approved', visitSlot.toISOString());
+        const visitSlot = `${visitDate} ${visitTime}:00`;
+        onUpdateStatus(selectedBooking.id, 'Approved', visitSlot);
         setIsApproveModalOpen(false);
         setSelectedBooking(null);
         setVisitDate('');
@@ -105,10 +107,26 @@ const LandlordBookingsView = ({ isDarkMode, bookings, onUpdateStatus, onRentToAp
                                         <div className="flex flex-col">
                                             <span className={`font-bold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{booking.tenantName}</span>
                                             {booking.email && <span className="text-xs text-slate-500">{booking.email}</span>}
+                                            {booking.message && (
+                                                <button 
+                                                    onClick={() => { setSelectedMessage(booking.message); setIsMessageModalOpen(true); }}
+                                                    className="flex items-center gap-1 text-[10px] mt-1 text-violet-500 hover:text-violet-600 font-bold transition-colors w-fit"
+                                                    title="View Message"
+                                                >
+                                                    <Eye size={12} /> View Message
+                                                </button>
+                                            )}
                                         </div>
                                     </td>
-                                    <td className={`p-6 font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                        {new Date(booking.created_at).toLocaleDateString()}
+                                    <td className="p-6">
+                                        <div className="flex flex-col">
+                                            <span className={`text-xs font-bold ${isDarkMode ? 'text-slate-500' : 'text-slate-400'} uppercase tracking-tight`}>Applied on:</span>
+                                            <span className={`font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                                                {new Date(booking.created_at).toLocaleDateString('en-IN', {
+                                                    day: '2-digit', month: '2-digit', year: 'numeric'
+                                                })}
+                                            </span>
+                                        </div>
                                     </td>
                                     <td className={`p-6 font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>{booking.userType}</td>
                                     <td className="p-6">
@@ -116,20 +134,31 @@ const LandlordBookingsView = ({ isDarkMode, bookings, onUpdateStatus, onRentToAp
                                             <span className={`px-3 py-1 w-fit rounded-full text-xs font-black uppercase tracking-wide border ${getStatusStyle(booking.status)}`}>
                                                 {booking.status}
                                             </span>
-                                            {['Approved', 'APPROVED'].includes(booking.status) && booking.visit_slot && (
-                                                <span className={`text-xs font-medium ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                                                    Visit: {new Date(booking.visit_slot).toLocaleString('en-US', {
-                                                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                                                    })}
-                                                </span>
-                                            )}
-                                            {['Pending', 'PENDING'].includes(booking.status) && booking.visit_slot && (
-                                                <span className={`text-xs font-medium ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-                                                    Requested: {new Date(booking.visit_slot).toLocaleString('en-US', {
-                                                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                                                    })}
-                                                </span>
-                                            )}
+                                            {booking.status.toUpperCase() === 'VISITED' && booking.visited_at ? (
+                                                <div className="flex flex-col mt-1">
+                                                    <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                                                        Visit Completed:
+                                                    </span>
+                                                    <span className={`text-xs font-bold truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                                                        {new Date(booking.visited_at).toLocaleString('en-US', {
+                                                            day: '2-digit', month: 'short', year: 'numeric',
+                                                            hour: '2-digit', minute: '2-digit', hour12: true
+                                                        })}
+                                                    </span>
+                                                </div>
+                                            ) : booking.visit_slot ? (
+                                                <div className="flex flex-col mt-1">
+                                                    <span className={`text-[10px] font-black uppercase tracking-widest ${isDarkMode ? 'text-violet-400' : 'text-violet-600'}`}>
+                                                        {['Approved', 'APPROVED'].includes(booking.status) ? 'Confirmed Visit:' : 'Requested Slot:'}
+                                                    </span>
+                                                    <span className={`text-xs font-bold truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-800'}`}>
+                                                        {new Date(booking.visit_slot).toLocaleString('en-US', {
+                                                            day: '2-digit', month: 'short', year: 'numeric',
+                                                            hour: '2-digit', minute: '2-digit', hour12: true
+                                                        })}
+                                                    </span>
+                                                </div>
+                                            ) : null}
                                         </div>
                                     </td>
                                     <td className="p-6">
@@ -218,12 +247,24 @@ const LandlordBookingsView = ({ isDarkMode, bookings, onUpdateStatus, onRentToAp
                                 </div>
                                 <div>
                                     <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Time</label>
-                                    <input
-                                        type="time"
+                                    <select
                                         value={visitTime}
                                         onChange={(e) => setVisitTime(e.target.value)}
                                         className={`w-full p-3 rounded-xl border ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200'} outline-none focus:ring-2 focus:ring-violet-500`}
-                                    />
+                                    >
+                                        <option value="" disabled>Select Time</option>
+                                        {Array.from({ length: 28 }).map((_, i) => {
+                                            const hour = Math.floor(i / 2) + 8; // 8 AM to 9:30 PM
+                                            const mins = i % 2 === 0 ? "00" : "30";
+                                            const isPM = hour >= 12;
+                                            const displayHour = hour > 12 ? hour - 12 : hour;
+                                            const displayHourStr = displayHour.toString().padStart(2, '0');
+                                            const valueHour = hour.toString().padStart(2, '0');
+                                            const ampm = isPM ? "PM" : "AM";
+                                            const val = `${valueHour}:${mins}`;
+                                            return <option key={val} value={val}>{`${displayHourStr}:${mins} ${ampm}`}</option>;
+                                        })}
+                                    </select>
                                 </div>
                             </div>
 
@@ -246,6 +287,34 @@ const LandlordBookingsView = ({ isDarkMode, bookings, onUpdateStatus, onRentToAp
                     </div>
                 )
             }
+
+            {/* Message Modal */}
+            {isMessageModalOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className={`w-full max-w-md p-6 rounded-2xl shadow-xl relative ${isDarkMode ? 'bg-slate-900 border border-slate-800' : 'bg-white'}`}>
+                        <button 
+                            onClick={() => setIsMessageModalOpen(false)}
+                            className={`absolute top-4 right-4 p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}
+                        >
+                            <X size={16} />
+                        </button>
+                        <h3 className={`text-xl font-bold mb-4 flex items-center gap-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                           <Eye className="text-violet-500" size={20} /> Tenant's Message
+                        </h3>
+                        <div className={`p-4 rounded-xl text-sm font-medium leading-relaxed max-h-[300px] overflow-y-auto ${isDarkMode ? 'bg-slate-800/50 text-slate-300' : 'bg-slate-50 text-slate-700'}`}>
+                            {selectedMessage || "No message provided."}
+                        </div>
+                        <div className="mt-6 flex justify-end">
+                            <button
+                                onClick={() => setIsMessageModalOpen(false)}
+                                className={`px-5 py-2 rounded-lg font-bold transition-colors ${isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-slate-300' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'}`}
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };

@@ -21,6 +21,7 @@ const PropertyDetails = () => {
     const [selectedCategory, setSelectedCategory] = useState('education');
     const [pois, setPois] = useState([]);
     const [poisLoading, setPoisLoading] = useState(false);
+    const [poisError, setPoisError] = useState(false);
 
     const NEIGHBOURHOOD_CATEGORIES = [
         { id: 'education', name: 'Education', icon: GraduationCap, color: 'violet', label: 'Schools & Colleges' },
@@ -61,12 +62,16 @@ const PropertyDetails = () => {
 
         const fetchPOIs = async () => {
             setPoisLoading(true);
+            setPoisError(false);
             setPois([]);
             try {
                 const query = OVERPASS_QUERIES[selectedCategory];
-                const overpassQuery = `[out:json][timeout:15];${query}(around:2000,${lat},${lng});out 10;`;
+                const overpassQuery = `[out:json][timeout:10];${query}(around:2000,${lat},${lng});out 10;`;
                 const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
-                const res = await axios.get(url);
+                
+                // Add 10s timeout to Axios to handle Overpass API slowness
+                const res = await axios.get(url, { timeout: 10000 });
+                
                 const results = (res.data.elements || [])
                     .filter(el => el.lat && el.lon && el.tags?.name)
                     .slice(0, 8)
@@ -84,7 +89,8 @@ const PropertyDetails = () => {
                     });
                 setPois(results);
             } catch (err) {
-                console.error('Overpass API error:', err);
+                console.error('Neighbourhood Info Error (Overpass API):', err.message);
+                setPoisError(true);
                 setPois([]);
             } finally {
                 setPoisLoading(false);
@@ -104,10 +110,16 @@ const PropertyDetails = () => {
         setIsChatOpen(true);
     };
 
+    // Resolve API URL dynamically
+    const BASE_URL = import.meta.env.VITE_API_URL || 
+                    (window.location.hostname === 'localhost' 
+                      ? 'http://localhost:5000' 
+                      : 'https://rentease-1-pwm5.onrender.com');
+
     useEffect(() => {
         const fetchProperty = async () => {
             try {
-                const res = await axios.get(`https://rentease-1-pwm5.onrender.com/api/properties/${id}`);
+                const res = await axios.get(`${BASE_URL}/api/properties/${id}`);
                 setProperty(res.data);
             } catch (err) {
                 console.error("Failed to load property", err);
@@ -117,7 +129,7 @@ const PropertyDetails = () => {
             }
         };
         fetchProperty();
-    }, [id]);
+    }, [id, BASE_URL]);
 
     const [visitDate, setVisitDate] = useState('');
     const [visitTime, setVisitTime] = useState('');
@@ -133,11 +145,25 @@ const PropertyDetails = () => {
             return;
         }
 
-        const visitSlot = new Date(`${visitDate}T${visitTime}`).toISOString();
+        const now = new Date();
+        const todayArr = [
+            now.getFullYear(),
+            String(now.getMonth() + 1).padStart(2, '0'),
+            String(now.getDate()).padStart(2, '0')
+        ];
+        const today = todayArr.join('-');
+        
+        if (visitDate < today) {
+            toast.error("Please select a date from today onwards.");
+            return;
+        }
+
+        // Send EXACT string to avoid UTC shifting
+        const visitSlot = `${visitDate} ${visitTime}:00`;
 
         setIsBooking(true);
         try {
-            await axios.post('https://rentease-1-pwm5.onrender.com/api/bookings',
+            await axios.post(`${BASE_URL}/api/bookings`,
                 { propertyId: id, message: bookingMessage, visitSlot },
                 { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } }
             );
@@ -152,8 +178,48 @@ const PropertyDetails = () => {
         }
     };
 
-    if (loading) return <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] text-gray-900 dark:text-white flex items-center justify-center">Loading...</div>;
-    if (!property) return <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] text-gray-900 dark:text-white flex items-center justify-center">Property not found</div>;
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] transition-colors duration-300">
+                <Navbar />
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-12 animate-pulse">
+                    <div className="h-10 w-48 bg-gray-200 dark:bg-white/5 rounded-full mb-8"></div>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
+                        <div className="space-y-4">
+                            <div className="h-12 w-96 bg-gray-200 dark:bg-white/5 rounded-2xl"></div>
+                            <div className="h-6 w-64 bg-gray-200 dark:bg-white/5 rounded-xl"></div>
+                        </div>
+                        <div className="flex gap-3">
+                            <div className="h-12 w-24 bg-gray-200 dark:bg-white/5 rounded-xl"></div>
+                            <div className="h-12 w-24 bg-gray-200 dark:bg-white/5 rounded-xl"></div>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12 h-[600px]">
+                        <div className="md:col-span-2 md:row-span-2 bg-gray-200 dark:bg-white/5 rounded-3xl"></div>
+                        <div className="bg-gray-200 dark:bg-white/5 rounded-3xl"></div>
+                        <div className="bg-gray-200 dark:bg-white/5 rounded-3xl"></div>
+                        <div className="bg-gray-200 dark:bg-white/5 rounded-3xl"></div>
+                        <div className="bg-gray-200 dark:bg-white/5 rounded-3xl"></div>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                        <div className="lg:col-span-2 space-y-12">
+                            <div className="h-24 w-full bg-gray-200 dark:bg-white/5 rounded-3xl"></div>
+                            <div className="h-64 w-full bg-gray-200 dark:bg-white/5 rounded-3xl"></div>
+                        </div>
+                        <div className="h-[500px] w-full bg-gray-200 dark:bg-white/5 rounded-[2.5rem]"></div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!property) return (
+        <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] text-gray-900 dark:text-white flex flex-col items-center justify-center gap-4">
+            <AlertCircle size={48} className="text-red-500" />
+            <h2 className="text-2xl font-bold">Property not found</h2>
+            <button onClick={() => navigate('/properties')} className="bg-violet-600 text-white px-6 py-2 rounded-xl">Back to Gallery</button>
+        </div>
+    );
 
     // Generate a robust list of images for display
     const getDisplayImages = () => {
@@ -385,11 +451,15 @@ const PropertyDetails = () => {
                                                 <p className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-wider">
                                                     {poisLoading ? (
                                                         <span className="animate-pulse">Searching...</span>
+                                                    ) : poisError ? (
+                                                        <span className="text-rose-500">Service temporarily busy</span>
                                                     ) : (
                                                         <>{pois.length} {NEIGHBOURHOOD_CATEGORIES.find(c => c.id === selectedCategory)?.label} found nearby</>
                                                     )}
                                                 </p>
-                                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Available around your home</p>
+                                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                                                    {poisError ? "Try switching categories or check later" : "Available around your home"}
+                                                </p>
                                             </div>
                                         </div>
                                         <button className="flex items-center gap-2 text-violet-600 dark:text-violet-400 font-bold text-sm bg-violet-600/10 px-4 py-2 rounded-xl group/btn">
@@ -499,17 +569,15 @@ const PropertyDetails = () => {
                                                 <input
                                                     type="date"
                                                     value={visitDate}
-                                                    onChange={(e) => {
-                                                        const selected = e.target.value;
-                                                        const today = new Date().toLocaleDateString('en-CA');
-                                                        if (selected < today) {
-                                                            setVisitDate(today);
-                                                            toast.info("Please select a date from today onwards.");
-                                                        } else {
-                                                            setVisitDate(selected);
-                                                        }
-                                                    }}
-                                                    min={new Date().toLocaleDateString('en-CA')}
+                                                    onChange={(e) => setVisitDate(e.target.value)}
+                                                    min={(() => {
+                                                        const now = new Date();
+                                                        return [
+                                                            now.getFullYear(),
+                                                            String(now.getMonth() + 1).padStart(2, '0'),
+                                                            String(now.getDate()).padStart(2, '0')
+                                                        ].join('-');
+                                                    })()}
                                                     className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 outline-none transition-all dark:[color-scheme:dark]"
                                                 />
                                             </div>
@@ -517,12 +585,24 @@ const PropertyDetails = () => {
                                                 <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-gray-500 dark:text-gray-400">
                                                     Time
                                                 </label>
-                                                <input
-                                                    type="time"
+                                                <select
                                                     value={visitTime}
                                                     onChange={(e) => setVisitTime(e.target.value)}
                                                     className="w-full bg-gray-50 dark:bg-black/50 border border-gray-200 dark:border-white/10 rounded-xl p-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 outline-none transition-all dark:[color-scheme:dark]"
-                                                />
+                                                >
+                                                    <option value="" disabled>Select Time</option>
+                                                    {Array.from({ length: 28 }).map((_, i) => {
+                                                        const hour = Math.floor(i / 2) + 8; // 8 AM to 9:30 PM
+                                                        const mins = i % 2 === 0 ? "00" : "30";
+                                                        const isPM = hour >= 12;
+                                                        const displayHour = hour > 12 ? hour - 12 : hour;
+                                                        const displayHourStr = displayHour.toString().padStart(2, '0');
+                                                        const valueHour = hour.toString().padStart(2, '0');
+                                                        const ampm = isPM ? "PM" : "AM";
+                                                        const val = `${valueHour}:${mins}`;
+                                                        return <option key={val} value={val}>{`${displayHourStr}:${mins} ${ampm}`}</option>;
+                                                    })}
+                                                </select>
                                             </div>
                                         </div>
                                     </div>

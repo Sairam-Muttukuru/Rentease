@@ -1,4 +1,6 @@
 const PropertyService = require("../../services/landlord/PropertyService");
+const AuditService = require("../../services/common/AuditService");
+
 
 exports.createProperty = async (req, res) => {
   try {
@@ -8,6 +10,7 @@ exports.createProperty = async (req, res) => {
       req.user.id,
       req.body
     );
+    await AuditService.logPropertyAction(req.user.id, property.id, "Created", `Title: ${property.title}`);
     res.status(201).json(property);
   } catch (err) {
     console.error("createProperty Error:", err);
@@ -81,6 +84,8 @@ exports.updateProperty = async (req, res) => {
       req.body
     );
 
+    await AuditService.logPropertyAction(req.user.id, req.params.id, "Updated", `Fields: ${Object.keys(req.body).join(", ")}`);
+
     res.json(updatedProperty);
   } catch (err) {
     console.error("updateProperty Error:", err);
@@ -94,6 +99,8 @@ exports.deleteProperty = async (req, res) => {
       req.params.id,
       req.user.id
     );
+
+    await AuditService.logPropertyAction(req.user.id, req.params.id, "Deleted");
 
     res.json({ message: "Property deleted successfully" });
   } catch (err) {

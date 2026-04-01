@@ -1006,9 +1006,17 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
                                         </>
                                     )}
                                     {job.status === 'Accepted' && (
-                                        <button onClick={() => onUpdateStatus(job.id, 'In Progress')} className="w-full lg:w-auto px-6 py-2.5 bg-amber-500 text-white hover:bg-amber-600 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-amber-500/20 active:scale-95 transition-all flex items-center justify-center gap-2">
-                                            Start Work <ChevronRight size={14} />
-                                        </button>
+                                        <div className="flex flex-col gap-2 w-full">
+                                             <button 
+                                                onClick={() => onUpdateStatus(job.id, 'Schedule')} 
+                                                className="w-full px-6 py-2.5 bg-sky-500 text-white hover:bg-sky-600 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-sky-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <Calendar size={14} /> Schedule Visit
+                                            </button>
+                                            <button onClick={() => onUpdateStatus(job.id, 'In Progress')} className="w-full px-6 py-2.5 bg-amber-500 text-white hover:bg-amber-600 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-amber-500/20 active:scale-95 transition-all flex items-center justify-center gap-2">
+                                                Start Work <ChevronRight size={14} />
+                                            </button>
+                                        </div>
                                     )}
                                     {job.status === 'In Progress' && (
                                         <button onClick={() => onUpdateStatus(job.id, 'Completed')} className="w-full lg:w-auto px-6 py-2.5 bg-emerald-500 text-white hover:bg-emerald-600 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-2">
@@ -1874,6 +1882,10 @@ const ServiceProvider = () => {
     const [rejectionBookingId, setRejectionBookingId] = useState(null);
     const [rejectionReason, setRejectionReason] = useState("");
 
+    // --- SLOT STATE ---
+    const [slotBookingId, setSlotBookingId] = useState(null);
+    const [slotForm, setSlotForm] = useState({ visit_date: "", start_time: "", end_time: "" });
+
     // --- FILTER CATEGORIES & SERVICES ---
     const { filteredCategories, filteredServices, filteredStats } = React.useMemo(() => {
         const typeMap = {
@@ -2117,6 +2129,11 @@ const ServiceProvider = () => {
             return;
         }
 
+        if (newStatus === 'Schedule') {
+            setSlotBookingId(id);
+            return;
+        }
+
         try {
             const payload = { status: newStatus };
             if (reason) payload.rejection_reason = reason;
@@ -2139,6 +2156,33 @@ const ServiceProvider = () => {
             console.error("Status Update Error:", err);
             toast.error("Failed to update job status");
         }
+    };
+
+    const handleCreateSlot = async () => {
+        if (!slotForm.visit_date || !slotForm.start_time || !slotForm.end_time) {
+            return toast.warning("Please fill in all slot details");
+        }
+
+        try {
+            await api.post('/slots', {
+                service_request_id: slotBookingId,
+                ...slotForm
+            });
+            toast.success("Visit scheduled & customer notified!");
+            setSlotBookingId(null);
+            setSlotForm({ visit_date: "", start_time: "", end_time: "" });
+        } catch (err) {
+            toast.error("Failed to schedule visit");
+        }
+    };
+
+    const formatTimeTo12h = (timeStr) => {
+        if (!timeStr) return "";
+        const [hours, minutes] = timeStr.split(':');
+        const h = parseInt(hours, 10);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const formattedH = h % 12 || 12;
+        return `${formattedH}:${minutes} ${ampm}`;
     };
 
     // --- RENDER HELPERS ---
@@ -2381,6 +2425,83 @@ const ServiceProvider = () => {
                                 className="flex-[2] px-8 py-3 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-[0_0_20px_rgba(225,29,72,0.4)] hover:shadow-[0_0_30px_rgba(225,29,72,0.6)] transition-all disabled:opacity-50 disabled:shadow-none"
                             >
                                 Submit Rejection
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Schedule Slot Modal */}
+            {slotBookingId && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+                    <div className="bg-slate-950 rounded-[2.5rem] shadow-2xl shadow-sky-900/20 max-w-lg w-full p-10 border border-sky-500/20 animate-in zoom-in-95 duration-300 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-48 h-48 bg-sky-500/10 rounded-full blur-3xl -mr-24 -mt-24 pointer-events-none"></div>
+
+                        <div className="flex items-center gap-6 mb-10 relative z-10">
+                            <div className="w-16 h-16 rounded-3xl bg-sky-950 border border-sky-500/30 text-sky-400 flex items-center justify-center shadow-[0_0_20px_rgba(14,165,233,0.3)]">
+                                <Calendar size={36} />
+                            </div>
+                            <div>
+                                <h3 className="text-3xl font-black text-white tracking-tight uppercase">Schedule Visit</h3>
+                                <p className="text-xs text-sky-400 font-bold tracking-widest uppercase mt-1">Notify customer of arrival time</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-6 relative z-10">
+                            <div>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Visit Date</label>
+                                <input
+                                    type="date"
+                                    value={slotForm.visit_date}
+                                    onChange={(e) => setSlotForm({ ...slotForm, visit_date: e.target.value })}
+                                    className="w-full px-6 py-4 bg-slate-900 rounded-2xl border border-slate-800 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none text-white font-bold"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Start Time</label>
+                                        <span className="text-[10px] font-bold text-sky-500 bg-sky-500/10 px-2 py-0.5 rounded-full">
+                                            {formatTimeTo12h(slotForm.start_time) || "Set Time"}
+                                        </span>
+                                    </div>
+                                    <input
+                                        type="time"
+                                        value={slotForm.start_time}
+                                        onChange={(e) => setSlotForm({ ...slotForm, start_time: e.target.value })}
+                                        className="w-full px-6 py-4 bg-slate-900 rounded-2xl border border-slate-800 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none text-white font-bold"
+                                    />
+                                </div>
+                                <div>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">End Time</label>
+                                        <span className="text-[10px] font-bold text-sky-500 bg-sky-500/10 px-2 py-0.5 rounded-full">
+                                            {formatTimeTo12h(slotForm.end_time) || "Set Time"}
+                                        </span>
+                                    </div>
+                                    <input
+                                        type="time"
+                                        value={slotForm.end_time}
+                                        onChange={(e) => setSlotForm({ ...slotForm, end_time: e.target.value })}
+                                        className="w-full px-6 py-4 bg-slate-900 rounded-2xl border border-slate-800 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none text-white font-bold"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4 mt-12 relative z-10">
+                            <button
+                                onClick={() => { setSlotBookingId(null); setSlotForm({ visit_date: "", start_time: "", end_time: "" }); }}
+                                className="flex-1 py-4 text-slate-500 font-bold hover:text-white hover:bg-white/5 rounded-2xl transition-all text-xs uppercase tracking-widest"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleCreateSlot}
+                                className="flex-[2] px-8 py-4 bg-sky-600 hover:bg-sky-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-[0_0_25px_rgba(14,165,233,0.4)] hover:shadow-[0_0_35px_rgba(14,165,233,0.6)] transition-all"
+                            >
+                                Confirm & Notify
                             </button>
                         </div>
                     </div>

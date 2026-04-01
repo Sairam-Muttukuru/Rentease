@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, MapPin, Bed, Bath, Maximize, ArrowRight, Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, MapPin, Bed, Bath, Maximize, ArrowRight, Star, ChevronLeft, ChevronRight, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext'; // Assuming AuthContext exists
 import { useNavigate } from 'react-router-dom';
 
@@ -25,6 +25,7 @@ const PropertyCard = ({ property }) => {
             navigate('/login');
             return;
         }
+        if (property.is_fake) return; // Prevent booking fake properties
         navigate(`/properties/${property.id}`); // Or open booking modal
     };
 
@@ -34,12 +35,23 @@ const PropertyCard = ({ property }) => {
 
     return (
         <div
-            className="group relative bg-white dark:bg-[#0a0a0a] rounded-[2rem] overflow-hidden border border-gray-200 dark:border-white/5 transition-all duration-500 hover:shadow-[0_0_50px_rgba(139,92,246,0.15)] hover:border-violet-500/30 hover:-translate-y-2 flex flex-col h-full"
+            className={`group relative bg-white dark:bg-[#0a0a0a] rounded-[2rem] overflow-hidden border transition-all duration-500 hover:shadow-[0_0_50px_rgba(139,92,246,0.15)] hover:border-violet-500/30 hover:-translate-y-2 flex flex-col h-full ${property.is_fake ? 'border-rose-500/50 grayscale-[0.3]' : 'border-gray-200 dark:border-white/5'}`}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
             {/* Image Slider */}
             <div className="relative h-72 overflow-hidden shrink-0">
+                {/* Fake Property Warning Overlay */}
+                {property.is_fake && (
+                    <div className="absolute inset-0 z-20 bg-rose-600/30 backdrop-blur-[2px] flex items-center justify-center pointer-events-none p-6 text-center">
+                        <div className="bg-rose-600 text-white px-5 py-3 rounded-2xl shadow-2xl border border-rose-400 flex flex-col items-center gap-2 scale-110">
+                            <ShieldAlert size={32} className="animate-bounce" />
+                            <span className="text-sm font-black uppercase tracking-tight">Reported as Fake</span>
+                            <span className="text-[10px] opacity-80">Do Not Book</span>
+                        </div>
+                    </div>
+                )}
+                
                 {images.map((img, index) => (
                     <img
                         key={index}
@@ -73,7 +85,12 @@ const PropertyCard = ({ property }) => {
                         <span className="bg-black/40 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1.5 rounded-full border border-white/10 uppercase tracking-widest hover:bg-black/60 transition-colors">
                             {property.property_type}
                         </span>
-                        {property.is_featured && (
+                        {property.is_fake && (
+                            <span className="bg-rose-600 text-white text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest flex items-center gap-1 shadow-lg border border-rose-500 animate-pulse">
+                                <ShieldAlert size={10} /> SCAM ALERT
+                            </span>
+                        )}
+                        {property.is_featured && !property.is_fake && (
                             <span className="bg-violet-600/90 text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest shadow-[0_0_15px_rgba(139,92,246,0.5)]">
                                 Featured
                             </span>
@@ -92,7 +109,7 @@ const PropertyCard = ({ property }) => {
                 {/* Price Tag */}
                 <div className="absolute bottom-5 left-6 text-white z-10">
                     <p className="text-3xl font-black tracking-tighter flex items-baseline gap-1 drop-shadow-lg">
-                        ${Number(property.price).toLocaleString()}
+                        ₹{Number(property.price).toLocaleString()}
                         <span className="text-sm font-medium text-gray-300 opacity-80">/mo</span>
                     </p>
                 </div>
@@ -109,7 +126,7 @@ const PropertyCard = ({ property }) => {
             <div className="p-6 relative flex flex-col flex-1">
                 <div className="mb-4">
                     <div className="flex justify-between items-start mb-2">
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white leading-tight group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors line-clamp-1">{property.title}</h3>
+                        <h3 className={`text-xl font-bold leading-tight transition-colors line-clamp-1 ${property.is_fake ? 'text-rose-600' : 'text-gray-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400'}`}>{property.title}</h3>
                     </div>
                     <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                         <MapPin className="w-4 h-4 text-violet-500 shrink-0" />
@@ -143,10 +160,10 @@ const PropertyCard = ({ property }) => {
                     </button>
                     <button
                         onClick={handleBookNow}
-                        disabled={property.status === 'Occupied'}
-                        className="flex-[2] bg-violet-600 hover:bg-violet-500 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white py-3 rounded-xl font-bold text-sm transition-all shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] flex items-center justify-center gap-2"
+                        disabled={property.status === 'Occupied' || property.is_fake}
+                        className={`flex-[2] py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${property.is_fake ? 'bg-rose-100 text-rose-500 cursor-not-allowed border border-rose-200' : 'bg-violet-600 hover:bg-violet-500 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)]'}`}
                     >
-                        {property.status === 'Occupied' ? 'Rented' : 'Book Now'} <ArrowRight className="w-4 h-4" />
+                        {property.is_fake ? 'Flagged Fake' : property.status === 'Occupied' ? 'Rented' : 'Book Now'} <ArrowRight className="w-4 h-4" />
                     </button>
                 </div>
             </div>

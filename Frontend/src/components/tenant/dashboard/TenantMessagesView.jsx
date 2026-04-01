@@ -31,7 +31,8 @@ export default function TenantMessagesView({ isDarkMode, currentUser, allPropert
         name: p.landlord_name,
         email: p.landlord_email,
         propertyName: p.property_name,
-        avatar_url: p.landlord_avatar_url // We might need to ensure this is fetched
+        propertyId: p.property_id || p.id, // Ensure propertyId is captured
+        avatar_url: p.landlord_avatar_url
     }])).values());
 
     // Filter and SORT landlords heart
@@ -218,7 +219,8 @@ export default function TenantMessagesView({ isDarkMode, currentUser, allPropert
             const token = localStorage.getItem("accessToken");
             const res = await axios.post(`${BASE_URL}/api/messages/send`, {
                 receiverId: selectedLandlord.user_id,
-                text: text
+                text: text,
+                propertyId: selectedLandlord.propertyId
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });

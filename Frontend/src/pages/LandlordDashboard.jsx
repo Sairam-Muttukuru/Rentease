@@ -407,14 +407,15 @@ export default function LandlordDashboard() {
   };
 
   const handleUpdateBookingStatus = async (bookingId, status, visitSlot = null) => {
+    const normalizedStatus = status ? status.toUpperCase() : status;
     try {
       const token = localStorage.getItem("accessToken");
       await axios.patch(`${BASE_URL}/api/bookings/${bookingId}/status`,
-        { status, visitSlot },
+        { status: normalizedStatus, visitSlot },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status, visit_slot: visitSlot } : b));
-      toast.success(`Booking ${status}`);
+      setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: normalizedStatus, visit_slot: visitSlot } : b));
+      toast.success(`Booking ${normalizedStatus.charAt(0) + normalizedStatus.slice(1).toLowerCase()}`);
     } catch (err) {
       toast.error("Failed to update booking status");
       console.error(err);
@@ -503,6 +504,7 @@ export default function LandlordDashboard() {
             tenants={tenants}
             complaints={complaints}
             payments={payments}
+            bookings={bookings}
           />
         )}
 

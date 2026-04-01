@@ -6,7 +6,7 @@ const sendRentWarning = require('../../utils/email/sendRentReminderEmail'); // N
 
 // Run every day at 9:00 AM
 const initRentScheduler = () => {
-    console.log('⏰ Rent Scheduler Initialized: Running daily at 9:00 AM');
+    console.log('⏰ Rent Scheduler Initialized: Running daily at 12:00 PM');
 
     /* 
     // OLD 9:00 AM Cron - Disabled in favor of 10:25 AM Consistently Scheduled Reminder

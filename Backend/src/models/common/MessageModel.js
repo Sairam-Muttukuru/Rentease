@@ -23,13 +23,13 @@ exports.getChatMessages = async (user1Id, user2Id) => {
 /**
  * Send a new message
  */
-exports.sendMessage = async (senderId, receiverId, text) => {
+exports.sendMessage = async (senderId, receiverId, text, propertyId = null) => {
     const query = `
-        INSERT INTO messages (sender_id, receiver_id, content)
-        VALUES ($1, $2, $3)
-        RETURNING id, sender_id, receiver_id, content as message_text, is_read, created_at;
+        INSERT INTO messages (sender_id, receiver_id, content, property_id)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id, sender_id, receiver_id, content as message_text, is_read, created_at, property_id;
     `;
-    return (await db.query(query, [senderId, receiverId, text])).rows[0];
+    return (await db.query(query, [senderId, receiverId, text, propertyId])).rows[0];
 };
 
 /**

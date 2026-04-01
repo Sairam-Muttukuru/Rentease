@@ -30,74 +30,55 @@ const sendRentReminderEmail = async ({
     let message = "";
 
     if (daysRemaining === 0) {
-        subject = `Friendly Reminder: Rent is Due Today! 🏠`;
+        subject = `Friendly Reminder: Rent is Due Today!`;
         message = `This is a gentle reminder that your rent for <strong>${propertyName}</strong> is due <strong>today</strong>.`;
     } else if (daysRemaining === 1) {
-        subject = `Reminder: Rent is Due Tomorrow 🏠`;
+        subject = `Reminder: Rent is Due Tomorrow`;
         message = `Just a quick heads-up that your rent for <strong>${propertyName}</strong> is due <strong>tomorrow</strong>.`;
     } else {
-        subject = `Upcoming Rent Reminder: Due in ${daysRemaining} Days 🏠`;
+        subject = `Upcoming Rent Reminder: Due in ${daysRemaining} Days`;
         message = `We hope you're having a great week! This is a reminder that your rent for <strong>${propertyName}</strong> will be due in <strong>${daysRemaining} days</strong>.`;
     }
 
     const html = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Rent Reminder</title>
-        <style>
-            body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; color: #1f2937; }
-            .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; }
-            .header { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 30px; text-align: center; color: white; }
-            .header-icon { font-size: 40px; margin-bottom: 10px; display: block; }
-            .content { padding: 40px 30px; }
-            .greeting { font-size: 22px; font-weight: 700; color: #111827; margin-bottom: 16px; }
-            .message { font-size: 16px; line-height: 1.6; color: #4b5563; margin-bottom: 24px; }
-            .details-card { background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; margin-bottom: 32px; }
-            .details-table { width: 100%; border-collapse: collapse; }
-            .details-table td { padding: 10px 0; vertical-align: top; }
-            .label-cell { color: #6b7280; font-weight: 500; width: 40%; }
-            .value-cell { color: #111827; font-weight: 600; text-align: right; width: 60%; }
-            .cta-button { display: block; width: 100%; text-align: center; background: #2563eb; color: white !important; text-decoration: none; padding: 14px 0; border-radius: 8px; font-weight: 600; font-size: 16px; margin-top: 10px; }
-            .footer { background-color: #f9fafb; padding: 24px; text-align: center; font-size: 13px; color: #9ca3af; border-top: 1px solid #e5e7eb; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <img src="cid:renteasefavicon" alt="RentEase" style="height: 50px; margin-bottom: 10px;">
-                <h2 style="margin:0; font-weight: 600;">Rent Reminder</h2>
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 40px auto; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); background-color: #ffffff;">
+            <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 30px; text-align: center; color: white;">
+                <img src="cid:renteasefavicon" alt="RentEase" style="height: 50px; margin-bottom: 10px; border-radius: 8px;">
+                <h1 style="margin: 0; font-size: 26px; font-weight: 700;">Rent Reminder</h1>
             </div>
-            <div class="content">
-                <h1 class="greeting">Hi ${tenantName},</h1>
-                <p class="message">${message}</p>
-                <div class="details-card">
-                    <table class="details-table">
+            <div style="padding: 40px 30px; background-color: #ffffff;">
+                <h2 style="font-size: 22px; font-weight: 600; color: #111827; margin-top: 0; margin-bottom: 16px;">Hi ${tenantName},</h2>
+                <p style="font-size: 16px; line-height: 1.6; color: #4b5563; margin-top: 0; margin-bottom: 24px;">
+                    ${message}
+                </p>
+                
+                <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; margin-bottom: 32px;">
+                    <table style="width: 100%; border-collapse: collapse;">
                         <tr>
-                            <td class="label-cell">Property</td>
-                            <td class="value-cell">${propertyName}</td>
+                            <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 40%; vertical-align: top;">Property</td>
+                            <td style="padding: 10px 0; font-weight: 600; color: #1f2937; font-size: 15px; width: 60%; text-align: right; vertical-align: top;">${propertyName}</td>
                         </tr>
                         <tr>
-                            <td class="label-cell">Amount Due</td>
-                            <td class="value-cell">₹${amount}</td>
+                            <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 40%; vertical-align: top;">Amount Due</td>
+                            <td style="padding: 10px 0; font-weight: 700; color: #2563eb; font-size: 18px; width: 60%; text-align: right; vertical-align: top;">₹${amount}</td>
                         </tr>
                         <tr>
-                            <td class="label-cell">Due Date</td>
-                            <td class="value-cell">${formattedDate} of this month</td>
+                            <td style="padding: 10px 0; color: #6b7280; font-size: 15px; width: 40%; vertical-align: top;">Due Date</td>
+                            <td style="padding: 10px 0; font-weight: 600; color: #1f2937; font-size: 15px; width: 60%; text-align: right; vertical-align: top;">${formattedDate} of this month</td>
                         </tr>
                     </table>
                 </div>
-                <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" class="cta-button">Pay Securely via RentEase</a>
+
+                <div style="text-align: center;">
+                    <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; transition: background-color 0.2s;">Pay Securely via RentEase</a>
+                </div>
             </div>
-            <div class="footer">
-                <p>RentEase Automated Reminders</p>
-                <p>&copy; ${new Date().getFullYear()} RentEase Home Management</p>
+            
+            <div style="background-color: #f9fafb; padding: 24px; text-align: center; font-size: 13px; color: #9ca3af; border-top: 1px solid #e5e7eb;">
+                <p style="margin: 0 0 8px 0; font-weight: 500;">RentEase Automated Reminders</p>
+                <p style="margin: 0;">&copy; ${new Date().getFullYear()} RentEase Home Management. All rights reserved.</p>
             </div>
         </div>
-    </body>
-    </html>
     `;
 
     try {

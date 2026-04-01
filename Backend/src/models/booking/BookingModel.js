@@ -16,9 +16,10 @@ const initTable = async () => {
   `;
   try {
     await db.query(query);
-    // Migration: Add visit_slot column if it doesn't exist
+    // Migration: Add columns if they don't exist
     await db.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS visit_slot TIMESTAMP;`);
-    console.log("Bookings table sanitized and migrated.");
+    await db.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS visited_at TIMESTAMP;`);
+    console.log("Bookings table sanitized and fully migrated.");
   } catch (err) {
     console.error("Error creating/migrating bookings table:", err);
   }
@@ -66,6 +67,8 @@ exports.getBookingsByLandlord = async (landlordId) => {
       b.status,
       b.created_at,
       b.visit_slot,
+      b.visited_at,
+      b.message,
       p.title as "propertyName",
       p.locality || ', ' || p.city as location,
       u.first_name || ' ' || u.last_name as "tenantName",
@@ -81,13 +84,32 @@ exports.getBookingsByLandlord = async (landlordId) => {
 };
 
 exports.updateStatus = async (bookingId, status, visitSlot = null) => {
-  const query = `
-    UPDATE bookings 
-    SET status = $1, visit_slot = $2, updated_at = NOW()
-    WHERE id = $3
-    RETURNING *;
-  `;
-  return (await db.query(query, [status, visitSlot, bookingId])).rows[0];
+  // Normalize status to UPPERCASE to match DB constraints and checkExistingBooking logic
+  const normalizedStatus = status ? status.toUpperCase() : status;
+  let query, params;
+  if (visitSlot) {
+    query = `
+      UPDATE bookings 
+      SET status = $1, 
+          visit_slot = $2,
+          visited_at = CASE WHEN $3 = 'VISITED' THEN NOW() ELSE visited_at END,
+          updated_at = NOW()
+      WHERE id = $4
+      RETURNING *;
+    `;
+    params = [normalizedStatus, visitSlot, normalizedStatus, bookingId];
+  } else {
+    query = `
+      UPDATE bookings 
+      SET status = $1, 
+          visited_at = CASE WHEN $2 = 'VISITED' THEN NOW() ELSE visited_at END,
+          updated_at = NOW()
+      WHERE id = $3
+      RETURNING *;
+    `;
+    params = [normalizedStatus, normalizedStatus, bookingId];
+  }
+  return (await db.query(query, params)).rows[0];
 };
 
 // Check if user already acted on this property

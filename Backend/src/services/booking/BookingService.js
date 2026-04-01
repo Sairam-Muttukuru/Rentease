@@ -14,12 +14,48 @@ class BookingService {
         const property = await PropertyModel.getPropertyById(propertyId);
         if (!property) throw new Error("Property not found");
 
-
         // 2. Check for existing pending/approved bookings
         const existing = await BookingModel.checkExistingBooking(userId, propertyId);
         if (existing) throw new Error("You already have a pending/approved request for this property.");
 
-        return await BookingModel.createBooking(userId, propertyId, message, visitSlot);
+        const booking = await BookingModel.createBooking(userId, propertyId, message, visitSlot);
+
+        // 3. Notify Landlord (Async)
+        this._handleLandlordBookingNotification(booking, property, userId, message, visitSlot)
+            .catch(err => console.error("Async landlord booking notification failed:", err));
+
+        return booking;
+    }
+
+    async _handleLandlordBookingNotification(booking, property, userId, message, visitSlot) {
+        try {
+            const tenant = await UserModel.findUserById(userId);
+            const landlord = await UserModel.findUserById(property.landlord_id);
+
+            if (landlord && landlord.email) {
+                // Internal Dashboard Notification
+                await NotificationService.createNotification(
+                    property.landlord_id,
+                    'booking',
+                    "📅 New Booking Request",
+                    `${tenant.first_name || 'A tenant'} has requested to visit ${property.title}.`
+                );
+
+                // Email Notification
+                const sendPropertyBookingNotification = require("../../utils/email/sendPropertyBookingNotification");
+                await sendPropertyBookingNotification(landlord.email, {
+                    landlordName: `${landlord.first_name} ${landlord.last_name}`,
+                    tenantName: `${tenant.first_name} ${tenant.last_name}`,
+                    propertyName: property.title,
+                    propertyAddress: `${property.address}, ${property.locality}`,
+                    visitSlot: visitSlot,
+                    message: message,
+                    dashboardUrl: `${process.env.CLIENT_URL || 'http://localhost:5173'}/landlord/dashboard`
+                });
+            }
+        } catch (err) {
+            console.error("Landlord notification orchestration failed:", err);
+        }
     }
 
     async getMyPropertyBookings(userId) {
@@ -45,20 +81,32 @@ class BookingService {
     }
 
     async _handleBookingStatusNotification(booking, status, visitSlot) {
-        if (!booking || (status !== 'Approved' && status !== 'Rejected')) return;
+        // Normalize to uppercase for consistent comparison
+        const normalizedStatus = status ? status.toUpperCase() : '';
+        if (!booking || (normalizedStatus !== 'APPROVED' && normalizedStatus !== 'REJECTED')) return;
 
         try {
             const property = await PropertyModel.getPropertyById(booking.property_id);
             const tenant = await UserModel.findUserById(booking.user_id);
+            const landlord = property ? await UserModel.findUserById(property.landlord_id) : null;
 
             if (property && tenant) {
+                let propertyImage = null;
+                if (property.images && property.images.length > 0) {
+                    const coverImg = property.images.find(img => img.is_cover);
+                    propertyImage = coverImg ? coverImg.url : property.images[0].url;
+                }
+
                 await sendBookingStatusNotification(tenant.email, {
                     tenantName: `${tenant.first_name} ${tenant.last_name}`,
                     propertyName: property.title,
                     propertyAddress: `${property.address}, ${property.locality}, ${property.city}`,
-                    status: status,
+                    status: normalizedStatus,
                     visitSlot: visitSlot,
-                    landlordName: `${property.first_name} ${property.last_name}`
+                    propertyImage: propertyImage,
+                    landlordName: landlord
+                        ? `${landlord.first_name} ${landlord.last_name}`
+                        : `${property.first_name || ''} ${property.last_name || ''}`.trim() || 'Landlord'
                 });
             }
         } catch (err) {

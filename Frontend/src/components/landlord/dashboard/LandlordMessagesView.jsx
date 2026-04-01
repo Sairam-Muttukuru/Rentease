@@ -252,7 +252,8 @@ export default function LandlordMessagesView({ isDarkMode, tenants = [], current
             const token = localStorage.getItem("accessToken");
             const res = await axios.post(`https://rentease-1-pwm5.onrender.com/api/messages/send`, {
                 receiverId: selectedTenant.user_id,
-                text: text
+                text: text,
+                propertyId: selectedTenant.property_id
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });

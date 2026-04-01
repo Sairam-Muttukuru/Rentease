@@ -1,13 +1,14 @@
 const Announcement = require('../../models/common/AnnouncementModel');
-
 const TenantModel = require('../../models/tenant/TenantModel');
+const PropertyModel = require('../../models/landlord/PropertyModel');
+const UserModel = require('../../models/common/UserModel');
 const sendAnnouncementEmail = require('../../utils/email/sendAnnouncementEmail');
 
 exports.createAnnouncement = async (req, res) => {
     try {
         const { title, category, priority, content, audience, property_id, target_type, target_tenant_id } = req.body;
         const landlord_id = req.user.id; // From auth middleware
-        const landlordName = `${req.user.first_name || 'Landlord'} ${req.user.last_name || ''}`.trim();
+
 
         if (!title || !content || !category || !property_id) {
             return res.status(400).json({ error: "Missing required fields" });
@@ -26,51 +27,52 @@ exports.createAnnouncement = async (req, res) => {
         });
 
         // Email Notification Logic
+        const landlord = await UserModel.findUserById(landlord_id);
+        const landlordName = landlord ? `${landlord.first_name} ${landlord.last_name || ''}`.trim() : 'Your Landlord';
+        
+        const property = await PropertyModel.getPropertyById(property_id);
+        const propertyName = property?.title || 'Your Managed Property';
+        const roomNumber = property?.flat_number || '';
+
         let tenantsToNotify = [];
 
         if (target_type === 'specific' && target_tenant_id) {
-            // Fetch single tenant
-            // Fetch single tenant with full details (email, name from joined tables)
-            // reusing getFullTenantByProperty to ensure we get the same rich object structure
             const allTenants = await TenantModel.getFullTenantByProperty(property_id, landlord_id);
             const targetTenant = allTenants.find(t => t.id == target_tenant_id);
-
-            if (targetTenant) {
-                tenantsToNotify.push(targetTenant);
-            } else {
-                console.warn(`Target tenant ${target_tenant_id} not found in property ${property_id}`);
-            }
+            if (targetTenant) tenantsToNotify.push(targetTenant);
         } else {
-            // Fetch all tenants in property
             tenantsToNotify = await TenantModel.getFullTenantByProperty(property_id, landlord_id);
         }
 
-        console.log(`Found ${tenantsToNotify.length} tenants to notify`);
-
-        // Send emails asynchronously (don't block response)
-        tenantsToNotify.forEach(async (tenant) => {
-            console.log("Processing tenant for email:", tenant.id, tenant.name, tenant.email);
-            if (tenant.email) {
-                try {
-                    await sendAnnouncementEmail({
-                        tenantEmail: tenant.email,
-                        tenantName: tenant.name || 'Tenant',
-                        landlordName: landlordName,
-                        announcementTitle: title,
-                        announcementContent: content,
-                        announcementCategory: category,
-                        announcementPriority: priority || 'medium'
-                    });
-                    console.log(`Email successfully sent to ${tenant.email}`);
-                } catch (err) {
-                    console.error(`Failed to send email to ${tenant.email}:`, err);
-                }
-            } else {
-                console.warn(`Tenant ${tenant.id} has no email address.`);
-            }
-        });
-
         res.status(201).json(newAnnouncement);
+
+        // Perform email sending in background (non-blocking)
+        (async () => {
+            console.log(`Background process: Found ${tenantsToNotify.length} tenants to notify`);
+            const propertyImage = property?.images?.[0]?.url || null;
+
+            for (const tenant of tenantsToNotify) {
+                if (tenant.email) {
+                    try {
+                        await sendAnnouncementEmail({
+                            tenantEmail: tenant.email,
+                            tenantName: tenant.name || 'Tenant',
+                            landlordName: landlordName,
+                            propertyName: propertyName,
+                            roomNumber: roomNumber,
+                            propertyImage: propertyImage,
+                            announcementTitle: title,
+                            announcementContent: content,
+                            announcementCategory: category,
+                            announcementPriority: priority || 'medium'
+                        });
+                        console.log(`✅ Background: Email sent to ${tenant.email}`);
+                    } catch (err) {
+                        console.error(`❌ Background: Failed to send email to ${tenant.email}:`, err);
+                    }
+                }
+            }
+        })();
     } catch (error) {
         console.error("Error creating announcement:", error);
         res.status(500).json({ error: "Internal Server Error" });

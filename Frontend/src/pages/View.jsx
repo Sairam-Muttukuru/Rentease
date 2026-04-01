@@ -90,8 +90,8 @@ import {
 
   Train,
 
-  ShoppingBag
-
+  ShoppingBag,
+  ShieldAlert
 } from 'lucide-react';
 
 import logo from "/favicon.png";
@@ -346,6 +346,8 @@ const MOCK_PROPERTIES = [
     featured: false,
 
     rating: 4.7,
+
+    is_fake: true,
 
     tags: ["Garden", "Garage"],
 
@@ -1388,43 +1390,37 @@ const PropertyDetailsPage = ({ property, isLoggedIn, onLogin }) => {
 
 
 
-            {/* DESCRIPTION & HOST */}
-
-            <div className="bg-white dark:bg-[#111] rounded-3xl p-8 border border-gray-100 dark:border-white/5 shadow-sm">
-
-              <div className="flex items-center justify-between mb-6">
-
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">About this home</h3>
-
-                <div className="flex items-center gap-3 bg-gray-50 dark:bg-white/5 p-2 pr-4 rounded-full">
-
-                  <img src={property.landlord.avatar} className="w-10 h-10 rounded-full object-cover" alt="host" />
-
-                  <div>
-
-                    <p className="text-xs text-gray-500 font-bold uppercase">Hosted by</p>
-
-                    <p className="text-sm font-bold text-gray-900 dark:text-white">{property.landlord.name}</p>
-
-                  </div>
-
+            {/* FAKE PROPERTY WARNING */}
+            {property.is_fake && (
+              <div className="bg-rose-500/10 border-2 border-rose-500/50 rounded-3xl p-8 flex flex-col md:flex-row items-center gap-6 animate-pulse">
+                <div className="w-20 h-20 rounded-2xl bg-rose-500 flex items-center justify-center text-white shadow-xl rotate-3 shrink-0">
+                  <ShieldAlert size={40} />
                 </div>
-
+                <div className="text-center md:text-left">
+                  <h3 className="text-2xl font-black text-rose-600 dark:text-rose-400 mb-2">SCAM ALERT / FAKE PROPERTY</h3>
+                  <p className="text-slate-600 dark:text-slate-400 font-medium">This property has been flagged by the RentEase Admin for policy violations or suspected fraudulent activity. <span className="font-black text-rose-500">BE EXTREMELY CAREFUL.</span></p>
+                </div>
               </div>
+            )}
 
+            {/* DESCRIPTION & HOST */}
+            <div className={`rounded-3xl p-8 border border-gray-100 dark:border-white/5 shadow-sm ${property.is_fake ? 'bg-rose-50/10 grayscale-[0.5]' : 'bg-white dark:bg-[#111]'}`}>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">About this home</h3>
+                <div className="flex items-center gap-3 bg-gray-50 dark:bg-white/5 p-2 pr-4 rounded-full">
+                  <img src={property.landlord.avatar} className="w-10 h-10 rounded-full object-cover" alt="host" />
+                  <div>
+                    <p className="text-xs text-gray-500 font-bold uppercase">Hosted by</p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">{property.landlord.name}</p>
+                  </div>
+                </div>
+              </div>
               <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-lg">
-
                 Experience luxury living in this stunning {property.type.toLowerCase()} located in the heart of {property.location}.
-
                 Featuring state-of-the-art amenities, breathtaking views, and modern design, this property offers the perfect blend of comfort and style.
-
                 Whether you are working from home or entertaining guests, every corner is designed to impress.
-
               </p>
-
             </div>
-
-
 
             {/* AMENITIES */}
 

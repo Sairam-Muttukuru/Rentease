@@ -31,19 +31,20 @@ exports.getChat = async (req, res) => {
 exports.sendMessage = async (req, res) => {
     try {
         const senderId = req.user.id;
-        const { receiverId, text } = req.body;
+        const { receiverId, text, propertyId } = req.body;
 
         if (!receiverId || !text) {
             return res.status(400).json({ message: "Receiver ID and message text are required" });
         }
 
-        const message = await MessageModel.sendMessage(senderId, receiverId, text);
+        const message = await MessageModel.sendMessage(senderId, receiverId, text, propertyId);
         
         // Emit real-time message to receiver
         socketService.emitToUser(receiverId, "new_message", {
             ...message,
             sender: 'tenant', // UI will normalize
             text: message.message_text,
+            property_id: message.property_id,
             timestamp: new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             date: new Date(message.created_at).toLocaleDateString()
         });

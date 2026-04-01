@@ -6,14 +6,19 @@ exports.overview = async (req, res) =>
 exports.getUsers = async (req, res) =>
   res.json(await service.getUsers(req.user.id));
 
-exports.toggleUserStatus = async (req, res) =>
-  res.json(await service.toggleUserStatus(req.params.id, req.user.id));
+exports.toggleUserStatus = async (req, res) => {
+  const { reason } = req.body;
+  res.json(await service.toggleUserStatus(req.params.id, reason, req.user.id));
+};
 
 exports.getProperties = async (req, res) =>
   res.json(await service.getProperties());
 
 exports.togglePropertyStatus = async (req, res) =>
   res.json(await service.togglePropertyStatus(req.params.id, req.user.id));
+
+exports.flagPropertyFake = async (req, res) =>
+  res.json(await service.flagPropertyFake(req.params.id, req.user.id));
 
 exports.getComplaints = async (req, res) =>
   res.json(await service.getComplaints());

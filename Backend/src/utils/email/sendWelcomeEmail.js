@@ -41,7 +41,7 @@ const sendWelcomeEmail = async (userEmail, userName) => {
             </div>
         `;
 
-        await sendMail(userEmail, "Welcome to RentEase! 🏠", html);
+        await sendMail(userEmail, "Welcome to RentEase!", html);
         console.log(`✅ Welcome email successfully dispatched via central mailer to ${userEmail}`);
     } catch (error) {
         console.error("❌ Critical Welcome dispatcher failure:", error);
