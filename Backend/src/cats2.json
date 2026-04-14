@@ -1,0 +1,32 @@
+[
+  {
+    "id": 13,
+    "name": "Plumbing",
+    "provider_id": null
+  },
+  {
+    "id": 14,
+    "name": "Electrical",
+    "provider_id": null
+  },
+  {
+    "id": 16,
+    "name": "Painting",
+    "provider_id": null
+  },
+  {
+    "id": 15,
+    "name": "Carpentry",
+    "provider_id": null
+  },
+  {
+    "id": 7,
+    "name": "Ac and Appliance repair",
+    "provider_id": null
+  },
+  {
+    "id": 8,
+    "name": "Home Cleaning",
+    "provider_id": null
+  }
+]

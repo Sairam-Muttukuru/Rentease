@@ -42,14 +42,14 @@ exports.toggleUserStatus = async (id, reason, adminId) => {
 
   // Background dispatch (Removing await for instant response)
   console.log(`[StatusUpdate] Dispatching ${newStatus === 'Blocked' ? 'Block' : 'Action'} notification...`);
-  
+
   sendUserBlockEmail(user.email, user.first_name, reason, newStatus === 'Blocked')
     .then(isSent => {
-        if (isSent) console.log(`[StatusUpdate] ✅ Success: Email delivered to ${user.email}`);
-        else console.error(`[StatusUpdate] ❌ Error: sendMail returned false for ${user.email}`);
+      if (isSent) console.log(`[StatusUpdate] ✅ Success: Email delivered to ${user.email}`);
+      else console.error(`[StatusUpdate] ❌ Error: sendMail returned false for ${user.email}`);
     })
     .catch(err => {
-        console.error(`[StatusUpdate] 🔥 Critical failure in background task for ${user.email}:`, err.message);
+      console.error(`[StatusUpdate] 🔥 Critical failure in background task for ${user.email}:`, err.message);
     });
 
   return { message: `User status changed from ${oldStatus} to ${newStatus}`, newStatus };

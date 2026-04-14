@@ -17,67 +17,59 @@ const sendTenantRemovalEmail = async ({
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Residency Update</title>
-        <style>
-            body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; color: #1f2937; }
-            .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; }
-            .header { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 30px; text-align: center; color: white; }
-            .content { padding: 40px 30px; }
-            .greeting { font-size: 24px; font-weight: 700; color: #111827; margin-bottom: 16px; }
-            .message { font-size: 16px; line-height: 1.6; color: #4b5563; margin-bottom: 24px; }
-            
-            .property-card { background-color: #fef2f2; border: 1px solid #fee2e2; border-radius: 12px; padding: 24px; margin-bottom: 32px; }
-            .card-header { font-size: 18px; font-weight: 600; color: #991b1b; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #fee2e2; }
-            
-            .details-table { width: 100%; border-collapse: collapse; }
-            .details-table td { padding: 10px 0; vertical-align: top; }
-            .label-cell { color: #991b1b; font-weight: 500; width: 40%; padding-right: 15px; opacity: 0.8; }
-            .value-cell { color: #7f1d1d; font-weight: 600; text-align: right; width: 60%; }
-            
-            .footer { background-color: #f9fafb; padding: 24px; text-align: center; font-size: 13px; color: #9ca3af; border-top: 1px solid #e5e7eb; }
-        </style>
     </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <img src="cid:renteasefavicon" alt="RentEase" style="height: 50px; margin-bottom: 10px;">
-                <h1 style="margin:0; font-size: 28px;">Notice of Removal</h1>
+    <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+        <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
+            
+            <!-- Logo Header -->
+            <div style="padding: 24px; text-align: left; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px;">
+                <img src="${process.env.FRONTEND_URL}/favicon.png" alt="RentEase" style="height: 32px; width: 32px; border-radius: 8px;" />
+                <span style="font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">RentEase</span>
             </div>
-            <div class="content">
-                <h1 class="greeting">Hello ${tenantName},</h1>
+
+            <!-- Content Body -->
+            <div style="padding: 40px 32px;">
+                <span style="background: #fee2e2; color: #dc2626; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Status Update</span>
+                <h1 style="color: #0f172a; margin: 16px 0 24px 0; font-size: 28px; font-weight: 800;">Hello ${tenantName}, 👋</h1>
                 
-                <p class="message">
-                    This email is to inform you that your tenancy record for <strong>${propertyName}</strong> has been removed from our system by your landlord, <strong>${landlordName}</strong>.
-                    <br><br>
-                    Consequently, you will no longer be able to manage payments or requests for this property through your RentEase dashboard.
+                <p style="font-size: 16px; color: #475569; line-height: 1.7; margin: 0 0 32px 0;">
+                    This is to inform you that your residency record for <b>${propertyName}</b> has been officially updated and removed by your landlord, <b>${landlordName}</b>.
                 </p>
                 
-                <div class="property-card">
-                    <div class="card-header">Property Information</div>
+                <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 32px;">
+                    <h2 style="font-size: 12px; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 20px 0;">Removal Details</h2>
                     
-                    <table class="details-table">
+                    <table style="width: 100%; border-collapse: collapse;">
                         <tr>
-                            <td class="label-cell">Property Name</td>
-                            <td class="value-cell">${propertyName}</td>
+                            <td style="padding: 10px 0; color: #64748b; font-size: 14px;">Property</td>
+                            <td style="padding: 10px 0; color: #0f172a; font-size: 14px; font-weight: 700; text-align: right;">${propertyName}</td>
                         </tr>
                         <tr>
-                            <td class="label-cell">Address</td>
-                            <td class="value-cell">${propertyAddress}</td>
+                            <td style="padding: 10px 0; color: #64748b; font-size: 14px;">Address</td>
+                            <td style="padding: 10px 0; color: #0f172a; font-size: 14px; font-weight: 700; text-align: right;">${propertyAddress}</td>
                         </tr>
-                        <tr>
-                            <td class="label-cell">Removal Date</td>
-                            <td class="value-cell">${new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</td>
+                        <tr style="border-top: 1px solid #e2e8f0;">
+                            <td style="padding: 10px 0; color: #64748b; font-size: 14px;">Date</td>
+                            <td style="padding: 14px 0 10px 0; color: #0f172a; font-size: 14px; font-weight: 700; text-align: right;">${new Date().toLocaleDateString()}</td>
                         </tr>
                     </table>
                 </div>
 
-                <p class="message" style="font-size: 14px; text-align: center;">
-                    If you believe this is a mistake, please contact your landlord directly.
+                <div style="background-color: #fff7ed; border-left: 4px solid #f97316; padding: 16px; border-radius: 8px; margin-bottom: 32px;">
+                    <p style="margin: 0; font-size: 14px; color: #9a3412; line-height: 1.5;">
+                        <b>Note:</b> Access to payment management and property documents through RentEase for this specific tenancy has been restricted.
+                    </p>
+                </div>
+
+                <p style="font-size: 14px; color: #94a3b8; text-align: center;">
+                    If you believe this update was made in error, please contact your landlord directly.
                 </p>
             </div>
             
-            <div class="footer">
-                <p>RentEase Home Management</p>
-                <p>&copy; ${new Date().getFullYear()} RentEase. All rights reserved.</p>
+            <!-- Footer -->
+            <div style="padding: 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+                <div style="font-weight: 800; color: #6366f1; font-size: 20px; margin-bottom: 8px;">RentEase</div>
+                <p style="font-size: 12px; color: #94a3b8; margin: 0;">&copy; ${new Date().getFullYear()} RentEase Home Management. All rights reserved.</p>
             </div>
         </div>
     </body>
@@ -91,7 +83,5 @@ const sendTenantRemovalEmail = async ({
         console.error("❌ Error sending removal email:", error);
     }
 };
-
-module.exports = sendTenantRemovalEmail;
 
 module.exports = sendTenantRemovalEmail;

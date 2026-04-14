@@ -3,13 +3,12 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import BASE_URL from '../../../utils/apiConfig';
 import { toast } from 'react-toastify';
-import { Download, IndianRupee, Users, PieChart } from 'lucide-react';
+import { Download, IndianRupee, Users, PieChart, CheckCircle2, Home } from 'lucide-react';
 import { Card } from '../../ui/card';
 import LandlordButton from '../common/LandlordButton';
-import RevenueLineChart from './charts/RevenueLineChart';
 import RevenueTrendsChart from './charts/RevenueTrendsChart';
 
-const LandlordFinanceView = ({ isDarkMode, tenants, onUpdateStatus }) => {
+const LandlordFinanceView = ({ isDarkMode, tenants, onUpdateStatus, setActiveTab }) => {
     const [realPayments, setRealPayments] = useState([]);
     const [loadingPayments, setLoadingPayments] = useState(true);
 
@@ -114,20 +113,15 @@ const LandlordFinanceView = ({ isDarkMode, tenants, onUpdateStatus }) => {
             </div>
 
             {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
-                <div className="lg:col-span-2 h-full">
-                    <RevenueLineChart isDarkMode={isDarkMode} payments={realPayments.filter(p => !p.receipt_number?.startsWith('SEC-DEP'))} />
-                </div>
-                <div className="lg:col-span-1 h-full">
-                    <RevenueTrendsChart isDarkMode={isDarkMode} payments={realPayments.filter(p => !p.receipt_number?.startsWith('SEC-DEP'))} />
-                </div>
+            <div className="h-[400px]">
+                <RevenueTrendsChart isDarkMode={isDarkMode} payments={realPayments.filter(p => !p.receipt_number?.startsWith('SEC-DEP'))} />
             </div>
 
             {/* Recent Transactions List */}
             <Card isDarkMode={isDarkMode} className="p-6">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Recent Transactions</h3>
-                    <LandlordButton variant="outline" className="text-xs h-8" isDarkMode={isDarkMode}>View All</LandlordButton>
+                    <LandlordButton variant="outline" className="text-xs h-8" isDarkMode={isDarkMode} onClick={() => setActiveTab('transactions')}>View All</LandlordButton>
                 </div>
                 <div className="space-y-4">
                     {loadingPayments ? (
@@ -164,6 +158,77 @@ const LandlordFinanceView = ({ isDarkMode, tenants, onUpdateStatus }) => {
                             ))}
                         </div>
                     )}
+                </div>
+            </Card>
+            
+            {/* Detailed Unpaid Tenants Ledger */}
+            <Card isDarkMode={isDarkMode} className="p-8 border-rose-500/20 bg-rose-500/5">
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 className={`text-2xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'} flex items-center gap-3`}>
+                            <Users className="text-rose-500" size={28} /> 
+                            Arrears Monitoring <span className="text-rose-500/50">/ Unpaid Tenants</span>
+                        </h3>
+                        <p className="text-sm text-slate-500 font-medium">Follow up with tenants who have outstanding balances.</p>
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-separate border-spacing-y-3">
+                        <thead>
+                            <tr className="text-slate-500 text-[10px] font-black uppercase tracking-widest px-4">
+                                <th className="pb-2 pl-4">Tenant</th>
+                                <th className="pb-2">Property / Room</th>
+                                <th className="pb-2">Monthly Rent</th>
+                                <th className="pb-2">Total Due</th>
+                                <th className="pb-2 text-right pr-4"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {tenants.filter(t => (parseFloat(t.balance_due) || 0) > 0).length === 0 ? (
+                                <tr>
+                                    <td colSpan="5" className="py-12 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <CheckCircle2 size={40} className="text-emerald-500" />
+                                            <p className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Zero Arrears!</p>
+                                            <p className="text-xs text-slate-500 uppercase tracking-widest font-black">All tenants have cleared their dues.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (
+                                tenants.filter(t => (parseFloat(t.balance_due) || 0) > 0).map((t, i) => (
+                                    <tr key={i} className={`${isDarkMode ? 'bg-slate-900/60' : 'bg-white'} rounded-2xl shadow-sm overflow-hidden group hover:scale-[1.01] transition-all`}>
+                                        <td className="py-4 pl-4 rounded-l-2xl">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-black text-violet-500 border border-slate-700">
+                                                    {(t.name || t.full_name || 'T')[0]}
+                                                </div>
+                                                <div>
+                                                    <p className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{t.name || t.full_name}</p>
+                                                    <p className="text-[10px] text-slate-500">{t.email || t.phone}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="py-4">
+                                            <div className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                                                <Home size={12} className="text-violet-500" />
+                                                <span className="truncate max-w-[150px]">{t.property_name || 'Assigned Property'}</span>
+                                            </div>
+                                        </td>
+                                        <td className="py-4">
+                                            <p className={`text-sm font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>₹{Number(t.monthly_rent || 0).toLocaleString()}</p>
+                                        </td>
+                                        <td className="py-4">
+                                            <p className="text-lg font-black text-rose-500 italic">₹{Number(t.balance_due).toLocaleString()}</p>
+                                        </td>
+                                        <td className="py-4 pr-4 text-right rounded-r-2xl">
+                                            {/* Action button removed per user request */}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </Card>
         </div>

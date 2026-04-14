@@ -71,10 +71,15 @@ class BookingService {
     }
 
     async updatePropertyBookingStatus(bookingId, status, visitSlot) {
+        // Fetch existing to see if reshedule
+        const existingBooking = await BookingModel.getBookingById(bookingId);
+        const isReschedule = existingBooking && existingBooking.status === 'APPROVED' && status.toUpperCase() === 'APPROVED';
+
         const booking = await BookingModel.updateStatus(bookingId, status, visitSlot);
 
         // Fire-and-forget email notification
-        this._handleBookingStatusNotification(booking, status, visitSlot)
+        const emailStatus = isReschedule ? 'RESCHEDULED' : status;
+        this._handleBookingStatusNotification(booking, emailStatus, visitSlot)
             .catch(err => console.error("Async booking email failed:", err));
 
         return booking;
@@ -83,7 +88,7 @@ class BookingService {
     async _handleBookingStatusNotification(booking, status, visitSlot) {
         // Normalize to uppercase for consistent comparison
         const normalizedStatus = status ? status.toUpperCase() : '';
-        if (!booking || (normalizedStatus !== 'APPROVED' && normalizedStatus !== 'REJECTED')) return;
+        if (!booking || (normalizedStatus !== 'APPROVED' && normalizedStatus !== 'REJECTED' && normalizedStatus !== 'RESCHEDULED')) return;
 
         try {
             const property = await PropertyModel.getPropertyById(booking.property_id);

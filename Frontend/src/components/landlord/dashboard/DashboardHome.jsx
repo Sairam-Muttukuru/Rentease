@@ -57,15 +57,14 @@ const DashboardHome = ({
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-6">
                     {/* Charts Section */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[320px]">
-                        <RevenueTrendsChart isDarkMode={isDarkMode} payments={payments.filter(p => !p.receipt_number?.startsWith('SEC-DEP'))} />
+                    <div className="grid grid-cols-1 gap-6 h-[320px]">
                         <ComplaintsDistributionChart isDarkMode={isDarkMode} complaints={complaints} />
                     </div>
 
                     <div className="space-y-6">
-                        <div className="flex justify-between items-center">
-                            <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>Activity & Transactions</h3>
-                            <LandlordButton variant="outline" className="text-xs h-8" onClick={() => setActiveTab('finance')}>View All</LandlordButton>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Recent Transactions</h3>
+                            <LandlordButton variant="outline" className="text-xs h-8" isDarkMode={isDarkMode} onClick={() => setActiveTab('transactions')}>View All</LandlordButton>
                         </div>
                         <Card isDarkMode={isDarkMode} className="p-0 overflow-hidden">
                             <div className="divide-y divide-slate-800/10 dark:divide-slate-800/50">

@@ -24,7 +24,7 @@ const RequestedServices = ({ serviceRequests = [], fetchTenantData }) => {
         setIsSubmitting(true);
         try {
             const token = localStorage.getItem("accessToken");
-            await axios.put(`https://rentease-1-pwm5.onrender.com/api/tenants/service-requests/${id}/comment`,
+            await axios.put(`/api/tenants/service-requests/${id}/comment`,
                 { comment, rating },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

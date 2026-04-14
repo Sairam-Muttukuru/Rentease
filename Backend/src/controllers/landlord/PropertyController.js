@@ -1,5 +1,6 @@
 const PropertyService = require("../../services/landlord/PropertyService");
 const AuditService = require("../../services/common/AuditService");
+const User = require("../../models/common/UserModel");
 
 
 exports.createProperty = async (req, res) => {
@@ -10,7 +11,11 @@ exports.createProperty = async (req, res) => {
       req.user.id,
       req.body
     );
-    await AuditService.logPropertyAction(req.user.id, property.id, "Created", `Title: ${property.title}`);
+
+    const actor = await User.getUserById(req.user.id);
+    const actorName = actor ? actor.first_name : "Unknown User";
+
+    await AuditService.logPropertyAction(req.user.id, property.id, "Created", `Title: ${property.title} | By: ${actorName}`);
     res.status(201).json(property);
   } catch (err) {
     console.error("createProperty Error:", err);
@@ -84,7 +89,10 @@ exports.updateProperty = async (req, res) => {
       req.body
     );
 
-    await AuditService.logPropertyAction(req.user.id, req.params.id, "Updated", `Fields: ${Object.keys(req.body).join(", ")}`);
+    const actor = await User.getUserById(req.user.id);
+    const actorName = actor ? actor.first_name : "Unknown User";
+
+    await AuditService.logPropertyAction(req.user.id, req.params.id, "Updated", `Fields: ${Object.keys(req.body).join(", ")} | By: ${actorName}`);
 
     res.json(updatedProperty);
   } catch (err) {
@@ -100,7 +108,10 @@ exports.deleteProperty = async (req, res) => {
       req.user.id
     );
 
-    await AuditService.logPropertyAction(req.user.id, req.params.id, "Deleted");
+    const actor = await User.getUserById(req.user.id);
+    const actorName = actor ? actor.first_name : "Unknown User";
+
+    await AuditService.logPropertyAction(req.user.id, req.params.id, "Deleted", `By: ${actorName}`);
 
     res.json({ message: "Property deleted successfully" });
   } catch (err) {

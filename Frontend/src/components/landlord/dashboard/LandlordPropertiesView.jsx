@@ -66,11 +66,11 @@ const LandlordPropertiesView = ({
 
                                 {/* Status Badge - Like the reference */}
                                 <div className="absolute top-4 right-4">
-                                    <span className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-wide shadow-sm ${prop.status === 'Occupied'
+                                     <span className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-wide shadow-sm ${prop.status === 'Occupied'
                                         ? 'bg-blue-600 text-white'
                                         : 'bg-yellow-400 text-slate-900'
                                         }`}>
-                                        {prop.status === 'Occupied' ? 'Rented' : 'Available'}
+                                        {prop.type === 'PG' ? `${prop.tenant_count || 0}/${prop.sharing_capacity || 1} Rented` : (prop.status === 'Occupied' ? 'Rented' : 'Available')}
                                     </span>
                                 </div>
                             </div>
@@ -93,7 +93,9 @@ const LandlordPropertiesView = ({
                                     </div>
                                     <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
                                         <Users size={18} className="text-slate-400" />
-                                        <span className="font-medium">{prop.units}</span>
+                                        <span className="font-medium text-xs">
+                                            {prop.type === 'PG' ? `${prop.tenant_count || 0}/${prop.sharing_capacity || 1} Occupied` : (prop.status === 'Occupied' ? 'Occupied' : 'Vacant')}
+                                        </span>
                                     </div>
 
                                     {/* Dynamic Amenities Row based on Type */}
@@ -168,25 +170,35 @@ const LandlordPropertiesView = ({
                                     </div>
 
                                     {/* Action Buttons - Side by Side Outline */}
-                                    <div className="flex gap-3">
-                                        <button
-                                            onClick={() => onEditClick(prop)}
-                                            className={`flex-1 py-2.5 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 transition-colors ${isDarkMode
-                                                ? 'border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white'
-                                                : 'border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                                                }`}
-                                        >
-                                            <Edit size={16} /> Edit
-                                        </button>
-                                        <button
-                                            onClick={() => onDeleteClick(prop.id)}
-                                            className={`flex-1 py-2.5 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 transition-colors ${isDarkMode
-                                                ? 'border-rose-900/30 text-rose-400 hover:bg-rose-900/20'
-                                                : 'border-rose-100 text-rose-600 hover:bg-rose-50'
-                                                }`}
-                                        >
-                                            <Trash2 size={16} /> Delete
-                                        </button>
+                                    <div className="flex flex-col gap-3">
+                                        {prop.status !== 'Occupied' && (
+                                            <button 
+                                                onClick={() => setActiveTab('tenants')}
+                                                className="w-full py-3 rounded-xl text-sm font-black bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5"
+                                            >
+                                                <PlusCircle size={18} /> Add Tenant {prop.type === 'PG' ? `(Bed ${Number(prop.tenant_count || 0) + 1})` : ''}
+                                            </button>
+                                        )}
+                                        <div className="flex gap-3">
+                                            <button
+                                                onClick={() => onEditClick(prop)}
+                                                className={`flex-1 py-2.5 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 transition-colors ${isDarkMode
+                                                    ? 'border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white'
+                                                    : 'border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                                    }`}
+                                            >
+                                                <Edit size={16} /> Edit
+                                            </button>
+                                            <button
+                                                onClick={() => onDeleteClick(prop.id)}
+                                                className={`flex-1 py-2.5 rounded-xl text-sm font-bold border flex items-center justify-center gap-2 transition-colors ${isDarkMode
+                                                    ? 'border-rose-900/30 text-rose-400 hover:bg-rose-900/20'
+                                                    : 'border-rose-100 text-rose-600 hover:bg-rose-50'
+                                                    }`}
+                                            >
+                                                <Trash2 size={16} /> Delete
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

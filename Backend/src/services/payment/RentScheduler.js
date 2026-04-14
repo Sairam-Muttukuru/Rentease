@@ -1,94 +1,121 @@
 const cron = require('node-cron');
 const db = require('../../config/db');
+const sendRentReminderEmail = require('../../utils/email/sendRentReminderEmail');
 
-const sendRentReminder = require('../../utils/email/sendRentReminderMail'); // Existing overdue reminder
-const sendRentWarning = require('../../utils/email/sendRentReminderEmail'); // NEW: Upcoming warning
-
-// Run every day at 9:00 AM
+/**
+ * RentScheduler: Automates Rent Warnings and Overdue Alerts
+ * - 9:00 AM: Daily Overdue Check (Sends alerts for unpaid balances)
+ * - 8:10 PM: Daily Upcoming Warning (0-5 days before due date)
+ */
 const initRentScheduler = () => {
-    console.log('⏰ Rent Scheduler Initialized: Running daily at 12:00 PM');
-
-    /* 
-    // OLD 9:00 AM Cron - Disabled in favor of 10:25 AM Consistently Scheduled Reminder
-    cron.schedule('0 9 * * *', async () => {
-        console.log('🔄 Running Daily Rent Check...');
-        try {
-            // ... [Old Logic Removed] ...
-        } catch (error) {
-            console.error('❌ Error in Rent Scheduler:', error);
-        }
-    });
-    */
-
+    console.log('⏰ Rent Scheduler Initialized: Elite Branding Active');
 
     // ----------------------------------------------------
-    // New Schedule: 8:10 PM Daily (20:10)
+    // 1️⃣ 6:30 PM: DAILY OVERDUE CHECK (For unpaid tenants)
+    // ----------------------------------------------------
+    cron.schedule('30 18 * * *', async () => {
+        console.log('🔄 Running 6:30 PM Daily Overdue Check...');
+        try {
+            const result = await db.query(`
+                SELECT 
+                    t.id, t.start_date, t.monthly_rent, t.rent_due_date,
+                    p.title as property_title,
+                    (SELECT image_url FROM property_images WHERE property_id = p.id ORDER BY is_cover DESC LIMIT 1) as property_image,
+                    tm.tenant_emailid as email, tm.full_name as name
+                FROM tenants t
+                JOIN properties p ON p.id = t.property_id
+                JOIN tenant_members tm ON tm.tenant_id = t.id AND tm.is_primary = true
+                WHERE t.start_date IS NOT NULL
+            `);
+
+            const today = new Date();
+            today.setHours(12, 0, 0, 0);
+
+            for (const tenant of result.rows) {
+                // Calculate Monthly Arrears
+                const paymentsRes = await db.query("SELECT amount FROM rent_payments WHERE tenant_id = $1 AND receipt_number NOT LIKE 'SEC-DEP%'", [tenant.id]);
+                const totalPaid = paymentsRes.rows.reduce((sum, p) => sum + parseFloat(p.amount || 0), 0);
+
+                const startDate = new Date(tenant.start_date);
+                if (today < startDate) continue;
+
+                const anchorDate = new Date(tenant.rent_due_date || tenant.start_date);
+                let monthsDiff = (today.getFullYear() - anchorDate.getFullYear()) * 12 + (today.getMonth() - anchorDate.getMonth());
+                if (today.getDate() >= anchorDate.getDate()) monthsDiff += 1;
+                const monthsElapsed = Math.max(1, monthsDiff);
+
+                const rawRent = parseFloat(tenant.monthly_rent);
+                const totalExpected = monthsElapsed * rawRent;
+                const rawBalance = totalExpected - totalPaid;
+
+                if (rawBalance > 100) { // Balance > 100 to avoid rounding dust
+                    const monthsPending = Math.max(1, Math.round(rawBalance / rawRent));
+                    
+                    console.log(`🚨 [Automated Overdue] Sending to ${tenant.email}: ₹${rawBalance} (${monthsPending} months)`);
+                    await sendRentReminderEmail({
+                        tenantEmail: tenant.email,
+                        tenantName: tenant.name,
+                        propertyName: tenant.property_title,
+                        dueDate: tenant.rent_due_date,
+                        amount: Math.round(rawBalance),
+                        daysRemaining: 0,
+                        propertyImage: tenant.property_image,
+                        monthsPending: monthsPending
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error in 9:00 AM Overdue Scheduler:', error);
+        }
+    });
+
+    // ----------------------------------------------------
+    // 2️⃣ 8:10 PM: DAILY UPCOMING WARNING (0-5 days remaining)
     // ----------------------------------------------------
     cron.schedule('10 20 * * *', async () => {
         console.log('🔄 Running 8:10 PM Rent Warning Check...');
         try {
-            // Fetch all active tenants
             const tenants = await db.query(`
                 SELECT 
-                    t.id,
-                    t.monthly_rent,
-                    t.start_date,
-                    t.rent_due_date, -- Day of month (e.g., 5, 20)
-                    tm.full_name,
-                    tm.tenant_emailid as email,
-                    p.title as property_name
+                    t.id, t.monthly_rent, t.rent_due_date,
+                    tm.full_name, tm.tenant_emailid as email,
+                    p.title as property_name,
+                    (SELECT image_url FROM property_images WHERE property_id = p.id ORDER BY is_cover DESC LIMIT 1) as property_image
                 FROM tenants t
                 JOIN properties p ON p.id = t.property_id
                 JOIN tenant_members tm ON tm.tenant_id = t.id AND tm.is_primary = true
-                WHERE t.start_date IS NOT NULL AND t.rent_due_date IS NOT NULL
             `);
 
             const today = new Date();
             const currentDay = today.getDate();
-            const currentMonth = today.getMonth(); // 0-indexed
+            const currentMonth = today.getMonth();
             const currentYear = today.getFullYear();
 
             for (const tenant of tenants.rows) {
                 const dueDay = parseInt(tenant.rent_due_date);
                 if (isNaN(dueDay)) continue;
 
-                // Construct the "Target Due Date" for THIS month
                 let targetDueDate = new Date(currentYear, currentMonth, dueDay);
-
-                // Handle edge case: If today is late in the month (e.g., 28th) and due date is early (e.g., 2nd),
-                // we might be looking at NEXT month's due date.
-                // But usually, reminders are for the upcoming date.
-
-                // If the due date for this month has passed, look at next month?
-                // The requirement is "5 days before".
-                // If today is 25th, and due date is 30th (diff 5) -> Send.
-                // If today is 25th, and due date is 2nd (next month) -> (Diff approx 7 days)
-
-                // Let's create a robust "Next Due Date" finder
                 if (targetDueDate < today) {
-                    // This month's date passed. Check next month.
                     targetDueDate = new Date(currentYear, currentMonth + 1, dueDay);
                 }
 
-                // Calculate difference in days
-                const diffTime = targetDueDate - today;
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const diffDays = Math.ceil((targetDueDate - today) / (1000 * 60 * 60 * 24));
 
-                // User Request: "before the 5 days of the rent due date"
-                // Assuming this means [5, 4, 3, 2, 1, 0] days remaining.
                 if (diffDays >= 0 && diffDays <= 5) {
-                    console.log(`🔔 Sending 8:10 PM Reminder to ${tenant.full_name}: Due in ${diffDays} days.`);
-                    await sendRentWarning({
+                    console.log(`🔔 [Automated Warning] Sending to ${tenant.full_name}: Due in ${diffDays} days.`);
+                    await sendRentReminderEmail({
                         tenantEmail: tenant.email,
                         tenantName: tenant.full_name,
                         propertyName: tenant.property_name,
                         dueDate: tenant.rent_due_date,
                         amount: tenant.monthly_rent,
-                        daysRemaining: diffDays
+                        daysRemaining: diffDays,
+                        propertyImage: tenant.property_image,
+                        monthsPending: 1
                     });
                 }
             }
-
         } catch (error) {
             console.error('❌ Error in 8:10 PM Scheduler:', error);
         }

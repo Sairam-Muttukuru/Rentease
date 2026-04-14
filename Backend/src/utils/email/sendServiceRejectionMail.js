@@ -5,68 +5,58 @@ module.exports = async (email, tenantName, serviceName, providerName, rejectionR
     const subject = `❌ Service Request Rejected: ${serviceName}`;
 
     const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background-color: #f9fafb; margin: 0; padding: 0; }
-            .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-            .header { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 30px 20px; text-align: center; }
-            .content { padding: 30px; }
-            .details-table { width: 100%; border-collapse: collapse; }
-            .detail-row { border-bottom: 1px solid #fee2e2; }
-            .detail-row:last-child { border-bottom: none; }
-            .label { font-weight: 600; color: #991b1b; font-size: 14px; padding: 8px 0; width: 40%; vertical-align: top; }
-            .value { font-weight: 500; color: #111827; font-size: 14px; padding: 8px 0; text-align: right; vertical-align: top; }
-            .reason-box { background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-top: 20px; font-style: italic; color: #4b5563; }
-            .footer { background-color: #f9fafb; text-align: center; padding: 20px; color: #6b7280; font-size: 12px; border-top: 1px solid #e5e7eb; }
-            .button { display: inline-block; background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 20px; text-align: center; }
-            .status-badge { display: inline-block; background-color: #fee2e2; color: #991b1b; padding: 6px 12px; border-radius: 9999px; font-size: 12px; font-weight: 700; text-transform: uppercase; margin-top: 10px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <img src="cid:renteasefavicon" alt="RentEase" style="height: 50px; margin-bottom: 10px;">
-              <h1 style="margin: 0; font-size: 24px; color: white;">Service Request Rejected</h1>
-              <div class="status-badge">Rejected</div>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Service Update</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+        <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
+            
+            <!-- Logo Header -->
+            <div style="padding: 24px; text-align: left; background: #ffffff; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px;">
+                <img src="${process.env.FRONTEND_URL}/favicon.png" alt="RentEase" style="height: 32px; width: 32px; border-radius: 8px;" />
+                <span style="font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">RentEase</span>
             </div>
-            <div class="content">
-              <p>Hello <strong>${tenantName}</strong>,</p>
-              
-              <p>We're sorry to inform you that your request for <strong>${serviceName}</strong> has been rejected by the service provider, <strong>${providerName}</strong>.</p>
-              
-              <div class="details-box">
-                <table class="details-table">
-                  <tr class="detail-row">
-                    <td class="label">Service</td>
-                    <td class="value">${serviceName}</td>
-                  </tr>
-                  <tr class="detail-row">
-                    <td class="label">Provider</td>
-                    <td class="value">${providerName}</td>
-                  </tr>
-                </table>
-              </div>
 
-              <p><strong>Reason for rejection:</strong></p>
-              <div class="reason-box">
-                "${rejectionReason || "No specific reason provided."}"
-              </div>
-              
-              <p style="margin-top: 25px;">You can browse other service providers on the platform to fulfill your request.</p>
-              
-              <div style="text-align: center;">
-                <a href="http://localhost:5173/tenant-dashboard" class="button">Go to Dashboard</a>
-              </div>
+            <!-- Content Body -->
+            <div style="padding: 40px 32px;">
+                <span style="background: #fee2e2; color: #dc2626; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Request Update</span>
+                <h1 style="color: #0f172a; margin: 16px 0 24px 0; font-size: 28px; font-weight: 800;">Hi ${tenantName}, 👋</h1>
+                
+                <p style="font-size: 16px; color: #475569; line-height: 1.7; margin: 0 0 32px 0;">
+                    We're writing to inform you that your request for <b>${serviceName}</b> could not be accepted by <b>${providerName}</b> at this time.
+                </p>
+                
+                <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 16px; padding: 24px; margin-bottom: 32px;">
+                    <h2 style="font-size: 11px; color: #e11d48; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 12px 0;">Reason for Rejection</h2>
+                    <p style="font-size: 15px; color: #9f1239; line-height: 1.6; margin: 0; font-style: italic;">
+                        "${rejectionReason || "No specific reason was provided by the professional."}"
+                    </p>
+                </div>
+
+                <p style="font-size: 15px; color: #64748b; margin-bottom: 32px;">
+                    Don't worry—you can easily browse and book other highly-rated professionals on the RentEase platform to get your issue resolved.
+                </p>
+
+                <div style="text-align: center;">
+                    <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" style="display: inline-block; background-color: #0f172a; color: #ffffff; padding: 18px 40px; border-radius: 12px; font-weight: 700; text-decoration: none; font-size: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);">
+                        Browse Other Professionals
+                    </a>
+                </div>
             </div>
-            <div class="footer">
-              <p>&copy; ${new Date().getFullYear()} RentEase. All rights reserved.</p>
-              <p>This is an automated message, please do not reply.</p>
+            
+            <!-- Footer -->
+            <div style="padding: 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+                <div style="font-weight: 800; color: #6366f1; font-size: 20px; margin-bottom: 8px;">RentEase</div>
+                <p style="font-size: 12px; color: #94a3b8; margin: 0;">We're here to help you manage your home better.</p>
+                <p style="font-size: 12px; color: #94a3b8; margin-top: 20px;">&copy; ${new Date().getFullYear()} RentEase. All rights reserved.</p>
             </div>
-          </div>
-        </body>
-        </html>
+        </div>
+    </body>
+    </html>
     `;
 
     await sendMail(email, subject, htmlContent);

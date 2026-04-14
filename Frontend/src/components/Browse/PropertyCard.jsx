@@ -110,7 +110,7 @@ const PropertyCard = ({ property }) => {
                 <div className="absolute bottom-5 left-6 text-white z-10">
                     <p className="text-3xl font-black tracking-tighter flex items-baseline gap-1 drop-shadow-lg">
                         ₹{Number(property.price).toLocaleString()}
-                        <span className="text-sm font-medium text-gray-300 opacity-80">/mo</span>
+                        <span className="text-sm font-medium text-gray-300 opacity-80">/mo {['PG', 'Hostel'].includes(property.property_type) ? '/ per person' : ''}</span>
                     </p>
                 </div>
 

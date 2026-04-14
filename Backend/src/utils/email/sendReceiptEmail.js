@@ -19,62 +19,90 @@ const sendReceiptEmail = (tenantEmail, payment) => {
 
             try {
                 const subject = `🧾 Payment Confirmation: ₹${payment.amount.toLocaleString()} for ${payment.property_title}`;
+                const propertyImage = payment.property_image || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=600';
+                
                 const html = `
-                    <div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 20px auto; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
-                        <div style="padding: 30px 20px; text-align: center; background-color: #ffffff; border-bottom: 1px solid #f3f4f6;">
-                            <img src="cid:renteasefavicon" alt="RentEase" style="height: 45px; display: block; margin: 0 auto 15px;">
-                            <div style="display: inline-block; padding: 6px 12px; background-color: #ecfdf5; color: #059669; border-radius: 100px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px;">
-                                Payment Confirmed
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Digital Payment Receipt</title>
+                </head>
+                <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+                    <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+                        
+                        <!-- Logo Header (Table-based for Bulletproof Rendering) -->
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-bottom: 1px solid #f1f5f9;">
+                            <tr>
+                                <td style="padding: 24px;">
+                                    <table cellpadding="0" cellspacing="0" border="0">
+                                        <tr>
+                                            <td style="vertical-align: middle; padding-right: 12px;">
+                                                <img src="${process.env.FRONTEND_URL || 'https://rentease-home.vercel.app'}/favicon.png" alt="Logo" width="32" height="32" style="display: block; width: 32px; height: 32px; border-radius: 8px;" />
+                                            </td>
+                                            <td style="vertical-align: middle;">
+                                                <span style="font-size: 22px; font-weight: 800; color: #010101; letter-spacing: -0.5px; font-family: 'Segoe UI', Arial, sans-serif;">RentEase</span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Property Hero Section -->
+                        <div style="height: 240px; background-color: #f1f5f9; overflow: hidden; position: relative;">
+                            <img src="${propertyImage || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=600'}" alt="Property" width="600" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%);"></div>
+                            <div style="position: absolute; bottom: 24px; left: 24px;">
+                                <span style="background: #10b981; color: white; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; display: inline-block;">Payment Confirmed</span>
+                                <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 800;">Hi ${tenantName}! 👋</h1>
                             </div>
-                            <h1 style="margin: 0; font-size: 24px; font-weight: 800; color: #111827; letter-spacing: -0.02em;">Payment Successful!</h1>
                         </div>
 
-                        ${payment.property_image ? `
-                        <div style="padding: 0;">
-                            <img src="${payment.property_image}" alt="Property" style="width: 100%; max-height: 260px; object-fit: cover; display: block;">
-                        </div>
-                        ` : ''}
-
-                        <div style="padding: 35px; background: #ffffff;">
-                            <h2 style="color: #1e293b; margin-top: 0; font-size: 20px;">Hi ${payment.tenant_name || 'Resident'},</h2>
-                            <p style="color: #475569; line-height: 1.6; font-size: 15px;">
-                                We've successfully received your payment for <b>${payment.property_title || 'your property'}</b>. 
-                                Your official rent receipt has been generated and is attached to this email.
+                        <!-- Content Body -->
+                        <div style="padding: 40px 32px;">
+                            <h1 style="color: #0f172a; margin: 0 0 16px 0; font-size: 26px; font-weight: 800;">Payment Confirmed</h1>
+                            <p style="font-size: 16px; color: #64748b; line-height: 1.7; margin: 0 0 32px 0;">
+                                Hello <b>${payment.tenant_name || 'Resident'}</b>,<br><br>
+                                We've successfully processed your payment for <b>${payment.property_title || 'your property'}</b>. 
+                                Attached you will find your official digital receipt (PDF) for your personal records.
                             </p>
                             
-                            <div style="background: #f9fafb; border-radius: 12px; padding: 25px; margin: 25px 0; border: 1px solid #f1f5f9;">
-                                <h3 style="margin-top: 0; color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 18px;">Payment Summary</h3>
-                                <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+                            <!-- Financial Breakdown Concept -->
+                            <div style="background-color: #f1f5f9; border-radius: 20px; padding: 32px; margin-bottom: 32px;">
+                                <table style="width: 100%; border-collapse: collapse;">
                                     <tr>
-                                        <td style="padding: 10px 0; color: #64748b; font-size: 14px; vertical-align: top; width: 35%;">Amount Paid</td>
-                                        <td style="padding: 10px 0; text-align: right; font-weight: 800; color: #111827; font-size: 18px; vertical-align: top;">₹${payment.amount.toLocaleString()}</td>
+                                        <td style="padding-bottom: 12px; color: #64748b; font-size: 14px;">Transaction Date</td>
+                                        <td style="padding-bottom: 12px; color: #0f172a; font-size: 14px; font-weight: 700; text-align: right;">${new Date(payment.payment_date || new Date()).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</td>
                                     </tr>
                                     <tr>
-                                        <td style="padding: 10px 0; color: #64748b; font-size: 14px; vertical-align: top; width: 35%;">Transaction ID</td>
-                                        <td style="padding: 10px 0; text-align: right; font-size: 13px; color: #1e293b; font-family: 'Roboto Mono', monospace; word-break: break-all; vertical-align: top;">${payment.transaction_id || 'N/A'}</td>
+                                        <td style="padding-bottom: 12px; color: #64748b; font-size: 14px;">Receipt #</td>
+                                        <td style="padding-bottom: 12px; color: #0f172a; font-size: 14px; font-weight: 700; text-align: right;">${payment.receipt_number || 'N/A'}</td>
                                     </tr>
-                                    <tr>
-                                        <td style="padding: 10px 0; color: #64748b; font-size: 14px; vertical-align: top; width: 35%;">Receipt No.</td>
-                                        <td style="padding: 10px 0; text-align: right; font-size: 13px; color: #1e293b; word-break: break-all; vertical-align: top;">${payment.receipt_number || 'N/A'}</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="padding: 10px 0; color: #64748b; font-size: 14px; vertical-align: top; width: 35%;">Payment Date</td>
-                                        <td style="padding: 10px 0; text-align: right; font-size: 14px; color: #1e293b; vertical-align: top;">${new Date(payment.payment_date || new Date()).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</td>
+                                    <tr style="border-top: 1px solid #cbd5e1;">
+                                        <td style="padding: 20px 0 0 0; color: #0f172a; font-size: 16px; font-weight: 700;">Total Amount</td>
+                                        <td style="padding: 20px 0 0 0; color: #10b981; font-size: 24px; font-weight: 800; text-align: right;">₹${payment.amount.toLocaleString()}</td>
                                     </tr>
                                 </table>
                             </div>
 
-                            <div style="text-align: center; margin-top: 30px;">
-                                <a href="http://localhost:5173/login" style="background: #4f46e5; color: white; padding: 14px 32px; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 15px; display: inline-block;">Go to Tenant Dashboard</a>
+                            <div style="background-color: #fffbeb; border: 1px dashed #fcd34d; border-radius: 12px; padding: 16px; text-align: center;">
+                                <p style="margin: 0; font-size: 13px; color: #92400e; font-weight: 600;">
+                                    📎 Please download the attached PDF for a full line-item breakdown.
+                                </p>
                             </div>
                         </div>
-
-                        <div style="background: #f1f5f9; padding: 25px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0;">
-                            <p style="margin-bottom: 8px; font-weight: 600; color: #475569;"> RentEase Home Management </p>
-                            <p style="margin: 0;">Fast. Easy. Reliable.</p>
-                            <p style="margin: 10px 0 0;">&copy; ${new Date().getFullYear()} RentEase Inc. All rights reserved.</p>
+                        
+                        <!-- Footer -->
+                        <div style="padding: 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+                            <div style="font-weight: 800; color: #6366f1; font-size: 20px; margin-bottom: 8px;">RentEase</div>
+                            <p style="font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Smart Property Management Solutions</p>
+                            <p style="font-size: 12px; color: #94a3b8; margin-top: 24px;">&copy; ${new Date().getFullYear()} RentEase Home Management. All rights reserved.</p>
                         </div>
                     </div>
+                </body>
+                </html>
                 `;
 
                 await sendMail(tenantEmail, subject, html, [

@@ -42,7 +42,7 @@ class ServiceProviderService {
 
         return await ProviderModel.createAndAddService(providerId, {
             ...data,
-            image_url: imageUrl,
+            image_url: imageUrl || data.image_url,
             features: typeof data.features === 'string' ? JSON.parse(data.features) : data.features
         });
     }

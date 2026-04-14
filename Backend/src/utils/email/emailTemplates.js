@@ -1,147 +1,71 @@
 const rentReminderTemplate = (tenantName, rentAmount, dueDate, landlordName) => `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Rent Reminder</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rent Reminder</title>
 </head>
-<body style="margin:0; padding:0; background-color:#f4f6f8; font-family:Arial, sans-serif;">
-
-  <table width="100%" cellpadding="0" cellspacing="0">
-    <tr>
-      <td align="center" style="padding:30px 15px;">
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <div style="max-width: 620px; margin: 40px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
         
-        <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.08);">
-          
-          <!-- HEADER -->
-          <tr>
-            <td style="background:#4f46e5; padding:24px; text-align:center;">
-              <h1 style="margin:0; color:#ffffff; letter-spacing:1px;">RentEase</h1>
-              <p style="margin:8px 0 0; color:#c7d2fe;">Smart Rent Management</p>
-            </td>
-          </tr>
+        <!-- Logo Header -->
+        <div style="padding: 24px; text-align: left; background: #ffffff; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px;">
+            <img src="${process.env.FRONTEND_URL}/favicon.png" alt="RentEase" style="height: 32px; width: 32px; border-radius: 8px;" />
+            <span style="font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">RentEase</span>
+        </div>
 
-          <!-- BODY -->
-          <tr>
-            <td style="padding:32px;">
-              <h2 style="color:#111827; margin-bottom:12px;">Hi ${tenantName}, 👋</h2>
+        <!-- Hero Section -->
+        <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 40px; text-align: center; color: #ffffff;">
+            <div style="background: rgba(255,255,255,0.2); width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                <span style="font-size: 32px;">💰</span>
+            </div>
+            <h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">Rent Reminder</h1>
+            <p style="margin: 8px 0 0; opacity: 0.9; font-size: 16px;">Time to secure your monthly stay</p>
+        </div>
 
-              <p style="color:#374151; font-size:16px; line-height:1.6;">
-                This is a friendly reminder that your <strong>monthly rent payment</strong> is due.
-              </p>
+        <!-- Content Body -->
+        <div style="padding: 40px 32px;">
+            <h2 style="font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 16px 0;">Hi ${tenantName}, 👋</h2>
+            <p style="font-size: 16px; color: #475569; line-height: 1.7; margin: 0 0 32px 0;">
+                We hope you're enjoying your home. This is a friendly reminder from <b>${landlordName}</b> that your rent payment is due soon.
+            </p>
+            
+            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 32px;">
+                <h2 style="font-size: 11px; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 20px 0;">Payment Details</h2>
+                
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 10px 0; color: #64748b; font-size: 14px;">Outstanding Amount</td>
+                        <td style="padding: 10px 0; color: #6366f1; font-size: 18px; font-weight: 800; text-align: right;">₹${rentAmount.toLocaleString()}</td>
+                    </tr>
+                    <tr style="border-top: 1px solid #e2e8f0;">
+                        <td style="padding: 14px 0 10px 0; color: #64748b; font-size: 14px;">Due Date</td>
+                        <td style="padding: 14px 0 10px 0; color: #0f172a; font-size: 14px; font-weight: 700; text-align: right;">${dueDate}</td>
+                    </tr>
+                </table>
+            </div>
 
-              <table width="100%" style="margin:24px 0; background:#f9fafb; border-radius:10px; padding:20px;">
-                <tr>
-                  <td style="font-size:15px; color:#374151;">
-                    <strong>Rent Amount:</strong>
-                  </td>
-                  <td style="font-size:15px; color:#111827; text-align:right;">
-                    ₹${rentAmount}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-size:15px; color:#374151; padding-top:8px;">
-                    <strong>Due Date:</strong>
-                  </td>
-                  <td style="font-size:15px; color:#111827; text-align:right; padding-top:8px;">
-                    ${dueDate}
-                  </td>
-                </tr>
-              </table>
-
-              <p style="color:#374151; font-size:15px;">
-                Please make the payment at the earliest to avoid any late fees.
-              </p>
-
-              <div style="text-align:center; margin-top:30px;">
-                <a href="#" style="
-                  background:#4f46e5;
-                  color:#ffffff;
-                  text-decoration:none;
-                  padding:14px 28px;
-                  border-radius:8px;
-                  font-weight:bold;
-                  display:inline-block;
-                ">
-                  Pay Rent Now
+            <div style="text-align: center;">
+                <a href="${process.env.FRONTEND_URL}/login" style="display: inline-block; background-color: #0f172a; color: #ffffff; padding: 18px 40px; border-radius: 12px; font-weight: 700; text-decoration: none; font-size: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);">
+                    Pay Rent Securely
                 </a>
-              </div>
-
-               <p style="color:#374151; font-size:15px; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
-                 Regards,<br>
-                 <strong>${landlordName}</strong>
-               </p>
-            </td>
-          </tr>
-
-          <!-- FOOTER -->
-          <tr>
-            <td style="background:#f3f4f6; padding:20px; text-align:center;">
-              <p style="margin:0; font-size:13px; color:#6b7280;">
-                © 2026 RentEase. All rights reserved.
-              </p>
-            </td>
-          </tr>
-
-        </table>
-
-      </td>
-    </tr>
-  </table>
-
+            </div>
+            
+            <p style="margin-top: 32px; font-size: 14px; color: #94a3b8; text-align: center;">
+                If you have already settled your dues, please ignore this notification.
+            </p>
+        </div>
+        
+        <!-- Footer -->
+        <div style="padding: 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+            <div style="font-weight: 800; color: #6366f1; font-size: 20px; margin-bottom: 8px;">RentEase</div>
+            <p style="font-size: 12px; color: #94a3b8; margin: 0;">Everything easier, with RentEase.</p>
+            <p style="font-size: 12px; color: #94a3b8; margin-top: 20px;">&copy; ${new Date().getFullYear()} RentEase Home Management. All rights reserved.</p>
+        </div>
+    </div>
 </body>
 </html>
 `;
+
 module.exports = { rentReminderTemplate };
-
-// const rentReminderTemplate = (tenantName, rentAmount, dueDate) => `
-// <!DOCTYPE html>
-// <html>
-// <head>
-//   <meta charset="UTF-8" />
-//   <title>Rent Reminder</title>
-// </head>
-// <body style="margin:0; padding:0; background-color:#f4f6f8; font-family:Arial, sans-serif;">
-//   <table width="100%">
-//     <tr>
-//       <td align="center" style="padding:30px">
-//         <table width="600" style="background:#fff;border-radius:12px;">
-//           <tr>
-//             <td style="background:#4f46e5;padding:20px;text-align:center;color:white;">
-//               <h1>RentEase</h1>
-//               <p>Smart Rent Management</p>
-//             </td>
-//           </tr>
-
-//           <tr>
-//             <td style="padding:30px">
-//               <h2>Hi ${tenantName}, 👋</h2>
-//               <p>Your rent payment is pending.</p>
-
-//               <p><strong>Rent Amount:</strong> ₹${rentAmount}</p>
-//               <p><strong>Due Date:</strong> ${dueDate}</p>
-
-//               <a href="#"
-//                 style="display:inline-block;margin-top:20px;
-//                 background:#4f46e5;color:#fff;
-//                 padding:12px 24px;border-radius:6px;
-//                 text-decoration:none;">
-//                 Pay Rent Now
-//               </a>
-//             </td>
-//           </tr>
-
-//           <tr>
-//             <td style="background:#f3f4f6;padding:15px;text-align:center;">
-//               © 2026 RentEase
-//             </td>
-//           </tr>
-//         </table>
-//       </td>
-//     </tr>
-//   </table>
-// </body>
-// </html>
-// `;
-
-// module.exports = { rentReminderTemplate };

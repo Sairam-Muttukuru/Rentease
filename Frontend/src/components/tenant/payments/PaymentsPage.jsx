@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, FileText, Check } from 'lucide-react';
+import { Download, FileText, Check, Eye, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import { jsPDF } from 'jspdf';
@@ -12,6 +12,8 @@ import BASE_URL from '../../../utils/apiConfig';
 const PaymentsPage = ({ payments }) => {
     const { theme } = useTheme();
     const isDarkMode = theme === 'dark';
+    const [previewUrl, setPreviewUrl] = React.useState(null);
+    const [isPreviewing, setIsPreviewing] = React.useState(false);
 
     const downloadReceipt = async (payment) => {
         try {
@@ -32,6 +34,24 @@ const PaymentsPage = ({ payments }) => {
         } catch (err) {
             console.error("Download failed", err);
             toast.error("Failed to download receipt");
+        }
+    };
+
+    const previewReceipt = async (payment) => {
+        try {
+            const token = localStorage.getItem("accessToken");
+            const res = await axios.get(`${BASE_URL}/api/payment/download-receipt/${payment.id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+                responseType: 'blob'
+            });
+
+            const blob = new Blob([res.data], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            setPreviewUrl(url);
+            setIsPreviewing(true);
+        } catch (err) {
+            console.error("Preview failed", err);
+            toast.error("Failed to preview receipt");
         }
     };
 
@@ -193,6 +213,7 @@ const PaymentsPage = ({ payments }) => {
                                 <th className={`px-6 py-4 font-semibold transition-colors duration-500 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Method</th>
                                 <th className={`px-6 py-4 font-semibold transition-colors duration-500 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Amount</th>
                                 <th className={`px-6 py-4 font-semibold transition-colors duration-500 ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Status</th>
+                                <th className={`px-6 py-4 font-semibold transition-colors duration-500 text-center ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Preview</th>
                                 <th className={`px-6 py-4 font-semibold transition-colors duration-500 text-center ${isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>Receipt</th>
                             </tr>
                         </thead>
@@ -212,6 +233,15 @@ const PaymentsPage = ({ payments }) => {
                                     </td>
                                     <td className="px-6 py-4 text-center">
                                         <button
+                                            onClick={() => previewReceipt(payment)}
+                                            className={`p-2 rounded-lg transition-all ${isDarkMode ? 'hover:bg-blue-500/20 text-blue-400' : 'hover:bg-blue-50 text-blue-600'}`}
+                                            title="Preview Receipt"
+                                        >
+                                            <Eye size={18} />
+                                        </button>
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <button
                                             onClick={() => downloadReceipt(payment)}
                                             className={`p-2 rounded-lg transition-all ${isDarkMode ? 'hover:bg-violet-500/20 text-violet-400' : 'hover:bg-violet-50 text-violet-600'}`}
                                             title="Download Receipt"
@@ -225,6 +255,30 @@ const PaymentsPage = ({ payments }) => {
                     </table>
                 </div>
             </Card>
+
+            {/* PDF Preview Modal */}
+            {isPreviewing && previewUrl && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className={`relative w-full max-w-4xl h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden ${isDarkMode ? 'bg-slate-900 border border-slate-800' : 'bg-white'}`}>
+                        <div className={`flex items-center justify-between p-4 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+                            <h3 className={`font-bold text-lg ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Receipt Preview</h3>
+                            <button 
+                                onClick={() => { setIsPreviewing(false); URL.revokeObjectURL(previewUrl); setPreviewUrl(null); }}
+                                className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-slate-800 text-slate-400 hover:text-white' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-900'}`}
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="flex-1 w-full bg-slate-100/50">
+                            <iframe 
+                                src={`${previewUrl}#toolbar=0`} 
+                                className="w-full h-full border-0"
+                                title="Receipt Preview"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

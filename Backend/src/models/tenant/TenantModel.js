@@ -17,6 +17,26 @@ exports.getByPropertyId = async (propertyId) => {
     [propertyId]
   )).rows[0];
 };
+ 
+exports.getCountByPropertyId = async (propertyId) => {
+  const res = await db.query(
+    "SELECT COUNT(*) FROM tenants WHERE property_id=$1",
+    [propertyId]
+  );
+  return parseInt(res.rows[0].count);
+};
+
+exports.getEmailsByPropertyId = async (propertyId) => {
+  const res = await db.query(
+    `SELECT DISTINCT email FROM (
+      SELECT u.email FROM tenants t JOIN users u ON u.id = t.user_id WHERE t.property_id = $1
+      UNION
+      SELECT tm.tenant_emailid as email FROM tenant_members tm JOIN tenants t ON t.id = tm.tenant_id WHERE t.property_id = $1
+    ) combined_emails`,
+    [propertyId]
+  );
+  return res.rows.map(r => r.email);
+};
 
 exports.getFullTenantByProperty = async (propertyId, landlordId) => {
   console.log("Fetching tenants for propertyId:", propertyId, "landlordId:", landlordId);
@@ -39,6 +59,13 @@ exports.getFullTenantByProperty = async (propertyId, landlordId) => {
   )).rows;
 };
 
+exports.updateAllRentsForProperty = async (propertyId, amount) => {
+  return (await db.query(
+    "UPDATE tenants SET monthly_rent = $1 WHERE property_id = $2",
+    [amount, propertyId]
+  ));
+};
+
 exports.getAllByLandlordId = async (landlordId) => {
   return (await db.query(
     `
@@ -52,6 +79,9 @@ exports.getAllByLandlordId = async (landlordId) => {
     t.start_date,
     t.rent_due_date,
     p.title as property_name,
+    p.property_type,
+    p.room_type,
+    p.sharing_capacity,
     p.late_penalty_amount as "latePenaltyAmount",
     p.rent_due_day as "rentDueDay",
     tm.full_name as name,
@@ -130,11 +160,11 @@ exports.getByUserId = async (userId) => {
     p.bathrooms,
 
     --Financials & Policies
-  p.security_deposit as "securityDeposit",
+    p.security_deposit as "securityDeposit",
     t.security_deposit_status as "securityDepositStatus",
     p.rent_escalation_desc as "rentEscalation",
-    p.bank_account as "bankAccount",
-    p.ifsc_code as "ifscCode",
+    NULL as "bankAccount",
+    NULL as "ifscCode",
     p.upi_id as "upiId",
     p.late_penalty_amount as "latePenaltyAmount",
     p.rent_due_day as "rentDueDay",

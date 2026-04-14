@@ -7,7 +7,8 @@ import {
     Phone,
     MessageCircle,
     Edit,
-    Trash2
+    Trash2,
+    IndianRupee
 } from 'lucide-react';
 import LandlordButton from '../common/LandlordButton';
 
@@ -90,7 +91,17 @@ const LandlordTenantsView = ({
                             {/* Decorative Header */}
                             <div className={`h-32 w-full relative overflow-hidden ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50'}`}>
                                 <div className="absolute inset-0 bg-gradient-to-br from-violet-600/20 to-fuchsia-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-                                <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest backdrop-blur-md border ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-emerald-100 text-emerald-600 border-emerald-200'}`}>
+                                <div className="absolute top-4 left-4 flex gap-2">
+                                    <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md border ${tenant.property_type?.includes('PG') ? 'bg-violet-500/20 text-violet-400 border-violet-500/30' : 'bg-blue-500/20 text-blue-400 border-blue-500/30'}`}>
+                                        {tenant.property_type || 'Property'}
+                                    </div>
+                                    {tenant.room_no && (
+                                        <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md border border-amber-500/30 bg-amber-500/20 text-amber-400`}>
+                                            Room {tenant.room_no}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md border ${isDarkMode ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-emerald-100 text-emerald-600 border-emerald-200'}`}>
                                     Active
                                 </div>
                             </div>
@@ -110,19 +121,35 @@ const LandlordTenantsView = ({
                                 <h3 className={`text-2xl font-black mb-1 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{tenant.name}</h3>
 
                                 {/* Info Grid */}
-                                <div className={`mt-6 space-y-4 text-left p-5 rounded-3xl ${isDarkMode ? 'bg-slate-950/50' : 'bg-slate-50'}`}>
+                                <div className={`mt-6 space-y-3 text-left p-5 rounded-3xl ${isDarkMode ? 'bg-slate-950/50 border border-slate-800' : 'bg-slate-50 border border-slate-100'}`}>
                                     <div className="flex items-center gap-4">
                                         <div className={`p-2.5 rounded-xl ${isDarkMode ? 'bg-slate-800 text-slate-400' : 'bg-white text-slate-500 shadow-sm'}`}><Home size={18} /></div>
                                         <div className="min-w-0">
-                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Property</p>
-                                            <p className={`font-bold text-sm truncate ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{tenant.property_name}</p>
+                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Property & Occupancy</p>
+                                            <p className={`font-bold text-xs truncate ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                                                {tenant.property_name} 
+                                                <span className="ml-2 text-violet-500">
+                                                    ({tenant.occupied_count || 1}/{tenant.sharing_capacity || 1})
+                                                </span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <div className={`p-2.5 rounded-xl ${isDarkMode ? 'bg-slate-800 text-emerald-400' : 'bg-white text-emerald-600 shadow-sm'}`}><IndianRupee size={18} /></div>
+                                        <div className="min-w-0">
+                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Monthly Rent</p>
+                                            <p className={`font-black text-sm ${isDarkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                                                ₹{parseFloat(tenant.monthly_rent || 0).toLocaleString()} <span className="text-[10px] font-bold text-slate-500">
+                                                    {tenant.property_type?.includes('PG') ? '/ per person' : '/ month'}
+                                                </span>
+                                            </p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4">
                                         <div className={`p-2.5 rounded-xl ${isDarkMode ? 'bg-slate-800 text-slate-400' : 'bg-white text-slate-500 shadow-sm'}`}><Phone size={18} /></div>
                                         <div className="min-w-0">
                                             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Contact</p>
-                                            <p className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{tenant.phone}</p>
+                                            <p className={`font-bold text-xs ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{tenant.phone}</p>
                                         </div>
                                     </div>
                                 </div>

@@ -90,7 +90,7 @@ exports.getServices = async (providerId) => {
          JOIN services s ON ps.service_id = s.id
          JOIN service_types st ON s.type_id = st.id
          JOIN service_categories sc ON st.category_id = sc.id
-         WHERE ps.provider_id = $1 
+         WHERE ps.provider_id = $1 AND (s.provider_id IS NULL OR s.provider_id = $1)
          ORDER BY s.name, ps.created_at DESC`,
         [providerId]
     );
@@ -335,8 +335,11 @@ exports.getCategories = async (providerId) => {
 
     if (isSpecialist) {
         // Find category where name matches specialty (e.g. 'Electrical')
-        query += ` WHERE name ILIKE $1`;
-        params.push(specialty);
+        query += ` WHERE name ILIKE $1 AND (provider_id IS NULL OR provider_id = $2)`;
+        params.push(specialty, providerId);
+    } else {
+        query += ` WHERE provider_id IS NULL OR provider_id = $1`;
+        params.push(providerId);
     }
 
     query += ` ORDER BY name ASC`;
@@ -365,7 +368,7 @@ exports.getCatalogServices = async (typeId, providerId) => {
                  FROM services s
                  LEFT JOIN provider_services ps ON s.id = ps.service_id AND ps.provider_id = $2
                  LEFT JOIN service_providers sp ON s.provider_id = sp.id
-                 WHERE s.type_id = $1 
+                 WHERE s.type_id = $1 AND (s.provider_id IS NULL OR s.provider_id = $2)
                  ORDER BY s.name ASC`;
         params = [typeId, providerId];
     } else {
@@ -396,7 +399,7 @@ exports.getCatalogServicesBySubType = async (subTypeId, providerId) => {
                  FROM services s
                  LEFT JOIN provider_services ps ON s.id = ps.service_id AND ps.provider_id = $2
                  LEFT JOIN service_providers sp ON s.provider_id = sp.id
-                 WHERE s.sub_type_id = $1
+                 WHERE s.sub_type_id = $1 AND (s.provider_id IS NULL OR s.provider_id = $2)
                  ORDER BY s.name ASC`;
         params = [subTypeId, providerId];
     } else {
@@ -522,13 +525,21 @@ exports.getBookings = async (providerId) => {
                 sr.created_at,
                 u.first_name || ' ' || u.last_name as customer, s.name as service,
                 COALESCE(sc.name, 'General') as category_name,
-                COALESCE(st.name, 'Standard') as type_name
+                COALESCE(st.name, 'Standard') as type_name,
+                latest_slot.visit_date, latest_slot.start_time, latest_slot.end_time
          FROM service_requests sr
          LEFT JOIN tenants t ON sr.tenant_id = t.id
          LEFT JOIN users u ON u.id = COALESCE(sr.user_id, t.user_id)
          LEFT JOIN services s ON sr.service_id = s.id
          LEFT JOIN service_types st ON s.type_id = st.id
          LEFT JOIN service_categories sc ON st.category_id = sc.id
+         LEFT JOIN LATERAL (
+             SELECT visit_date, start_time, end_time
+             FROM service_slots
+             WHERE service_request_id = sr.id
+             ORDER BY created_at DESC
+             LIMIT 1
+         ) latest_slot ON true
          WHERE sr.assigned_provider_id = $1
          ORDER BY sr.created_at DESC`,
         [providerId]

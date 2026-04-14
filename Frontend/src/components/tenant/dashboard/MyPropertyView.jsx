@@ -5,6 +5,7 @@ import Card from '../ui/Card';
 import Button from '../ui/Button';
 import ImageGalleryModal from '../../ui/ImageGalleryModal';
 import LandlordProfileModal from '../modals/LandlordProfileModal';
+import BASE_URL from '../../../utils/apiConfig';
 
 const MyPropertyView = ({
     isDarkMode,
@@ -25,7 +26,7 @@ const MyPropertyView = ({
     const handleDownloadReceipt = async () => {
         setDownloading(true);
         try {
-            const res = await fetch(`https://rentease-1-pwm5.onrender.com/api/payment/security-deposit/tenant/${user.id}`, {
+            const res = await fetch(`${BASE_URL}/api/payment/security-deposit/tenant/${user.id}`, {
                 headers: {
                     "Authorization": `Bearer ${localStorage.getItem("accessToken")}`
                 }
@@ -208,15 +209,15 @@ const MyPropertyView = ({
                                     { label: 'Type', value: user.property_type || 'PG / Hostel', icon: Building },
                                     { label: 'Sharing', value: user.room_type || 'Shared Room', icon: Users },
                                     { label: 'Food Served', value: user.food_included ? 'Included' : (user.food_included === false ? 'Not Included' : 'Check Amenities'), icon: Sparkles },
-                                    { label: 'Size', value: (user.area_sqft && Number(user.area_sqft) > 0) ? `${user.area_sqft} sq ft` : 'N/A', icon: FileText }
+                                    { label: 'Size', value: (user.area_sqft && Number(user.area_sqft) > 0) ? `${user.area_sqft} sq ft` : 'Standard', icon: FileText }
                                 ];
                             }
 
                             return [
                                 { label: 'Type', value: user.property_type || 'Not Specified', icon: Building },
-                                { label: 'Size', value: (user.area_sqft && Number(user.area_sqft) > 0) ? `${user.area_sqft} sq ft` : 'Not Specified', icon: FileText },
-                                { label: 'Bedrooms', value: (user.bedrooms && Number(user.bedrooms) > 0) ? `${user.bedrooms} Beds` : 'Not Specified', icon: Users },
-                                { label: 'Bathrooms', value: (user.bathrooms && Number(user.bathrooms) > 0) ? `${user.bathrooms} Baths` : 'Not Specified', icon: Sparkles }
+                                { label: 'Size', value: (user.area_sqft && Number(user.area_sqft) > 0) ? `${user.area_sqft} sq ft` : 'Standard', icon: FileText },
+                                { label: 'Bedrooms', value: (user.bedrooms && Number(user.bedrooms) > 0) ? `${user.bedrooms} Beds` : 'Standard', icon: Users },
+                                { label: 'Bathrooms', value: (user.bathrooms && Number(user.bathrooms) > 0) ? `${user.bathrooms} Baths` : 'Standard', icon: Sparkles }
                             ];
                         })().map((item, idx) => (
                             <Card key={idx} className="p-4 flex flex-col items-center justify-center text-center gap-2 hover:scale-105 transition-transform cursor-default">
@@ -286,24 +287,38 @@ const MyPropertyView = ({
 
                     {/* Payment Information Card */}
                     <Card className="p-6">
-                        <h3 className={`text-lg font-bold mb-4 transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Payment Details</h3>
-                        <div className="space-y-3">
-                            <div className="flex items-center gap-3">
-                                <Landmark size={18} className="text-slate-400" />
-                                <div>
-                                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Bank Transfer / NEFT</p>
-                                    <p className={`font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>
-                                        {user.bankAccount ? `${user.bankAccount} (${user.ifscCode})` : "Ask Landlord"}
-                                    </p>
+                        <div className="flex justify-between items-start gap-4 cursor-default">
+                            <div className="flex-1">
+                                <h3 className={`text-lg font-bold mb-4 transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Payment Details</h3>
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-3">
+                                        <Landmark size={18} className="text-slate-400 shrink-0" />
+                                        <div>
+                                            <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Bank Transfer / NEFT</p>
+                                            <p className={`font-semibold text-sm break-all ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                                                {user.bankAccount ? `${user.bankAccount} (${user.ifscCode})` : "Ask Landlord"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-5 h-5 rounded-full bg-slate-400 flex items-center justify-center text-[10px] text-white font-bold shrink-0">₹</div>
+                                        <div>
+                                            <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>UPI ID</p>
+                                            <p className={`font-semibold text-sm break-all ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{user.upiId || "N/A"}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <div className="w-4 h-4 rounded-full bg-slate-400 flex items-center justify-center text-[10px] text-white font-bold">₹</div>
-                                <div>
-                                    <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>UPI ID</p>
-                                    <p className={`font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{user.upiId || "N/A"}</p>
+                            {user.upiId && user.upiId !== "N/A" && (
+                                <div className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl shrink-0 ${isDarkMode ? 'bg-white' : 'bg-white border border-slate-100 shadow-sm'}`}>
+                                    <img 
+                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=${user.upiId}`} 
+                                        alt="UPI QR Code" 
+                                        className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
+                                    />
+                                    <span className="text-[10px] font-bold text-slate-800 uppercase tracking-wide">Scan to Pay</span>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </Card>
 

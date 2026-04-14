@@ -9,27 +9,52 @@ const path = require("path");
 const sendOtp = async (to, otp) => {
     try {
         const html = `
-            <div style="background-color: #fdfdfd; padding: 40px 0; font-family: 'Inter', sans-serif;">
-                <div style="max-width: 480px; margin: 0 auto; background: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05);">
-                    <div style="height: 6px; background: #4f46e5;"></div>
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Verification Code</title>
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+            <div style="max-width: 480px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+                
+                <!-- Logo Header -->
+                <div style="padding: 32px 32px 10px 32px; text-align: center;">
+                    <img src="${process.env.FRONTEND_URL || 'https://rentease-home.vercel.app'}/favicon.png" alt="RentEase" style="height: 48px; width: 48px; border-radius: 12px; margin-bottom: 16px;" />
+                    <div style="font-size: 24px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">RentEase</div>
+                </div>
+
+                <!-- Content Body -->
+                <div style="padding: 32px; text-align: center;">
+                    <h1 style="color: #0f172a; margin: 0 0 12px 0; font-size: 24px; font-weight: 800;">Verification Code</h1>
+                    <p style="font-size: 16px; color: #64748b; line-height: 1.6; margin: 0 0 32px 0;">
+                        Wait! Don't share this code with anyone. Use it to complete your verification on the RentEase platform.
+                    </p>
                     
-                    <div style="padding: 40px; text-align: center;">
-                        <img src="cid:renteasefavicon" alt="Icon" style="width: 42px; height: 42px; margin-bottom: 15px; border-radius: 10px;">
-                        <h2 style="color: #1e293b; font-size: 22px; font-weight: 800; margin: 0 0 10px 0;">Verify Your Account</h2>
-                        <p style="color: #64748b; font-size: 15px; line-height: 1.5; margin: 0 0 30px 0;">Enter this code to complete your verification.</p>
-                        
-                        <div style="background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px; padding: 25px; margin-bottom: 30px;">
-                            <div style="color: #4f46e5; font-size: 36px; font-weight: 800; letter-spacing: 6px; font-family: 'Courier New', monospace;">${otp}</div>
-                        </div>
-                        
-                        <p style="color: #94a3b8; font-size: 12px; margin: 0;">Code expires in 5 minutes.</p>
+                    <div style="background-color: #f1f5f9; border: 2px dashed #cbd5e1; border-radius: 20px; padding: 32px; margin-bottom: 32px;">
+                        <div style="color: #4f46e5; font-size: 42px; font-weight: 800; letter-spacing: 12px; font-family: 'Courier New', monospace; line-height: 1;">${otp}</div>
                     </div>
-                    
-                    <div style="background: #f1f5f9; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
-                        <p style="color: #94a3b8; font-size: 11px; margin: 0;">RentEase Inc. | Fast. Easy. Reliable.</p>
+
+                    <div style="background-color: #fffbeb; border-radius: 12px; padding: 12px 20px; display: inline-block; margin-bottom: 24px;">
+                        <p style="margin: 0; font-size: 13px; color: #92400e; font-weight: 600;">
+                            🕒 This code will expire in 10 minutes.
+                        </p>
                     </div>
+
+                    <p style="font-size: 14px; color: #94a3b8; line-height: 1.5; margin: 0;">
+                        If you didn't request this code, you can safely ignore this email.
+                    </p>
+                </div>
+                
+                <!-- Footer -->
+                <div style="padding: 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+                    <div style="font-weight: 800; color: #6366f1; font-size: 18px; margin-bottom: 4px;">RentEase</div>
+                    <p style="font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin: 0;">Secure Property Management</p>
                 </div>
             </div>
+        </body>
+        </html>
         `;
 
         await sendMail(to, `RentEase Code: ${otp}`, html);

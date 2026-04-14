@@ -15,9 +15,9 @@ exports.createProperty = async (data) => {
      room_type, food_included, electricity_included, gender_allowed,
      shop_use_type, water_available,
      office_type, seating_capacity, cabins_available, conference_room,
-     security_deposit, rent_escalation_desc, bank_account, ifsc_code, upi_id,
-     late_penalty_amount, rent_due_day, guidelines, latitude, longitude)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45)
+     security_deposit, rent_escalation_desc, upi_id,
+     late_penalty_amount, rent_due_day, guidelines, latitude, longitude, qr_code, sharing_capacity)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44, $45)
     RETURNING *;
   `;
 
@@ -66,14 +66,14 @@ exports.createProperty = async (data) => {
     // Financials & Policies
     data.security_deposit || 0,
     data.rent_escalation_desc || null,
-    data.bank_account || null,
-    data.ifsc_code || null,
     data.upi_id || null,
     data.late_penalty_amount || 0,
     data.rent_due_day || 5, // Default to 5th
     data.guidelines || null,
     data.latitude || null,
-    data.longitude || null
+    data.longitude || null,
+    data.qr_code || null,
+    data.sharing_capacity || 1
   ];
 
   return (await db.query(query, values)).rows[0];
@@ -108,7 +108,11 @@ exports.getAllProperties = async (filters = {}) => {
       u.first_name,
       u.last_name,
       u.email,
-      (CASE WHEN (SELECT COUNT(*) FROM tenants t WHERE t.property_id = p.id) > 0 THEN 'Occupied' ELSE 'Available' END) as status,
+      (SELECT COUNT(*) FROM tenants t WHERE t.property_id = p.id) as tenant_count,
+      (CASE 
+        WHEN (SELECT COUNT(*) FROM tenants t WHERE t.property_id = p.id) >= p.sharing_capacity THEN 'Occupied' 
+        ELSE 'Available' 
+       END) as status,
       COALESCE(
         (SELECT json_agg(json_build_object('url', pi.image_url, 'is_cover', pi.is_cover))
          FROM property_images pi
@@ -308,7 +312,10 @@ exports.getPropertiesByLandlordId = async (landlordId) => {
       u.last_name,
       u.email,
       (SELECT COUNT(*) FROM tenants t WHERE t.property_id = p.id) as tenant_count,
-      (CASE WHEN (SELECT COUNT(*) FROM tenants t WHERE t.property_id = p.id) > 0 THEN 'Occupied' ELSE 'Available' END) as status,
+      (CASE 
+        WHEN (SELECT COUNT(*) FROM tenants t WHERE t.property_id = p.id) >= p.sharing_capacity THEN 'Occupied' 
+        ELSE 'Available' 
+       END) as status,
       COALESCE(
         (SELECT json_agg(json_build_object('url', pi.image_url, 'is_cover', pi.is_cover))
          FROM property_images pi
@@ -337,7 +344,11 @@ exports.getPropertyById = async (id) => {
       u.first_name,
       u.last_name,
       u.email,
-      (CASE WHEN (SELECT COUNT(*) FROM tenants t WHERE t.property_id = p.id) > 0 THEN 'Occupied' ELSE 'Available' END) as status,
+      (SELECT COUNT(*) FROM tenants t WHERE t.property_id = p.id) as tenant_count,
+      (CASE 
+        WHEN (SELECT COUNT(*) FROM tenants t WHERE t.property_id = p.id) >= p.sharing_capacity THEN 'Occupied' 
+        ELSE 'Available' 
+       END) as status,
       COALESCE(
         (SELECT json_agg(json_build_object('url', pi.image_url, 'is_cover', pi.is_cover))
          FROM property_images pi
@@ -400,14 +411,14 @@ exports.updateProperty = async (id, landlordId, data) => {
       conference_room = $33,
       security_deposit = $34,
       rent_escalation_desc = $35,
-      bank_account = $36,
-      ifsc_code = $37,
-      upi_id = $38,
-      late_penalty_amount = $39,
-      rent_due_day = $40,
-      guidelines = $41,
-      latitude = $42,
-      longitude = $43,
+      upi_id = $36,
+      late_penalty_amount = $37,
+      rent_due_day = $38,
+      guidelines = $39,
+      latitude = $40,
+      longitude = $41,
+      qr_code = $42,
+      sharing_capacity = $43,
       updated_at = NOW()
     WHERE id = $44 AND landlord_id = $45
     RETURNING *;
@@ -455,12 +466,14 @@ exports.updateProperty = async (id, landlordId, data) => {
     // Financials & Policies (Update)
     data.security_deposit,
     data.rent_escalation_desc,
-    data.bank_account,
-    data.ifsc_code,
     data.upi_id,
     data.late_penalty_amount,
     data.rent_due_day,
     data.guidelines,
+    data.latitude,
+    data.longitude,
+    data.qr_code,
+    data.sharing_capacity || 1,
 
     id,
     landlordId

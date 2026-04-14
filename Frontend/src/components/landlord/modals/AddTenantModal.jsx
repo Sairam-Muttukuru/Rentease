@@ -92,7 +92,7 @@ const AddTenantModal = ({ isOpen, onClose, properties, onSuccess, isDarkMode, pr
                 }
             };
             await axios.post(
-                `https://rentease-1-pwm5.onrender.com/api/tenants/property/${formData.propertyId}`,
+                `/api/tenants/property/${formData.propertyId}`,
                 payload,
                 { headers: { Authorization: `Bearer ${token}` } }
             );

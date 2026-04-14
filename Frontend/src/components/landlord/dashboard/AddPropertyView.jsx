@@ -30,16 +30,26 @@ import {
 import { Card } from '../../ui/card';
 import LandlordButton from '../common/LandlordButton';
 
-const AMENITIES_LIST = [
-    { id: 1, name: "Swimming Pool", icon: Sparkles },
-    { id: 2, name: "Gym / Fitness Center", icon: TrendingUp },
-    { id: 3, name: "Car Parking", icon: Building },
-    { id: 4, name: "24/7 Security", icon: Shield },
-    { id: 5, name: "Wifi / Internet", icon: Globe },
-    { id: 6, name: "Garden / Park", icon: Sun },
-    { id: 7, name: "Power Backup", icon: Clock },
-    { id: 8, name: "Elevator", icon: ChevronLeft },
-];
+// Removed statically defined AMENITIES_LIST
+const getAmenityIcon = (name) => {
+    switch (name) {
+        case 'Pool':
+        case 'Swimming Pool': return Sparkles;
+        case 'Gym':
+        case 'Gym / Fitness Center': return TrendingUp;
+        case 'Parking':
+        case 'Car Parking': return Building;
+        case 'Security':
+        case '24/7 Security': return Shield;
+        case 'Wifi / Internet': return Globe;
+        case 'Garden':
+        case 'Garden / Park': return Sun;
+        case 'Power Backup': return Clock;
+        case 'Lift':
+        case 'Elevator': return ChevronLeft;
+        default: return CheckCircle2;
+    }
+};
 
 const INITIAL_NEW_PROPERTY = {
     title: "", description: "", type: "", orientation: "North",
@@ -52,13 +62,58 @@ const INITIAL_NEW_PROPERTY = {
     room_type: "", food_included: false, electricity_included: false, gender_allowed: "",
     shop_use_type: "", water_available: false,
     office_type: "", seating_capacity: "", cabins_available: false, conference_room: false,
-    security_deposit: "", rent_escalation_desc: "", bank_account: "", ifsc_code: "", upi_id: "",
-    rent_due_day: "5", late_penalty_amount: "", guidelines: ""
+    security_deposit: "", rent_escalation_desc: "", upi_id: "", qr_code: "",
+    rent_due_day: "5", late_penalty_amount: "", guidelines: "",
+    sharing_capacity: "1"
 };
 
 const AddPropertyView = ({ isDarkMode, onSuccess, showNotificationToast }) => {
     const [newProperty, setNewProperty] = useState(INITIAL_NEW_PROPERTY);
     const [uploadingImages, setUploadingImages] = useState(false);
+    const [uploadingQr, setUploadingQr] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [amenitiesList, setAmenitiesList] = useState([]);
+    const [newAmenityName, setNewAmenityName] = useState("");
+    const [isAddingAmenity, setIsAddingAmenity] = useState(false);
+
+    React.useEffect(() => {
+        const fetchAmenities = async () => {
+            try {
+                const token = localStorage.getItem("accessToken");
+                if (!token) return;
+                const res = await axios.get(`${import.meta.env.VITE_API_URL || 'https://rentease-1-pwm5.onrender.com'}/api/properties/amenities/list`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                    withCredentials: true
+                });
+                setAmenitiesList(res.data);
+            } catch (err) {
+                console.error("Failed to fetch amenities", err);
+            }
+        };
+        fetchAmenities();
+    }, []);
+
+    const handleAddCustomAmenity = async () => {
+        if (!newAmenityName.trim()) return;
+        setIsAddingAmenity(true);
+        try {
+            const token = localStorage.getItem("accessToken");
+            const res = await axios.post(`${import.meta.env.VITE_API_URL || 'https://rentease-1-pwm5.onrender.com'}/api/properties/amenities/add`, 
+            { name: newAmenityName },
+            {
+                headers: { Authorization: `Bearer ${token}` },
+                withCredentials: true
+            });
+            setAmenitiesList(prev => [...prev, res.data]);
+            setNewAmenityName("");
+            toast.success("Custom amenity added!");
+        } catch (err) {
+            toast.error(err.response?.data?.error || "Failed to add amenity");
+        } finally {
+            setIsAddingAmenity(false);
+        }
+    };
+
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -130,6 +185,7 @@ const AddPropertyView = ({ isDarkMode, onSuccess, showNotificationToast }) => {
             toast.error("You are not authenticated. Please log in.");
             return;
         }
+        setIsSaving(true);
         try {
             const propertyPayload = {
                 title: newProperty.title,
@@ -170,12 +226,12 @@ const AddPropertyView = ({ isDarkMode, onSuccess, showNotificationToast }) => {
                 conference_room: newProperty.conference_room,
                 security_deposit: parseFloat(newProperty.security_deposit) || 0,
                 rent_escalation_desc: newProperty.rent_escalation_desc || null,
-                bank_account: newProperty.bank_account || null,
-                ifsc_code: newProperty.ifsc_code || null,
                 upi_id: newProperty.upi_id || null,
+                qr_code: newProperty.qr_code || null,
                 rent_due_day: parseInt(newProperty.rent_due_day) || 5,
                 late_penalty_amount: parseFloat(newProperty.late_penalty_amount) || 0,
-                guidelines: newProperty.guidelines || null
+                guidelines: newProperty.guidelines || null,
+                sharing_capacity: parseInt(newProperty.sharing_capacity) || 1
             };
             const response = await axios.post(`${import.meta.env.VITE_API_URL || 'https://rentease-1-pwm5.onrender.com'}/api/properties/addproperty`, propertyPayload, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -189,6 +245,8 @@ const AddPropertyView = ({ isDarkMode, onSuccess, showNotificationToast }) => {
         } catch (error) {
             console.error("Error saving property:", error);
             toast.error(error.response?.data?.error || "Failed to save property");
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -205,7 +263,9 @@ const AddPropertyView = ({ isDarkMode, onSuccess, showNotificationToast }) => {
                     <p className="text-slate-500 mt-2 font-medium">Register a new asset to your marvelous portfolio.</p>
                 </div>
                 <div className="flex gap-3">
-                    <LandlordButton isDarkMode={isDarkMode} type="submit" icon={CheckCircle2}>Add Property</LandlordButton>
+                    <LandlordButton isDarkMode={isDarkMode} type="submit" icon={CheckCircle2} disabled={isSaving}>
+                        {isSaving ? "Publishing..." : "Add Property"}
+                    </LandlordButton>
                 </div>
             </div>
 
@@ -218,7 +278,7 @@ const AddPropertyView = ({ isDarkMode, onSuccess, showNotificationToast }) => {
                         </div>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-xs font-black text-black dark:text-white uppercase tracking-widest mb-2">Property Title</label>
+                                <label className="block text-xs font-black text-black dark:text-white uppercase tracking-widest mb-2">Property Name</label>
                                 <input required name="title" value={newProperty.title} onChange={handleInputChange} type="text" placeholder="e.g. Modern Luxury Penthouse" className={inputClasses} />
                             </div>
                             <div>
@@ -254,11 +314,18 @@ const AddPropertyView = ({ isDarkMode, onSuccess, showNotificationToast }) => {
                                         <option value="VILLA">Villa</option>
                                         <option value="STUDIO">Studio</option>
                                         <option value="INDEPENDENT_FLOOR">Independent Floor</option>
-                                        <option value="PG">PG / Hostel</option>
+                                        <option value="PG">PG/Hostel</option>
                                         <option value="COMMERCIAL_SHOP">Commercial Shop</option>
                                         <option value="OFFICE_SPACE">Office Space</option>
                                     </select>
                                 </div>
+
+                                {newProperty.type === 'PG' && (
+                                    <div className="animate-in slide-in-from-left duration-300">
+                                        <label className="block text-xs font-black text-black dark:text-white uppercase tracking-widest mb-2">Room Number</label>
+                                        <input type="text" name="room_no" value={newProperty.room_no || ''} onChange={handleInputChange} className={inputClasses} placeholder="e.g. 101, B-4" />
+                                    </div>
+                                )}
 
                                 {/* Conditional Fields based on Property Type */}
                                 {newProperty.type === "OFFICE_SPACE" && (
@@ -354,6 +421,22 @@ const AddPropertyView = ({ isDarkMode, onSuccess, showNotificationToast }) => {
                                                 <option value="Female Only">Female Only</option>
                                                 <option value="Both">Both (Co-living)</option>
                                             </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-black text-indigo-500 uppercase tracking-widest mb-2 flex items-center gap-1">
+                                                <Sparkles size={12} /> Sharing Capacity (Beds)
+                                            </label>
+                                            <input 
+                                                required 
+                                                name="sharing_capacity" 
+                                                value={newProperty.sharing_capacity} 
+                                                onChange={handleInputChange} 
+                                                type="number" 
+                                                min="1"
+                                                placeholder="e.g. 3" 
+                                                className={`${inputClasses} border-indigo-500/30 bg-indigo-500/10`} 
+                                            />
+                                            <p className="text-[10px] text-slate-500 mt-1 italic font-bold">* How many separate tenants can stay here?</p>
                                         </div>
                                         <div className="md:col-span-2 flex gap-6 mt-2">
                                             <label className="flex items-center gap-3 cursor-pointer">
@@ -561,16 +644,8 @@ const AddPropertyView = ({ isDarkMode, onSuccess, showNotificationToast }) => {
                                 <input name="security_deposit" value={newProperty.security_deposit} onChange={handleInputChange} type="number" placeholder="5000" className={numberInputClasses} />
                             </div>
                             <div>
-                                <label className="block text-xs font-black text-black dark:text-white uppercase tracking-widest mb-2">Rent Escalation Policy</label>
-                                <input name="rent_escalation_desc" value={newProperty.rent_escalation_desc} onChange={handleInputChange} type="text" placeholder="e.g. 5% annual increase" className={inputClasses} />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-black text-black dark:text-white uppercase tracking-widest mb-2">Bank Account Number</label>
-                                <input name="bank_account" value={newProperty.bank_account} onChange={handleInputChange} type="text" placeholder="For rent transfers" className={inputClasses} />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-black text-black dark:text-white uppercase tracking-widest mb-2">IFSC Code</label>
-                                <input name="ifsc_code" value={newProperty.ifsc_code} onChange={handleInputChange} type="text" placeholder="BANK0123456" className={inputClasses} />
+                                <label className="block text-xs font-black text-black dark:text-white uppercase tracking-widest mb-2">Rent Escalation (%)</label>
+                                <input name="rent_escalation_desc" value={newProperty.rent_escalation_desc} onChange={handleInputChange} type="number" placeholder="5" className={numberInputClasses} />
                             </div>
                             <div>
                                 <label className="block text-xs font-black text-black dark:text-white uppercase tracking-widest mb-2">UPI ID</label>
@@ -580,6 +655,66 @@ const AddPropertyView = ({ isDarkMode, onSuccess, showNotificationToast }) => {
                                 <label className="block text-xs font-black text-black dark:text-white uppercase tracking-widest mb-2">Rent Due Day</label>
                                 <input name="rent_due_day" value={newProperty.rent_due_day} onChange={handleInputChange} type="number" min="1" max="31" placeholder="5" className={numberInputClasses} />
                             </div>
+                            <div>
+                                <label className="block text-xs font-black text-black dark:text-white uppercase tracking-widest mb-2">Late Penalty (₹ per day)</label>
+                                <input name="late_penalty_amount" value={newProperty.late_penalty_amount} onChange={handleInputChange} type="number" placeholder="50" className={numberInputClasses} />
+                            </div>
+                            
+                            {/* QR Code Upload */}
+                            <div className="md:col-span-2">
+                                <label className="block text-xs font-black text-black dark:text-white uppercase tracking-widest mb-2 text-center">Payment QR Code</label>
+                                <div className={`relative border-2 border-dashed ${newProperty.qr_code ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-slate-800'} rounded-3xl p-6 text-center hover:border-emerald-500 transition-all group/qr`}>
+                                    <input 
+                                        type="file" 
+                                        accept="image/*" 
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                                        onChange={async (e) => {
+                                            const file = e.target.files[0];
+                                            if (!file) return;
+                                            setUploadingQr(true);
+                                            try {
+                                                const url = await uploadToCloudinary(file);
+                                                setNewProperty(prev => ({ ...prev, qr_code: url }));
+                                                toast.success("QR Code uploaded!");
+                                            } catch (err) {
+                                                toast.error("QR upload failed");
+                                            } finally {
+                                                setUploadingQr(false);
+                                            }
+                                        }} 
+                                    />
+                                    {newProperty.qr_code ? (
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="relative w-32 h-32 rounded-xl overflow-hidden border border-emerald-500/30 shadow-lg">
+                                                <img src={newProperty.qr_code} alt="QR Code" className="w-full h-full object-cover" />
+                                                <button 
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        setNewProperty(prev => ({ ...prev, qr_code: '' }));
+                                                    }}
+                                                    className="absolute top-1 right-1 p-1 bg-rose-500 text-white rounded-lg hover:scale-110 transition-transform z-20"
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">QR Code Linked</p>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center gap-3">
+                                            <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center group-hover/qr:scale-110 transition-transform">
+                                                <Upload size={24} />
+                                            </div>
+                                            <div>
+                                                <p className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>{uploadingQr ? 'Uploading QR...' : 'Click to upload Payment QR'}</p>
+                                                <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">GPay / PhonePe / Paytm QR</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
                             <div className="md:col-span-2">
                                 <label className="block text-xs font-black text-black dark:text-white uppercase tracking-widest mb-2">Property Guidelines / Rules</label>
                                 <textarea name="guidelines" value={newProperty.guidelines} onChange={handleInputChange} rows="3" placeholder="e.g. No pets allowed, Silent hours after 10 PM..." className={inputClasses}></textarea>
@@ -629,20 +764,41 @@ const AddPropertyView = ({ isDarkMode, onSuccess, showNotificationToast }) => {
                             <h4 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>Amenities</h4>
                         </div>
                         <div className="grid grid-cols-1 gap-3">
-                            {AMENITIES_LIST.map((amenity) => (
-                                <button
-                                    key={amenity.id}
-                                    type="button"
-                                    onClick={() => handleToggleAmenity(amenity.id)}
-                                    className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${newProperty.amenities.includes(amenity.id) ? 'bg-violet-600/10 border-violet-500/50 text-violet-400 shadow-lg shadow-violet-500/5' : 'bg-transparent border-slate-800 text-slate-500 hover:border-slate-700'}`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <amenity.icon size={18} />
-                                        <span className="text-sm font-bold">{amenity.name}</span>
-                                    </div>
-                                    {newProperty.amenities.includes(amenity.id) && <Check size={16} />}
-                                </button>
-                            ))}
+                            {amenitiesList.map((amenity) => {
+                                const IconComponent = getAmenityIcon(amenity.name);
+                                return (
+                                    <button
+                                        key={amenity.id}
+                                        type="button"
+                                        onClick={() => handleToggleAmenity(amenity.id)}
+                                        className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${newProperty.amenities.includes(amenity.id) ? 'bg-violet-600/10 border-violet-500/50 text-violet-400 shadow-lg shadow-violet-500/5' : 'bg-transparent border-slate-800 text-slate-500 hover:border-slate-700'}`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <IconComponent size={18} />
+                                            <span className="text-sm font-bold">{amenity.name}</span>
+                                        </div>
+                                        {newProperty.amenities.includes(amenity.id) && <Check size={16} />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-slate-800/50 flex gap-2">
+                            <input
+                                type="text"
+                                value={newAmenityName}
+                                onChange={(e) => setNewAmenityName(e.target.value)}
+                                placeholder="Add custom amenity..."
+                                className={`flex-1 px-4 py-2 rounded-xl text-sm border outline-none ${isDarkMode ? 'bg-slate-900 border-slate-700 text-white focus:border-violet-500' : 'bg-slate-50 border-slate-300 text-slate-900 focus:border-violet-500'}`}
+                            />
+                            <button
+                                type="button"
+                                onClick={handleAddCustomAmenity}
+                                disabled={isAddingAmenity || !newAmenityName.trim()}
+                                className={`px-4 py-2 rounded-xl flex items-center justify-center gap-2 font-bold text-sm transition-all ${isDarkMode ? 'bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50' : 'bg-slate-200 text-black hover:bg-slate-300 disabled:opacity-50'}`}
+                            >
+                                <PlusCircle size={16} />
+                                {isAddingAmenity ? "Adding..." : "Add"}
+                            </button>
                         </div>
                     </Card>
                 </div>

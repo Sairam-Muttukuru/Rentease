@@ -10,6 +10,9 @@ const ComplaintsDistributionChart = ({ isDarkMode, complaints = [] }) => {
         'Maintenance': 0,
         'Electrical': 0,
         'Security': 0,
+        'Cleaning': 0,
+        'Furniture': 0,
+        'Water': 0,
         'Other': 0
     };
 
@@ -26,7 +29,11 @@ const ComplaintsDistributionChart = ({ isDarkMode, complaints = [] }) => {
         { label: "Plumbing", value: categories['Plumbing'], color: "bg-indigo-600" },
         { label: "Maintenance", value: categories['Maintenance'], color: "bg-blue-600" },
         { label: "Electrical", value: categories['Electrical'], color: "bg-violet-600" },
-        { label: "Other", value: categories['Security'] + categories['Other'], color: "bg-slate-600" },
+        { label: "Security", value: categories['Security'], color: "bg-rose-600" },
+        { label: "Cleaning", value: categories['Cleaning'], color: "bg-emerald-600" },
+        { label: "Furniture", value: categories['Furniture'], color: "bg-amber-600" },
+        { label: "Water", value: categories['Water'], color: "bg-sky-600" },
+        { label: "Other", value: categories['Other'], color: "bg-slate-600" },
     ];
 
     const maxVal = Math.max(16, ...data.map(d => d.value)) + 4;
@@ -64,7 +71,7 @@ const ComplaintsDistributionChart = ({ isDarkMode, complaints = [] }) => {
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: `${(d.value / maxVal) * 85}%`, opacity: 1 }}
                                 transition={{ duration: 1, delay: i * 0.2, ease: "easeOut" }}
-                                className={`w-14 rounded-t-lg transition-all duration-300 group-hover:opacity-80 group-hover:scale-x-110 ${d.color} shadow-lg`}
+                                className={`w-10 md:w-14 rounded-t-lg transition-all duration-300 group-hover:opacity-80 group-hover:scale-x-110 ${d.color} shadow-lg`}
                             />
                             <span className={`text-[11px] font-bold mt-1 text-center whitespace-nowrap ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                                 {d.label}

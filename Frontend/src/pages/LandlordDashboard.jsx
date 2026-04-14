@@ -29,6 +29,7 @@ import LandlordFinanceView from '../components/landlord/dashboard/LandlordFinanc
 import SettingsView from '../components/landlord/dashboard/SettingsView';
 import LandlordAnnouncementsView from '../components/landlord/dashboard/LandlordAnnouncementsView.jsx';
 import LandlordMessagesView from '../components/landlord/dashboard/LandlordMessagesView';
+import LandlordTransactionsView from '../components/landlord/dashboard/LandlordTransactionsView';
 
 // Modals
 import EditPropertyModal from '../components/landlord/modals/EditPropertyModal';
@@ -78,7 +79,7 @@ export default function LandlordDashboard() {
     try {
       const token = localStorage.getItem("accessToken");
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
-      await axios.patch(`https://rentease-1-pwm5.onrender.com/api/notifications/${id}/read`, {}, {
+      await axios.patch(`${BASE_URL}/api/notifications/${id}/read`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
     } catch (error) {
@@ -90,7 +91,7 @@ export default function LandlordDashboard() {
     try {
       const token = localStorage.getItem("accessToken");
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-      await axios.patch(`https://rentease-1-pwm5.onrender.com/api/notifications/read-all`, {}, {
+      await axios.patch(`${BASE_URL}/api/notifications/read-all`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
     } catch (error) {
@@ -126,7 +127,7 @@ export default function LandlordDashboard() {
   // Tab management
   const pathParts = location.pathname.split('/').filter(Boolean);
   const lastSegment = pathParts[pathParts.length - 1];
-  const knownTabs = ['properties', 'add-property', 'tenants', 'messages', 'requests', 'request-details', 'finance', 'settings', 'tenant-details', 'bookings', 'announcements'];
+  const knownTabs = ['properties', 'add-property', 'tenants', 'messages', 'requests', 'request-details', 'finance', 'settings', 'tenant-details', 'bookings', 'announcements', 'transactions'];
   const activeTab = knownTabs.includes(lastSegment) ? lastSegment : 'dashboard';
 
   const setActiveTab = (tab) => {
@@ -410,12 +411,20 @@ export default function LandlordDashboard() {
     const normalizedStatus = status ? status.toUpperCase() : status;
     try {
       const token = localStorage.getItem("accessToken");
+      const existingBooking = bookings.find(b => b.id === bookingId);
+      const isReschedule = existingBooking?.status?.toUpperCase() === 'APPROVED' && normalizedStatus === 'APPROVED';
+
       await axios.patch(`${BASE_URL}/api/bookings/${bookingId}/status`,
         { status: normalizedStatus, visitSlot },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: normalizedStatus, visit_slot: visitSlot } : b));
-      toast.success(`Booking ${normalizedStatus.charAt(0) + normalizedStatus.slice(1).toLowerCase()}`);
+      
+      if (isReschedule) {
+        toast.success("Successfully rescheduled");
+      } else {
+        toast.success(`Booking ${normalizedStatus.charAt(0) + normalizedStatus.slice(1).toLowerCase()}`);
+      }
     } catch (err) {
       toast.error("Failed to update booking status");
       console.error(err);
@@ -617,6 +626,15 @@ export default function LandlordDashboard() {
           <LandlordFinanceView
             isDarkMode={isDarkMode}
             tenants={tenants}
+            setActiveTab={setActiveTab}
+          />
+        )}
+
+        {activeTab === 'transactions' && (
+          <LandlordTransactionsView
+            isDarkMode={isDarkMode}
+            payments={payments}
+            setActiveTab={setActiveTab}
           />
         )}
 

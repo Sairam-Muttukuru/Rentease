@@ -6,215 +6,69 @@ const sendComplaintMail = async ({ landlordEmail, landlordName, tenantName, prop
   const subject = `Urgent Action Required: New Issue at ${propertyName || 'Your Property'}`;
   const html = `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>New Complaint Alert</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Issue Reported</title>
 </head>
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <div style="max-width: 620px; margin: 40px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
+        
+        <!-- Logo Header -->
+        <div style="padding: 24px; text-align: left; background: #ffffff; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px;">
+            <img src="${process.env.FRONTEND_URL || 'https://rentease-home.vercel.app'}/favicon.png" alt="RentEase" style="height: 32px; width: 32px; border-radius: 8px;" />
+            <span style="font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">RentEase</span>
+        </div>
 
-<body style="margin:0; padding:0; background:#f1f5f9; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,Helvetica,Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0">
-    <tr>
-      <td align="center" style="padding:48px 16px;">
+        <!-- Hero Section -->
+        <div style="position: relative; height: 220px;">
+            <img src="${heroImage}" alt="Property" style="width: 100%; height: 100%; object-fit: cover;" />
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 100%);"></div>
+            <div style="position: absolute; bottom: 20px; left: 24px;">
+                <span style="background: #ef4444; color: white; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Urgent Action Required</span>
+                <h1 style="color: white; margin: 12px 0 0 0; font-size: 24px; font-weight: 800;">Issue at ${propertyName || 'Property'}</h1>
+            </div>
+        </div>
 
-        <!-- MAIN CARD -->
-        <table width="620" cellpadding="0" cellspacing="0"
-          style="background:#ffffff; border-radius:20px; overflow:hidden;
-          box-shadow:0 25px 50px rgba(15,23,42,0.15);">
+        <!-- Content Body -->
+        <div style="padding: 40px 32px;">
+            <p style="font-size: 16px; color: #475569; line-height: 1.7; margin: 0 0 32px 0;">
+                Hi <b>${landlordName}</b>,<br><br>
+                A new issue has been reported by tenant <b>${tenantName}</b>. Please review the details below to ensure a timely resolution.
+            </p>
 
-          <!-- HERO -->
-          <tr>
-            <td style="
-              height:240px;
-              background-image:url('${heroImage}');
-              background-size:cover;
-              background-position:center;
-              position:relative;
-            ">
-              <div style="position:absolute; inset:0;
-                background:linear-gradient(180deg, rgba(15,23,42,0.2), rgba(15,23,42,0.85));">
-              </div>
-
-              <div style="position:relative; padding:28px;">
-                <span style="
-                  display:inline-block;
-                  background:rgba(239,68,68,0.95);
-                  color:#fff;
-                  padding:6px 14px;
-                  border-radius:999px;
-                  font-size:12px;
-                  font-weight:700;
-                  letter-spacing:.08em;
-                  text-transform:uppercase;
-                ">
-                  URGENT
-                </span>
-              </div>
-            </td>
-          </tr>
-
-          <!-- HEADER -->
-          <tr>
-            <td style="padding:36px 36px 16px 36px;">
-              <h1 style="
-                margin:0;
-                font-size:28px;
-                font-weight:900;
-                color:#020617;
-                letter-spacing:-0.02em;
-              ">
-                Property Requires Attention
-              </h1>
-
-              <p style="
-                margin:12px 0 0 0;
-                font-size:16px;
-                color:#475569;
-              ">
-                Hi <strong>${landlordName}</strong>, a tenant has reported an issue that needs your review.
-              </p>
-            </td>
-          </tr>
-
-          <!-- INFO GRID -->
-          <tr>
-            <td style="padding:24px 36px;">
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td width="50%" style="padding-right:10px;">
-                    <div style="
-                      background:#f8fafc;
-                      border-radius:14px;
-                      padding:18px;
-                      border:1px solid #e2e8f0;
-                    ">
-                      <p style="margin:0; font-size:11px; color:#64748b; font-weight:700; letter-spacing:.08em; text-transform:uppercase;">
-                        Property
-                      </p>
-                      <p style="margin:6px 0 0 0; font-size:15px; font-weight:700; color:#0f172a;">
-                        ${propertyName || "Unknown Property"}
-                      </p>
+            <!-- Info Cards -->
+            <div style="margin-bottom: 32px; display: grid; gap: 16px;">
+                <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;">
+                    <div style="font-size: 11px; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;">Reported Issue</div>
+                    <div style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 8px;">${complaint.title}</div>
+                    
+                    <div style="margin-top: 16px;">
+                        <span style="background: #f1f5f9; color: #475569; padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 700; text-transform: uppercase;">${complaint.category}</span>
+                        <span style="background: ${complaint.priority_level === 'High' ? '#fee2e2' : '#f1f5f9'}; color: ${complaint.priority_level === 'High' ? '#ef4444' : '#475569'}; padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 700; text-transform: uppercase; margin-left: 8px;">${complaint.priority_level?.toUpperCase()} PRIORITY</span>
                     </div>
-                  </td>
+                </div>
 
-                  <td width="50%" style="padding-left:10px;">
-                    <div style="
-                      background:#f8fafc;
-                      border-radius:14px;
-                      padding:18px;
-                      border:1px solid #e2e8f0;
-                    ">
-                      <p style="margin:0; font-size:11px; color:#64748b; font-weight:700; letter-spacing:.08em; text-transform:uppercase;">
-                        Tenant
-                      </p>
-                      <p style="margin:6px 0 0 0; font-size:15px; font-weight:700; color:#0f172a;">
-                        ${tenantName || "Unknown Tenant"}
-                      </p>
-                    </div>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+                <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;">
+                    <div style="font-size: 11px; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Description</div>
+                    <p style="font-size: 15px; line-height: 1.7; color: #334155; margin: 0;">${complaint.description}</p>
+                </div>
+            </div>
 
-          <!-- COMPLAINT CARD -->
-          <tr>
-            <td style="padding:0 36px 32px 36px;">
-              <div style="
-                border-radius:18px;
-                border:1px solid #e2e8f0;
-                padding:28px;
-                background:linear-gradient(180deg,#ffffff,#f8fafc);
-              ">
+            <div style="text-align: center; margin-top: 40px;">
+                <a href="${process.env.FRONTEND_URL}/landlord-dashboard" style="display: inline-block; background-color: #0f172a; color: #ffffff; padding: 18px 40px; border-radius: 12px; font-weight: 700; text-decoration: none; font-size: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);">
+                    Open Manager Dashboard
+                </a>
+            </div>
+        </div>
 
-                <p style="margin:0; font-size:13px; color:#64748b;">Issue Title</p>
-                <p style="margin:4px 0 18px 0; font-size:18px; font-weight:800; color:#020617;">
-                  ${complaint.title}
-                </p>
-
-                <table width="100%">
-                  <tr>
-                    <td>
-                      <p style="margin:0; font-size:12px; color:#64748b;">Category</p>
-                      <p style="margin:4px 0 0 0; font-size:14px; font-weight:600; color:#334155;">
-                        ${complaint.category}
-                      </p>
-                    </td>
-                    <td align="right">
-                      <p style="margin:0; font-size:12px; color:#64748b;">Priority</p>
-                      <span style="
-                        display:inline-block;
-                        margin-top:6px;
-                        padding:6px 14px;
-                        border-radius:999px;
-                        font-size:12px;
-                        font-weight:800;
-                        background:${complaint.priority_level === 'High'
-        ? '#fee2e2'
-        : complaint.priority_level === 'Medium'
-          ? '#fef3c7'
-          : '#dcfce7'
-      };
-                        color:${complaint.priority_level === 'High'
-        ? '#991b1b'
-        : complaint.priority_level === 'Medium'
-          ? '#92400e'
-          : '#166534'
-      };
-                      ">
-                        ${complaint.priority_level || 'Low'}
-                      </span>
-                    </td>
-                  </tr>
-                </table>
-
-                <hr style="border:none; border-top:1px dashed #cbd5e1; margin:20px 0;"/>
-
-                <p style="margin:0; font-size:12px; color:#64748b;">Description</p>
-                <p style="margin-top:6px; font-size:15px; line-height:1.7; color:#334155;">
-                  ${complaint.description}
-                </p>
-
-              </div>
-            </td>
-          </tr>
-
-          <!-- CTA -->
-          <tr>
-            <td align="center" style="padding-bottom:44px;">
-              <a href="http://localhost:5173/landlord/dashboard"
-                style="
-                  background:linear-gradient(135deg,#7c3aed,#4f46e5);
-                  color:#ffffff;
-                  padding:16px 40px;
-                  border-radius:12px;
-                  text-decoration:none;
-                  font-size:16px;
-                  font-weight:800;
-                  box-shadow:0 20px 40px rgba(79,70,229,0.4);
-                ">
-                Open Dashboard →
-              </a>
-            </td>
-          </tr>
-
-          <!-- FOOTER -->
-          <tr>
-            <td style="background:#f8fafc; padding:28px; text-align:center;">
-              <p style="margin:0; font-size:12px; color:#94a3b8;">
-                © 2026 RentEase • Smart Property Management
-              </p>
-              <p style="margin-top:6px; font-size:12px; color:#94a3b8;">
-                This is an automated notification. Please do not reply.
-              </p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
+        <!-- Footer -->
+        <div style="padding: 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+            <div style="font-weight: 800; color: #6366f1; font-size: 20px; margin-bottom: 8px;">RentEase</div>
+            <p style="font-size: 12px; color: #94a3b8; margin: 0;">© ${new Date().getFullYear()} RentEase Home Management. All rights reserved.</p>
+        </div>
+    </div>
 </body>
 </html>
     `;

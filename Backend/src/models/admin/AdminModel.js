@@ -196,14 +196,17 @@ exports.getProviderById = async (id) =>
   `, [id])).rows[0];
 
 exports.deleteProviderAndUser = async (providerId, userId) => {
-  await db.query("BEGIN");
+  const client = await db.connect();
   try {
-    await db.query("DELETE FROM service_providers WHERE id = $1", [providerId]);
-    await db.query("DELETE FROM users WHERE id = $1", [userId]);
-    await db.query("COMMIT");
+    await client.query("BEGIN");
+    await client.query("DELETE FROM service_providers WHERE id = $1", [providerId]);
+    await client.query("DELETE FROM users WHERE id = $1", [userId]);
+    await client.query("COMMIT");
   } catch (err) {
-    await db.query("ROLLBACK");
+    await client.query("ROLLBACK");
     throw err;
+  } finally {
+    client.release();
   }
 };
 

@@ -152,39 +152,63 @@ exports.addTenant = async (landlordId, propertyId, data) => {
     throw new Error("Unauthorized property");
   }
 
-  // 🔒 check if tenant already exists
-  const existing = await Tenant.getByPropertyId(propertyId);
-  if (existing) {
-    throw new Error("Tenant already exists for this property");
-  }
-
-  // Handle both flat and nested structure (fallback for safety)
+  // 1️⃣ Handlers for structured data
   const full_name = data.primary_member?.full_name || data.full_name;
   const phone = data.primary_member?.phone || data.phone;
   const email = data.primary_member?.email || data.email;
-  const monthly_rent = data.monthly_rent;
-  const tenant_type = data.tenant_type;
+  const tenant_type = data.tenant_type || 'BACHELOR';
 
-  if (!full_name || !tenant_type || !monthly_rent) {
-    throw new Error("Required fields missing");
+  if (!full_name || !email) {
+    throw new Error("Required fields missing (Name and Email are mandatory)");
   }
 
-  // 🔒 Verify user exists
+  // 2️⃣ 🔒 Security & Registration Check
+  const pType = (property.property_type || "").toUpperCase();
+  const fType = (property.family_type || "").toUpperCase();
+  
+  // Checks for PG, HOSTEL, or PG/HOSTEL variations
+  const isSharedType = pType.includes('PG') || pType.includes('HOSTEL') || fType === 'BACHELORS';
   const existingUser = await UserModel.findUserByEmail(email);
-  if (!existingUser) {
-    throw new Error("User does not exist. Please register the user first.");
+
+  // For shared properties (PG/Bachelors), registration is mandatory
+  if (isSharedType && !existingUser) {
+    throw new Error(`Security Alert: The account for '${email}' was not found. For PG/Hostel or Bachelor properties, every tenant MUST register an account on RentEase before being added.`);
   }
 
-  // 1️⃣ Insert tenant
+  // 3️⃣ 💰 Rent Calculation & Splitting Logic
+  let calculatedRent = parseFloat(property.price);
+  const currentTenantsCount = await Tenant.getCountByPropertyId(propertyId);
+  const newTotalTenants = currentTenantsCount + 1;
+
+  if (pType.includes('PG') || pType.includes('HOSTEL')) {
+    // PG Style: Everyone pays the full property price (which is "per person")
+    calculatedRent = parseFloat(property.price);
+  } else if (fType === 'BACHELORS') {
+    // Bachelor Style: Total property price is split equally among all occupants
+    calculatedRent = parseFloat(property.price) / newTotalTenants;
+    
+    // 🔥 Update rent for all existing roommates to reflect the new split
+    await Tenant.updateAllRentsForProperty(propertyId, calculatedRent);
+  } else {
+    // Family/Couples: Single occupancy logic
+    calculatedRent = parseFloat(property.price);
+  }
+
+  // 4️⃣ 🔒 Capacity Check
+  if (currentTenantsCount >= (property.sharing_capacity || 1)) {
+    throw new Error(`Forbidden: This property has reached its sharing capacity (${property.sharing_capacity} beds).`);
+  }
+
+  // 5️⃣ Insert tenant
   const tenant = await Tenant.create({
     landlord_id: landlordId,
     property_id: propertyId,
-    tenant_type: tenant_type.toUpperCase(), // Ensure uppercase for DB constraint
-    monthly_rent: monthly_rent,
+    tenant_type: tenant_type.toUpperCase(),
+    monthly_rent: calculatedRent,
     payment_status: (data.payment_status || 'PENDING').toUpperCase(),
-    user_id: existingUser.id,
-    start_date: data.start_date,
-    rent_due_date: data.rent_due_date
+    user_id: existingUser ? existingUser.id : null, // Allowed for family/couples
+    start_date: data.start_date || new Date().toISOString().split('T')[0],
+    rent_due_date: data.rent_due_date || property.rent_due_day
   });
 
   // 2️⃣ Insert primary member
@@ -307,12 +331,15 @@ exports.getAllTenants = async (landlordId) => {
 
     const totalExpected = monthsElapsed * parseFloat(tenant.monthly_rent);
     const lateFees = _calculateLateFees(tenant, rentPayments, today);
-    const balanceDue = Math.round((totalExpected - totalPaid + lateFees) * 100) / 100;
+    const rawBalanceDue = totalExpected - totalPaid + lateFees;
+    
+    // Apply a ₹1 threshold to ignore floating point rounding errors or tiny balances
+    const balanceDue = rawBalanceDue > 1 ? Math.round(rawBalanceDue * 100) / 100 : 0;
 
     // Override the static 'payment_status' with our dynamic check
     tenant.status = balanceDue <= 0 ? 'PAID' : 'UNPAID';
     // Expose balance for landlord dashboard to show cumulative debt
-    tenant.balance_due = Math.max(0, balanceDue);
+    tenant.balance_due = balanceDue;
     tenant.months_overdue = balanceDue > 0 ? Math.ceil(balanceDue / parseFloat(tenant.monthly_rent)) : 0;
   }
 
@@ -425,7 +452,8 @@ exports.getDashboardData = async (requesterId, targetUserName = null) => {
 
     const expectedRent = monthsElapsed * parseFloat(tenant.monthly_rent);
     const lateFees = _calculateLateFees(tenant, payments.filter(p => !p.receipt_number?.startsWith('SEC-DEP')), currentDate);
-    const accumulatedDue = Math.round((expectedRent - totalPaid + lateFees) * 100) / 100;
+    const rawAccumulatedDue = expectedRent - totalPaid + lateFees;
+    const accumulatedDue = rawAccumulatedDue > 1 ? Math.round(rawAccumulatedDue * 100) / 100 : 0;
     const unpaidMonthsCount = Math.max(0, Math.ceil((expectedRent - totalPaid) / parseFloat(tenant.monthly_rent)));
 
     // Calculate Next Due Date and Pending Months dynamically

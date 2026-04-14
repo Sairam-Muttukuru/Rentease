@@ -21,7 +21,7 @@ const TenantDetailView = ({ tenants, selectedTenantId, isDarkMode, setActiveTab,
         setIsLoadingMembers(true);
         try {
             const token = localStorage.getItem('accessToken');
-            const response = await axios.get(`https://rentease-1-pwm5.onrender.com/api/tenants/${tenant.id}/members`, {
+            const response = await axios.get(`/api/tenants/${tenant.id}/members`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setMembers(response.data);
@@ -38,7 +38,7 @@ const TenantDetailView = ({ tenants, selectedTenantId, isDarkMode, setActiveTab,
 
         try {
             const token = localStorage.getItem('accessToken');
-            await axios.delete(`https://rentease-1-pwm5.onrender.com/api/tenant-members/${memberId}`, {
+            await axios.delete(`/api/tenant-members/${memberId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             showNotificationToast("Resident deleted successfully", "success");
@@ -74,6 +74,8 @@ const TenantDetailView = ({ tenants, selectedTenantId, isDarkMode, setActiveTab,
                 isOpen={isAddResidentModalOpen}
                 onClose={() => setIsAddResidentModalOpen(false)}
                 tenantId={tenant.id}
+                propertyType={tenant.property_type}
+                roomType={tenant.room_type}
                 onResidentAdded={fetchMembers}
                 isDarkMode={isDarkMode}
                 showNotificationToast={showNotificationToast}
@@ -171,7 +173,13 @@ const TenantDetailView = ({ tenants, selectedTenantId, isDarkMode, setActiveTab,
                             </div>
                             <div className="flex justify-between items-center py-2 border-b border-slate-800">
                                 <span className="text-slate-500 text-sm">Occupancy</span>
-                                <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{tenant.tenant_type || 'FAMILY'}</span>
+                                <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                                    {tenant.property_type?.toUpperCase().includes('PG') || 
+                                     tenant.property_type?.toUpperCase().includes('HOSTEL') || 
+                                     tenant.tenant_type === 'BACHELORS' 
+                                        ? `${members.length || 1} / ${tenant.sharing_capacity || 1} Occupied`
+                                        : tenant.tenant_type || 'FAMILY'}
+                                </span>
                             </div>
                         </div>
                     </Card>

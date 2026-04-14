@@ -94,14 +94,30 @@ exports.getPropertyDetails = async (propertyId) => {
 ======================= */
 exports.updateProperty = async (propertyId, landlordId, data) => {
   // 1️⃣ Update property basic details
-  // Automatic Geocoding
-  if (data.address || data.locality || data.city) {
+  
+  // Fetch current property to check if geocoding is needed
+  const currentProperty = await Property.getPropertyById(propertyId);
+  if (!currentProperty) {
+    throw new Error("Property not found");
+  }
+
+  // Only geocode if the address components actually changed
+  const addressChanged = 
+    data.address !== currentProperty.address || 
+    data.locality !== currentProperty.locality || 
+    data.city !== currentProperty.city;
+
+  if (addressChanged && (data.address || data.locality || data.city)) {
     const fullAddress = `${data.address || ''}, ${data.locality || ''}, ${data.city || ''}`;
     const coords = await geocodeAddress(fullAddress);
     if (coords) {
       data.latitude = coords.lat;
       data.longitude = coords.lng;
     }
+  } else {
+    // Retain existing coordinates if geocoding is skipped
+    data.latitude = currentProperty.latitude;
+    data.longitude = currentProperty.longitude;
   }
 
   const updatedProperty = await Property.updateProperty(
@@ -114,25 +130,32 @@ exports.updateProperty = async (propertyId, landlordId, data) => {
     throw new Error("Unauthorized or property not found");
   }
 
-  // 2️⃣ Update images (if sent)
-  if (data.images) {
-    await Images.deleteImagesByProperty(propertyId);
+  // 2️⃣ Parallelize Image and Amenity Updates
+  const tasks = [];
 
-    for (let img of data.images) {
-      const url = img.url || img.image_url;
-      if (url) {
-        await Images.addImage(propertyId, url, img.is_cover);
-      }
-    }
+  if (data.images) {
+    tasks.push((async () => {
+      await Images.deleteImagesByProperty(propertyId);
+      const imagePromises = data.images.map(img => {
+        const url = img.url || img.image_url;
+        return url ? Images.addImage(propertyId, url, img.is_cover) : null;
+      }).filter(p => p !== null);
+      await Promise.all(imagePromises);
+    })());
   }
 
-  // 3️⃣ Update amenities (if sent)
   if (data.amenities) {
-    await Amenities.removeAmenitiesFromProperty(propertyId);
+    tasks.push((async () => {
+      await Amenities.removeAmenitiesFromProperty(propertyId);
+      const amenityPromises = data.amenities.map(amenityId => 
+        Amenities.addAmenityToProperty(propertyId, amenityId)
+      );
+      await Promise.all(amenityPromises);
+    })());
+  }
 
-    for (let amenityId of data.amenities) {
-      await Amenities.addAmenityToProperty(propertyId, amenityId);
-    }
+  if (tasks.length > 0) {
+    await Promise.all(tasks);
   }
 
   return updatedProperty;

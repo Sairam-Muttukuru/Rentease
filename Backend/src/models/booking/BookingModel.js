@@ -37,6 +37,11 @@ exports.createBooking = async (userId, propertyId, message, visitSlot = null) =>
   return (await db.query(query, [userId, propertyId, message, visitSlot])).rows[0];
 };
 
+exports.getBookingById = async (id) => {
+  const query = `SELECT * FROM bookings WHERE id = $1`;
+  return (await db.query(query, [id])).rows[0];
+};
+
 exports.getBookingsByUser = async (userId) => {
   const query = `
     SELECT b.*, p.title, p.price, p.city, p.locality, 
@@ -51,7 +56,7 @@ exports.getBookingsByUser = async (userId) => {
 
 exports.getBookingsByProperty = async (propertyId) => {
   const query = `
-    SELECT b.*, u.first_name, u.last_name, u.email, u.phone_number
+    SELECT b.*, u.first_name, u.last_name, u.email, u.phone
     FROM bookings b
     JOIN users u ON u.id = b.user_id
     WHERE b.property_id = $1

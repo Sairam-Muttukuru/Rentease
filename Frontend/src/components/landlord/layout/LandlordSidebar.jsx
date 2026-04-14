@@ -42,21 +42,30 @@ const LandlordSidebar = ({ activeTab, setActiveTab, handleLogout, isDarkMode, is
                 {isExpanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
             </button>
 
-            <div className={`border-b flex flex-col items-center gap-0 min-h-[100px] justify-center transition-all duration-500 ease-in-out ${isExpanded ? 'p-6' : 'p-2'} ${isDarkMode ? 'border-slate-900' : 'border-slate-100'}`}>
-                <div className="flex items-center gap-3 w-full justify-center">
-                    <div className="relative shrink-0 group">
-                        <div className="absolute inset-0 bg-emerald-500 blur-[18px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full" />
-                        <img
-                            src="/favicon.png"
-                            alt="RentEase Logo"
-                            className={`object-contain relative z-10 drop-shadow-lg transition-all duration-500 ease-in-out ${isExpanded ? 'w-16 h-16' : 'w-14 h-14'}`}
-                        />
+            <div className={`border-b flex flex-col items-center transition-all duration-500 ease-in-out ${isExpanded ? 'p-8 pb-1 relative bottom-3' : 'p-4 pt-10'} ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                <div className={`flex ${isExpanded ? 'flex-col items-center' : 'justify-center'} w-full`}>
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="relative group shrink-0">
+                            <div className="absolute inset-0 bg-emerald-500 blur-[15px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full" />
+                            <img
+                                src="/favicon.png"
+                                alt="RentEase Logo"
+                                className={`object-contain relative z-10 drop-shadow-lg transition-all duration-500 ease-in-out ${isExpanded ? 'w-16 h-16' : 'w-10 h-10'}`}
+                            />
+                        </div>
+                        {isExpanded && (
+                            <span className={`text-[25px] font-black tracking-tighter animate-in fade-in slide-in-from-left-2 relative right-5 duration-500 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                                RentEase
+                            </span>
+                        )}
                     </div>
                     {isExpanded && (
-                        <div className="flex flex-col animate-in fade-in duration-300 w-full overflow-hidden relative right-5">
-                            <span className={`text-2xl font-black tracking-tighter ${isDarkMode ? 'text-white' : 'text-black'}`}>RentEase</span>
-                            <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-500">Landlord Dashboard</span>
-                        </div>
+                        <>
+                            <div className="w-full h-px bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent mb-2 animate-in fade-in duration-700"></div>
+                            <span className="text-[12px] font-black uppercase tracking-[0.15em] text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-600 block text-center animate-in fade-in slide-in-from-bottom-2 duration-500 relative bottom-5 left-5">
+                                Landlord Dashboard
+                            </span>
+                        </>
                     )}
                 </div>
             </div>

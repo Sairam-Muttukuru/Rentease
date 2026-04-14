@@ -2,6 +2,7 @@ import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { useState } from "react";
 import { CreditCard, CheckCircle, ShieldCheck, X, Loader2, Receipt } from "lucide-react";
 import { toast } from "react-toastify";
+import BASE_URL from "../utils/apiConfig";
 
 // Custom styling for the Stripe Element field
 const CARD_ELEMENT_OPTIONS = {
@@ -66,7 +67,7 @@ const CheckoutForm = ({ amount, tenantId, propertyId, tenantName, isDarkMode, pa
 
     try {
       // 1️⃣ Create payment intent
-      const res = await fetch("https://rentease-1-pwm5.onrender.com/api/payment/create-payment-intent", {
+      const res = await fetch(`${BASE_URL}/api/payment/create-payment-intent`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -111,8 +112,8 @@ const CheckoutForm = ({ amount, tenantId, propertyId, tenantName, isDarkMode, pa
 
         // Determine endpoint based on paymentType
         const endpoint = paymentType === 'SECURITY_DEPOSIT'
-          ? "https://rentease-1-pwm5.onrender.com/api/payment/security-deposit"
-          : "https://rentease-1-pwm5.onrender.com/api/payment/rent-payment";
+          ? `${BASE_URL}/api/payment/security-deposit`
+          : `${BASE_URL}/api/payment/rent-payment`;
 
         const saveRes = await fetch(endpoint, {
           method: "POST",
@@ -156,8 +157,8 @@ const CheckoutForm = ({ amount, tenantId, propertyId, tenantName, isDarkMode, pa
       try {
         const mockTx = "MOCK_TX_" + Date.now();
         const endpoint = paymentType === 'SECURITY_DEPOSIT'
-          ? "https://rentease-1-pwm5.onrender.com/api/payment/security-deposit"
-          : "https://rentease-1-pwm5.onrender.com/api/payment/rent-payment";
+          ? `${BASE_URL}/api/payment/security-deposit`
+          : `${BASE_URL}/api/payment/rent-payment`;
 
         const saveRes = await fetch(endpoint, {
           method: "POST",

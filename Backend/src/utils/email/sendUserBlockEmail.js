@@ -9,42 +9,66 @@ const sendUserBlockEmail = async (email, firstName, reason, isBlocked) => {
     const statusColor = isBlocked ? "#ef4444" : "#10b981";
     
     const html = `
-        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 40px auto; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); background-color: #ffffff;">
-            <div style="background: linear-gradient(135deg, ${statusColor} 0%, #000000 100%); padding: 30px; text-align: center; color: white;">
-                <img src="cid:renteasefavicon" alt="Icon" style="width: 48px; height: 48px; margin-bottom: 12px; border-radius: 12px;">
-                <h1 style="margin: 0; font-size: 24px; font-weight: 700;">Security Notification</h1>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Account Security Update</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+        <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
+            
+            <!-- Logo Header -->
+            <div style="padding: 24px; text-align: left; background: #ffffff; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px;">
+                <img src="${process.env.FRONTEND_URL}/favicon.png" alt="RentEase" style="height: 32px; width: 32px; border-radius: 8px;" />
+                <span style="font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">RentEase</span>
             </div>
-            <div style="padding: 40px 30px; background-color: #ffffff;">
-                <h2 style="font-size: 20px; font-weight: 600; color: #111827; margin-top: 0; margin-bottom: 16px;">Hello ${firstName},</h2>
-                <p style="font-size: 16px; line-height: 1.6; color: #4b5563; margin-top: 0; margin-bottom: 24px;">
-                    This is an automated notification regarding your RentEase account status. Your account has been <strong>${statusText}</strong> by the system administrator.
+
+            <!-- Header Section -->
+            <div style="background: ${isBlocked ? 'linear-gradient(to right, #ef4444, #991b1b)' : 'linear-gradient(to right, #10b981, #065f46)'}; padding: 40px; text-align: center; color: #ffffff;">
+                <div style="background: rgba(255,255,255,0.2); width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                    <span style="font-size: 32px;">${isBlocked ? '🔒' : '🔓'}</span>
+                </div>
+                <h1 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">Account ${isBlocked ? 'Deactivated' : 'Reactivated'}</h1>
+                <p style="margin: 8px 0 0; opacity: 0.9; font-size: 16px;">Security status update for your profile</p>
+            </div>
+
+            <!-- Content Body -->
+            <div style="padding: 40px 32px;">
+                <h2 style="font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 16px 0;">Hello ${firstName},</h2>
+                <p style="font-size: 16px; color: #475569; line-height: 1.7; margin: 0 0 32px 0;">
+                    This is an official notification regarding the status of your RentEase account. Our administrative team has updated your access permissions.
                 </p>
                 
                 ${isBlocked ? `
-                <div style="background-color: #fef2f2; border: 1px solid #fee2e2; border-radius: 12px; padding: 24px; margin-bottom: 32px;">
-                    <h3 style="margin-top: 0; color: #991b1b; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;">Reason for Suspension:</h3>
-                    <p style="margin-bottom: 0; color: #b91c1c; font-size: 16px; font-style: italic;">"${reason}"</p>
+                <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; border-radius: 12px; padding: 24px; margin-bottom: 32px;">
+                    <h3 style="margin-top: 0; color: #991b1b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;">Reason for Suspension</h3>
+                    <p style="margin-bottom: 0; color: #b91c1c; font-size: 16px; font-style: italic; line-height: 1.6;">"${reason}"</p>
                 </div>
                 ` : `
-                <div style="background-color: #f0fdf4; border: 1px solid #dcfce7; border-radius: 12px; padding: 24px; margin-bottom: 32px;">
-                    <p style="margin: 0; color: #166534; font-size: 16px;">Your account access has been restored. You can now login using your registered credentials.</p>
+                <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; border-radius: 12px; padding: 24px; margin-bottom: 32px;">
+                    <p style="margin: 0; color: #166534; font-size: 16px; font-weight: 600;">Account Restored Successfully</p>
+                    <p style="margin: 8px 0 0; color: #14532d; font-size: 14px;">Your access has been fully restored. You can now log back into the RentEase portal using your standard credentials.</p>
                 </div>
                 `}
 
-                <p style="font-size: 14px; color: #6b7280; line-height: 1.6;">
-                    ${isBlocked 
-                        ? "While your account is blocked, you will not be able to login or access any RentEase services. If you believe this is a mistake, please reach out to our support team." 
-                        : "Thank you for being a part of RentEase."}
-                </p>
-
-                <div style="text-align: center; margin-top: 32px;">
-                    <a href="https://rentease-home.vercel.app" style="display: inline-block; background-color: #111827; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px;">Visit Website</a>
+                <div style="text-align: center;">
+                    <a href="${process.env.FRONTEND_URL || 'https://rentease-home.vercel.app'}" style="display: inline-block; background-color: #0f172a; color: #ffffff; padding: 18px 40px; border-radius: 12px; font-weight: 700; text-decoration: none; font-size: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);">
+                        ${isBlocked ? 'Contact Support' : 'Login to Account'}
+                    </a>
                 </div>
             </div>
-            <div style="background-color: #f9fafb; padding: 20px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb;">
-                <p style="margin: 0;">&copy; ${new Date().getFullYear()} RentEase Home Management. Internal Security Team.</p>
+            
+            <!-- Footer -->
+            <div style="padding: 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+                <div style="font-weight: 800; color: #6366f1; font-size: 20px; margin-bottom: 8px;">RentEase</div>
+                <p style="font-size: 12px; color: #94a3b8; margin: 0;">Securing your property experience.</p>
+                <p style="font-size: 12px; color: #94a3b8; margin-top: 20px;">&copy; ${new Date().getFullYear()} RentEase Home Management. Security Team.</p>
             </div>
         </div>
+    </body>
+    </html>
     `;
 
     try {

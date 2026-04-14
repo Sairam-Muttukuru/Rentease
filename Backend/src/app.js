@@ -34,6 +34,39 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
 
+// === CONCISE JSON API LOGGER ===
+app.use((req, res, next) => {
+    if (!req.url.startsWith('/api')) return next();
+
+    const start = Date.now();
+    
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        const logObj = {
+            api_call: `${req.method} ${req.url}`,
+            status: res.statusCode,
+            duration: `${duration}ms`,
+        };
+        
+        if (req.body && Object.keys(req.body).length > 0) {
+            // Trim long strings to avoid terminal spam (like base64 images)
+            const cleanBody = {};
+            for (const key in req.body) {
+                if (typeof req.body[key] === 'string' && req.body[key].length > 100) {
+                    cleanBody[key] = req.body[key].substring(0, 100) + '...[TRUNCATED]';
+                } else {
+                    cleanBody[key] = req.body[key];
+                }
+            }
+            logObj.request_body = cleanBody;
+        }
+
+        console.log(JSON.stringify(logObj, null, 2));
+    });
+
+    next();
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/properties", PropertyRoutes);
 app.use("/api/tenants", tenantRoutes);

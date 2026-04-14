@@ -27,7 +27,7 @@ const ICON_MAP = {
     Fan, Sparkles, Zap, Paintbrush, Wrench, Hammer, Home, Star, LayoutGrid, ClipboardList
 };
 
-const API_BASE_URL = window.location.hostname === 'localhost' 
+const API_BASE_URL = window.location.hostname === 'localhost'
     ? "http://localhost:5000/api/service-provider"
     : "https://rentease-1-pwm5.onrender.com/api/service-provider";
 
@@ -257,7 +257,7 @@ const ProfileView = ({ user, profile, onUpdate }) => {
         }
 
         try {
-            await axios.post('https://rentease-1-pwm5.onrender.com/api/auth/change-password', {
+            await axios.post('/api/auth/change-password', {
                 currentPassword: passwordForm.current,
                 newPassword: passwordForm.new
             }, {
@@ -713,7 +713,7 @@ const AddEntityForm = ({ type, label, onSave, onCancel, parentId, initialData })
             } else if (type === 'service') {
                 // If the parent was a sub-type, we need to preserve the path correctly
                 if (parentId && initialData?.sub_type_id) {
-                     payload.sub_type_id = parentId;
+                    payload.sub_type_id = parentId;
                 }
             }
 
@@ -930,8 +930,8 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
                                     </div>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-2">
-                                        {/* Column 1: Customer & Time */}
-                                        <div className="flex flex-col gap-4">
+                                        {/* Column 1: Customer & Times */}
+                                        <div className="flex flex-col gap-3">
                                             <div className="flex flex-col gap-0.5">
                                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Customer</span>
                                                 <p className="text-slate-800 dark:text-slate-200 font-bold text-sm truncate">
@@ -939,7 +939,7 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
                                                 </p>
                                             </div>
                                             <div className="flex flex-col gap-0.5">
-                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Scheduled Time</span>
+                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Booked Time</span>
                                                 <p className="text-slate-800 dark:text-slate-200 font-bold text-[13px] flex items-center gap-2">
                                                     <Calendar size={14} className="text-indigo-500 shrink-0" />
                                                     <span className="truncate">
@@ -948,6 +948,29 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
                                                     </span>
                                                 </p>
                                             </div>
+                                            {/* Visit Scheduled — slot set by provider */}
+                                            {job.visit_date ? (
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1">
+                                                        <CalendarCheck size={10} /> Visit Scheduled
+                                                    </span>
+                                                    <p className="text-emerald-700 dark:text-emerald-400 font-bold text-[13px] flex items-center gap-1.5">
+                                                        <Clock size={13} className="text-emerald-500 shrink-0" />
+                                                        <span>
+                                                            {new Date(job.visit_date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
+                                                            {job.start_time && (() => { const [h,m]=job.start_time.split(':'); const hr=parseInt(h); return <span className="ml-1">{`${hr%12||12}:${m} ${hr>=12?'PM':'AM'}`}</span>; })()}
+                                                            {job.end_time && (() => { const [h,m]=job.end_time.split(':'); const hr=parseInt(h); return <span className="text-emerald-500/70 font-medium ml-1">{`– ${hr%12||12}:${m} ${hr>=12?'PM':'AM'}`}</span>; })()}
+                                                        </span>
+                                                    </p>
+                                                </div>
+                                            ) : (
+                                                job.status === 'Accepted' && (
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest">⏳ Visit Not Scheduled</span>
+                                                        <p className="text-amber-600 dark:text-amber-400 text-xs font-medium">Click "Schedule Visit" to set a time</p>
+                                                    </div>
+                                                )
+                                            )}
                                         </div>
 
                                         {/* Column 2: Classification (Service Type & Category) */}
@@ -1007,11 +1030,15 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
                                     )}
                                     {job.status === 'Accepted' && (
                                         <div className="flex flex-col gap-2 w-full">
-                                             <button 
-                                                onClick={() => onUpdateStatus(job.id, 'Schedule')} 
-                                                className="w-full px-6 py-2.5 bg-sky-500 text-white hover:bg-sky-600 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-sky-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                            <button
+                                                onClick={() => onUpdateStatus(job.id, 'Schedule', null, job)}
+                                                className={`w-full px-6 py-2.5 text-white rounded-xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg ${
+                                                    job.visit_date
+                                                        ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20'
+                                                        : 'bg-sky-500 hover:bg-sky-600 shadow-sky-500/20'
+                                                }`}
                                             >
-                                                <Calendar size={14} /> Schedule Visit
+                                                <Calendar size={14} /> {job.visit_date ? 'Reschedule Visit' : 'Schedule Visit'}
                                             </button>
                                             <button onClick={() => onUpdateStatus(job.id, 'In Progress')} className="w-full px-6 py-2.5 bg-amber-500 text-white hover:bg-amber-600 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-amber-500/20 active:scale-95 transition-all flex items-center justify-center gap-2">
                                                 Start Work <ChevronRight size={14} />
@@ -1019,9 +1046,19 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
                                         </div>
                                     )}
                                     {job.status === 'In Progress' && (
-                                        <button onClick={() => onUpdateStatus(job.id, 'Completed')} className="w-full lg:w-auto px-6 py-2.5 bg-emerald-500 text-white hover:bg-emerald-600 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-2">
-                                            <CheckCircle2 size={14} /> Complete
-                                        </button>
+                                        <div className="flex flex-col gap-2 w-full">
+                                            {job.visit_date && (
+                                                <button
+                                                    onClick={() => onUpdateStatus(job.id, 'Schedule', null, job)}
+                                                    className="w-full px-6 py-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 rounded-xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2 border border-amber-200 dark:border-amber-800"
+                                                >
+                                                    <Calendar size={13} /> Reschedule Visit
+                                                </button>
+                                            )}
+                                            <button onClick={() => onUpdateStatus(job.id, 'Completed')} className="w-full lg:w-auto px-6 py-2.5 bg-emerald-500 text-white hover:bg-emerald-600 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-2">
+                                                <CheckCircle2 size={14} /> Complete
+                                            </button>
+                                        </div>
                                     )}
                                     {job.status === 'Completed' && (
                                         <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 px-4 py-2 rounded-xl border border-emerald-100 dark:border-emerald-800/50">
@@ -1142,46 +1179,126 @@ const CustomerReviews = ({ reviews }) => {
 };
 
 const UpcomingSchedule = ({ bookings }) => {
-    const upcoming = bookings.filter(b => ["Assigned", "Accepted", "In Progress"].includes(b.status));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Helper: format time string to 12h AM/PM
+    const fmt12h = (timeStr) => {
+        if (!timeStr) return null;
+        const [h, m] = timeStr.split(':').map(Number);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const hr12 = h % 12 || 12;
+        return `${hr12}:${String(m).padStart(2, '0')} ${ampm}`;
+    };
+
+    // Build upcoming list from bookings that have a future visit_date
+    // or are Accepted/In Progress with a booking_date >= today
+    const upcoming = bookings
+        .filter(b => ['Accepted', 'In Progress', 'Assigned'].includes(b.status))
+        .map(b => {
+            // prefer visit_date (from scheduled slot) over booking_date
+            const dateStr = b.visit_date || b.booking_date;
+            const date = dateStr ? new Date(dateStr) : null;
+            return { ...b, _sortDate: date };
+        })
+        .filter(b => b._sortDate && b._sortDate >= today)
+        .sort((a, b) => a._sortDate - b._sortDate);
+
+    const isRescheduled = (b) => b.visit_date && b.booking_date && b.visit_date !== b.booking_date;
 
     return (
-        <div className="bg-white/70 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl p-6 h-full">
+        <div className="bg-white/70 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl p-6 h-full flex flex-col">
             <div className="flex justify-between items-center mb-6">
-                <h3 className="font-bold text-xl text-slate-800 dark:text-white">Upcoming Schedule</h3>
-                <button className="p-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-100 transition-colors">
-                    <Calendar size={18} />
-                </button>
+                <div>
+                    <h3 className="font-bold text-xl text-slate-800 dark:text-white">Upcoming Schedule</h3>
+                    <p className="text-xs text-slate-400 font-medium mt-0.5">{upcoming.length} service{upcoming.length !== 1 ? 's' : ''} upcoming</p>
+                </div>
+                <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl">
+                    <CalendarCheck size={20} />
+                </div>
             </div>
 
-            <div className="relative pl-4 space-y-8 before:absolute before:left-1.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-700">
+            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
                 {upcoming.length === 0 ? (
-                    <p className="text-slate-400 text-sm font-bold py-10 text-center">No upcoming jobs scheduled</p>
-                ) : upcoming.map((item, index) => (
-                    <div className="relative pl-6 group">
-                        {/* Timeline Dot */}
-                        <span className={`absolute left-0 top-1.5 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-slate-800 shadow-sm z-10 
-                                ${index === 0 ? 'bg-indigo-500 ring-4 ring-indigo-100 dark:ring-indigo-900/30' : 'bg-slate-300 dark:bg-slate-600'}`}
-                        />
+                    <div className="flex flex-col items-center justify-center h-full py-10 text-slate-400">
+                        <CalendarCheck size={40} className="mb-3 opacity-30" />
+                        <p className="text-sm font-bold">No upcoming services scheduled</p>
+                        <p className="text-xs mt-1 opacity-70">Accept jobs and schedule visits to see them here</p>
+                    </div>
+                ) : upcoming.map((item, index) => {
+                    const visitDate = item._sortDate;
+                    const isToday = visitDate.toDateString() === new Date().toDateString();
+                    const isTomorrow = visitDate.toDateString() === new Date(Date.now() + 86400000).toDateString();
 
-                        <div className="bg-white dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm hover:shadow-md transition-all hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 hover:border-indigo-100 group-hover:translate-x-1">
-                            <div className="flex justify-between items-start mb-2">
-                                <span className="font-extrabold text-indigo-600 dark:text-indigo-400 text-xs uppercase tracking-wider">{item.booking_date ? new Date(item.booking_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric'}) : 'TBD'}</span>
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${item.status === 'Accepted' || item.status === 'In Progress' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-700'}`}>
+                    const dateLabel = isToday ? 'Today' : isTomorrow ? 'Tomorrow' : visitDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+                    const rescheduled = isRescheduled(item);
+
+                    const startTime = fmt12h(item.start_time);
+                    const endTime = fmt12h(item.end_time);
+                    const timeLabel = startTime
+                        ? (endTime ? `${startTime} – ${endTime}` : startTime)
+                        : (item.booking_time || null);
+
+                    return (
+                        <div key={item.id} className={`relative p-4 rounded-2xl border transition-all hover:-translate-y-0.5 hover:shadow-md
+                            ${index === 0
+                                ? 'bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 border-indigo-200 dark:border-indigo-700/50 shadow-indigo-100 dark:shadow-none'
+                                : 'bg-slate-50/80 dark:bg-slate-900/30 border-slate-100 dark:border-slate-700/50'
+                            }`}>
+
+                            {/* Top Row: Date + Status */}
+                            <div className="flex justify-between items-center mb-3">
+                                <div className="flex items-center gap-2">
+                                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black
+                                        ${isToday ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>
+                                        {visitDate.getDate()}
+                                    </div>
+                                    <div>
+                                        <p className={`text-xs font-black uppercase tracking-wider ${isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'}`}>{dateLabel}</p>
+                                        {rescheduled && (
+                                            <span className="text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-700/50">
+                                                ↻ Rescheduled
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
+                                    ${item.status === 'In Progress' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                        : item.status === 'Accepted' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
                                     {item.status}
                                 </span>
                             </div>
-                            <h4 className="font-bold text-slate-800 dark:text-white mb-1">{item.service || item.service_name}</h4>
-                            <div className="flex flex-col gap-1">
-                                <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                                    <Clock size={12} /> {item.booking_time || 'Pending'}
-                                </div>
-                                <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                                    <MapPin size={12} /> {item.address}
-                                </div>
+
+                            {/* Service Name */}
+                            <h4 className="font-black text-slate-900 dark:text-white text-sm mb-2 leading-tight">
+                                {item.service || item.service_name || `Service #${item.service_id}`}
+                            </h4>
+
+                            {/* Details Row */}
+                            <div className="flex flex-wrap gap-x-4 gap-y-1">
+                                {timeLabel && (
+                                    <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                        <Clock size={11} className="text-indigo-400" />
+                                        <span className="font-bold text-slate-700 dark:text-slate-300">{timeLabel}</span>
+                                    </div>
+                                )}
+                                {item.customer && (
+                                    <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                        <span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600 inline-block" />
+                                        {item.customer}
+                                    </div>
+                                )}
+                                {item.address && (
+                                    <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                        <MapPin size={11} className="text-slate-400 shrink-0" />
+                                        <span className="truncate max-w-[120px]">{item.address}</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
@@ -1502,12 +1619,6 @@ const HierarchicalServiceManager = ({
 
     const fetchCatalogServices = async (id) => {
         try {
-            const providerType = profile?.service_type?.trim().toLowerCase() || '';
-            const isAllArounder = ['all in one', 'all', 'others', 'general'].includes(providerType);
-            if (isAllArounder) {
-                setCatalogServices([]);
-                return;
-            }
             const endpoint = view.subType ? `/catalog/services-by-subtype/${id}` : `/catalog/services/${id}`;
             const res = await api.get(endpoint);
             setCatalogServices(res.data);
@@ -1545,7 +1656,7 @@ const HierarchicalServiceManager = ({
                 servicePayload.type_id = view.type.id;
                 servicePayload.sub_type_id = view.subType?.id || null;
                 if (servicePayload.price) servicePayload.base_price = Number(servicePayload.price);
-                
+
                 if (id) {
                     await onEditService({ ...servicePayload, id });
                     toast.success("Service updated");
@@ -1553,7 +1664,7 @@ const HierarchicalServiceManager = ({
                     await onAddService(servicePayload);
                     // No need for toast here as onAddService has its own
                 }
-                
+
                 if (onRefreshServices) await onRefreshServices();
                 fetchCatalogServices(view.subType?.id || view.type?.id);
             }
@@ -1580,8 +1691,8 @@ const HierarchicalServiceManager = ({
     const breadcrumbs = [
         { label: 'All Categories', onClick: () => setView({ depth: 'categories', category: null, type: null, subType: null }) },
         ...(view.category ? [{ label: view.category.name, onClick: () => setView({ depth: 'types', category: view.category, type: null, subType: null }) }] : []),
-        ...(view.type ? [{ 
-            label: view.type.name, 
+        ...(view.type ? [{
+            label: view.type.name,
             onClick: () => {
                 const isAC = view.category?.name?.toLowerCase().includes('ac and appliance');
                 setView({ ...view, depth: isAC ? 'sub-types' : 'types', type: isAC ? view.type : null, subType: null });
@@ -1638,10 +1749,10 @@ const HierarchicalServiceManager = ({
                                         <div className="flex gap-6 items-start">
                                             {/* Photo on Left */}
                                             <div className="w-28 h-28 rounded-2xl overflow-hidden shrink-0 shadow-lg border border-slate-800 bg-slate-950">
-                                                <img 
-                                                    src={svc.image_url || getServiceImage(svc.name)} 
-                                                    alt={svc.name} 
-                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                                                <img
+                                                    src={svc.image_url || getServiceImage(svc.name)}
+                                                    alt={svc.name}
+                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                                 />
                                             </div>
 
@@ -1654,7 +1765,7 @@ const HierarchicalServiceManager = ({
                                                             {svc.category_name || 'Service Category'}
                                                         </p>
                                                     </div>
-                                                    
+
                                                     {/* ACTIVE Badge */}
                                                     {isActive && (
                                                         <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase tracking-widest rounded-lg border border-emerald-500/20">
@@ -1687,17 +1798,17 @@ const HierarchicalServiceManager = ({
                                                         <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Base Cost:</span>
                                                         <span className="text-xl font-black text-white">{'\u20B9'}{svc.base_price || svc.price || 0}</span>
                                                     </div>
-                                                    
+
                                                     {/* Integrated Actions */}
                                                     <div className="flex gap-2">
-                                                        <button 
+                                                        <button
                                                             onClick={(e) => { e.stopPropagation(); onEditService(svc); }}
                                                             className="p-2 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500 hover:text-white rounded-xl transition-all"
                                                             title="Edit Service"
                                                         >
                                                             <Edit2 size={16} />
                                                         </button>
-                                                        <button 
+                                                        <button
                                                             onClick={(e) => { e.stopPropagation(); onDeleteService(svc.id); }}
                                                             className="p-2 bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl transition-all"
                                                             title="Delete Service"
@@ -1771,8 +1882,8 @@ const HierarchicalServiceManager = ({
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {(() => {
-                            const myExistingServices = services.filter(s => 
-                                (view.subType && s.sub_type_id === view.subType.id) || 
+                            const myExistingServices = services.filter(s =>
+                                (view.subType && s.sub_type_id === view.subType.id) ||
                                 (!view.subType && s.type_id === view.type.id && !s.sub_type_id)
                             );
                             const mergedList = [...catalogServices];
@@ -1786,61 +1897,65 @@ const HierarchicalServiceManager = ({
                             return mergedList.map(svc => {
                                 const matched = services.find(s => s.service_id === svc.id || (svc.is_custom && s.id === svc.id));
                                 const isAdded = !!svc.link_id || !!matched;
-                                
+
                                 // Enhanced Fallback Selection
                                 const displayImage = svc.image_url || getServiceImage(svc.name);
-                                
+
                                 return (
-                                    <div key={svc.id} className="group relative overflow-hidden rounded-[32px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-5 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 flex flex-col h-full">
-                                        {/* Image Section */}
-                                        <div className="h-44 overflow-hidden rounded-2xl mb-6 relative shadow-inner bg-slate-50 dark:bg-slate-950">
-                                            <img 
-                                                src={displayImage} 
-                                                alt={svc.name} 
-                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-90 group-hover:opacity-100" 
+                                    <div key={svc.id} className="group relative rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 flex flex-col h-full overflow-hidden">
+                                        {/* Image Section completely edge-to-edge */}
+                                        <div className="h-52 w-full relative overflow-hidden bg-slate-100 dark:bg-slate-950 shrink-0">
+                                            <img
+                                                src={displayImage}
+                                                alt={svc.name}
+                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                             />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500" />
                                             
+                                            {/* Price Tag floating on the image */}
+                                            <div className="absolute bottom-5 left-5 z-10">
+                                                <span className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-1 block shadow-sm">Price Starts</span>
+                                                <div className="flex items-center gap-1">
+                                                    <span className="text-xl font-bold text-indigo-400">₹</span>
+                                                    <span className="text-4xl font-black text-white tracking-tight drop-shadow-lg">
+                                                        {svc.price || svc.base_price || 0}
+                                                    </span>
+                                                </div>
+                                            </div>
+
                                             {/* Status Badge */}
                                             {isAdded && (
-                                                <div className="absolute top-3 right-3 bg-emerald-500/90 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg border border-emerald-400/20 uppercase tracking-widest animate-in zoom-in-50 duration-300">
-                                                    Active
+                                                <div className="absolute top-5 right-5 bg-emerald-500/90 backdrop-blur-md text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-xl border border-white/20 uppercase tracking-widest flex items-center gap-1 animate-in slide-in-from-top-4 duration-500">
+                                                    <Check size={12} strokeWidth={3} /> Active
                                                 </div>
                                             )}
                                         </div>
 
                                         {/* Content Section */}
-                                        <div className="flex-1 space-y-3">
-                                            <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight tracking-tight group-hover:text-indigo-500 transition-colors">
-                                                {svc.name}
-                                            </h3>
-                                            
-                                            {svc.description && (
-                                                <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed bg-slate-50 dark:bg-slate-950/50 p-2 rounded-xl border border-slate-100 dark:border-slate-800/50">
-                                                    {svc.description.replace(/•/g, '').trim()}
-                                                </p>
-                                            )}
-                                        </div>
+                                        <div className="flex flex-col flex-1 p-6 relative">
+                                            <div className="flex-1 mb-6">
+                                                <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight tracking-tight mb-3 group-hover:text-indigo-500 transition-colors line-clamp-2">
+                                                    {svc.name}
+                                                </h3>
 
-                                        {/* Footer Section */}
-                                        <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-50 dark:border-slate-800">
-                                            <div className="flex flex-col">
-                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Price Starts</span>
-                                                <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums">
-                                                    {'\u20B9'}{svc.price || svc.base_price || 0}
-                                                </span>
+                                                {svc.description && (
+                                                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                                                        {svc.description.replace(/•/g, '').trim()}
+                                                    </p>
+                                                )}
                                             </div>
-                                            
+
+                                            {/* Action Button at bottom */}
                                             {isAdded ? (
-                                                <div className="flex items-center gap-2 text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 px-4 py-2 rounded-2xl font-black text-[10px] uppercase tracking-tighter border border-emerald-200 dark:border-emerald-500/20">
-                                                    <Check size={14} strokeWidth={3} /> Added to My List
+                                                <div className="w-full py-3.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl font-black tracking-widest flex justify-center items-center gap-2 border border-emerald-200 dark:border-emerald-500/20 text-[11px] uppercase shadow-inner">
+                                                    <Check size={16} strokeWidth={3} /> Added to Catalog
                                                 </div>
                                             ) : (
-                                                <button 
-                                                    onClick={() => onAddService({ ...svc, service_id: svc.id })} 
-                                                    className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/40 active:scale-95 transition-all flex items-center gap-2"
+                                                <button
+                                                    onClick={() => onAddService({ ...svc, service_id: svc.id, price: svc.price || svc.base_price })}
+                                                    className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-500 hover:to-blue-400 text-white rounded-2xl font-black tracking-widest flex justify-center items-center gap-2 shadow-xl shadow-indigo-600/30 transition-all text-[11px] uppercase group-hover:shadow-indigo-600/50 active:scale-[0.98]"
                                                 >
-                                                    <Plus size={14} strokeWidth={3} /> Add Now
+                                                    <Plus size={16} strokeWidth={3} /> Add Service
                                                 </button>
                                             )}
                                         </div>
@@ -1885,6 +2000,8 @@ const ServiceProvider = () => {
     // --- SLOT STATE ---
     const [slotBookingId, setSlotBookingId] = useState(null);
     const [slotForm, setSlotForm] = useState({ visit_date: "", start_time: "", end_time: "" });
+    const [isReschedule, setIsReschedule] = useState(false);
+    const [rescheduleReason, setRescheduleReason] = useState("");
 
     // --- FILTER CATEGORIES & SERVICES ---
     const { filteredCategories, filteredServices, filteredStats } = React.useMemo(() => {
@@ -1901,8 +2018,8 @@ const ServiceProvider = () => {
         const providerType = profile?.service_type?.trim().toLowerCase() || '';
 
         // Providers marked as all-arounders should see everything
-        const isAllArounder = !providerType || 
-                             ['all in one', 'all', 'others', 'general'].includes(providerType);
+        const isAllArounder = !providerType ||
+            ['all in one', 'all', 'others', 'general'].includes(providerType);
 
         if (isAllArounder) {
             return {
@@ -2055,8 +2172,12 @@ const ServiceProvider = () => {
                 payload.features = payload.features.split(',').map(f => f.trim()).filter(f => f);
             }
 
-            const res = await api.post('/services', payload);
-            setServices([res.data, ...services]);
+            await api.post('/services', payload);
+            
+            // Re-fetch the entire list to cleanly synchronize the frontend with correctly built data references
+            const updatedServices = await api.get('/services');
+            setServices(updatedServices.data);
+            
             setIsAddingService(false);
             setRefreshTrigger(prev => prev + 1); // Refresh catalog
             toast.success("Service added successfully!");
@@ -2130,7 +2251,16 @@ const ServiceProvider = () => {
         }
 
         if (newStatus === 'Schedule') {
+            const job = arguments[3]; // job object passed as 4th arg
+            if (job && job.visit_date) {
+                // Already has a scheduled slot — open reschedule modal
+                setIsReschedule(true);
+            } else {
+                setIsReschedule(false);
+            }
+            setRescheduleReason("");
             setSlotBookingId(id);
+            setSlotForm({ visit_date: "", start_time: "", end_time: "" });
             return;
         }
 
@@ -2162,17 +2292,41 @@ const ServiceProvider = () => {
         if (!slotForm.visit_date || !slotForm.start_time || !slotForm.end_time) {
             return toast.warning("Please fill in all slot details");
         }
+        if (isReschedule && !rescheduleReason.trim()) {
+            return toast.warning("Please provide a reason for rescheduling");
+        }
 
         try {
-            await api.post('/slots', {
-                service_request_id: slotBookingId,
-                ...slotForm
-            });
-            toast.success("Visit scheduled & customer notified!");
+            if (isReschedule) {
+                await api.put('/slots/reschedule', {
+                    service_request_id: slotBookingId,
+                    ...slotForm,
+                    reason: rescheduleReason
+                });
+                // Update bookings state with new slot times
+                setBookings(bookings.map(b => b.id === slotBookingId
+                    ? { ...b, visit_date: slotForm.visit_date, start_time: slotForm.start_time, end_time: slotForm.end_time }
+                    : b
+                ));
+                toast.success("Visit rescheduled & customer notified!");
+            } else {
+                await api.post('/slots', {
+                    service_request_id: slotBookingId,
+                    ...slotForm
+                });
+                // Update bookings state with slot times
+                setBookings(bookings.map(b => b.id === slotBookingId
+                    ? { ...b, visit_date: slotForm.visit_date, start_time: slotForm.start_time, end_time: slotForm.end_time }
+                    : b
+                ));
+                toast.success("Visit scheduled & customer notified!");
+            }
             setSlotBookingId(null);
             setSlotForm({ visit_date: "", start_time: "", end_time: "" });
+            setRescheduleReason("");
+            setIsReschedule(false);
         } catch (err) {
-            toast.error("Failed to schedule visit");
+            toast.error(err.response?.data?.error || "Failed to schedule visit");
         }
     };
 
@@ -2431,23 +2585,49 @@ const ServiceProvider = () => {
                 </div>
             )}
 
-            {/* Schedule Slot Modal */}
+            {/* Schedule / Reschedule Slot Modal */}
             {slotBookingId && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className="bg-slate-950 rounded-[2.5rem] shadow-2xl shadow-sky-900/20 max-w-lg w-full p-10 border border-sky-500/20 animate-in zoom-in-95 duration-300 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-48 h-48 bg-sky-500/10 rounded-full blur-3xl -mr-24 -mt-24 pointer-events-none"></div>
+                    <div className={`rounded-[2.5rem] shadow-2xl max-w-lg w-full p-10 border animate-in zoom-in-95 duration-300 relative overflow-hidden
+                        ${isReschedule
+                            ? 'bg-slate-950 shadow-amber-900/20 border-amber-500/20'
+                            : 'bg-slate-950 shadow-sky-900/20 border-sky-500/20'
+                        }`}>
+                        <div className={`absolute top-0 right-0 w-48 h-48 rounded-full blur-3xl -mr-24 -mt-24 pointer-events-none ${isReschedule ? 'bg-amber-500/10' : 'bg-sky-500/10'}`} />
 
-                        <div className="flex items-center gap-6 mb-10 relative z-10">
-                            <div className="w-16 h-16 rounded-3xl bg-sky-950 border border-sky-500/30 text-sky-400 flex items-center justify-center shadow-[0_0_20px_rgba(14,165,233,0.3)]">
+                        <div className="flex items-center gap-6 mb-8 relative z-10">
+                            <div className={`w-16 h-16 rounded-3xl border flex items-center justify-center shadow-lg
+                                ${isReschedule
+                                    ? 'bg-amber-950 border-amber-500/30 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.3)]'
+                                    : 'bg-sky-950 border-sky-500/30 text-sky-400 shadow-[0_0_20px_rgba(14,165,233,0.3)]'
+                                }`}>
                                 <Calendar size={36} />
                             </div>
                             <div>
-                                <h3 className="text-3xl font-black text-white tracking-tight uppercase">Schedule Visit</h3>
-                                <p className="text-xs text-sky-400 font-bold tracking-widest uppercase mt-1">Notify customer of arrival time</p>
+                                <h3 className="text-3xl font-black text-white tracking-tight uppercase">
+                                    {isReschedule ? 'Reschedule Visit' : 'Schedule Visit'}
+                                </h3>
+                                <p className={`text-xs font-bold tracking-widest uppercase mt-1 ${isReschedule ? 'text-amber-400' : 'text-sky-400'}`}>
+                                    {isReschedule ? 'Set a new date & notify customer' : 'Notify customer of arrival time'}
+                                </p>
                             </div>
                         </div>
 
                         <div className="space-y-6 relative z-10">
+                            {/* Reschedule reason — only shown when rescheduling */}
+                            {isReschedule && (
+                                <div>
+                                    <label className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-2 block">Reason for Rescheduling <span className="text-rose-400">*</span></label>
+                                    <textarea
+                                        value={rescheduleReason}
+                                        onChange={(e) => setRescheduleReason(e.target.value)}
+                                        placeholder="e.g. Emergency repair came up, will visit on the new date instead..."
+                                        rows={3}
+                                        className="w-full px-5 py-4 bg-slate-900 rounded-2xl border border-amber-800/50 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none text-white placeholder:text-slate-600 font-medium resize-none text-sm leading-relaxed"
+                                    />
+                                </div>
+                            )}
+
                             <div>
                                 <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Visit Date</label>
                                 <input
@@ -2459,49 +2639,75 @@ const ServiceProvider = () => {
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <div className="flex justify-between items-center mb-2">
-                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">Start Time</label>
-                                        <span className="text-[10px] font-bold text-sky-500 bg-sky-500/10 px-2 py-0.5 rounded-full">
-                                            {formatTimeTo12h(slotForm.start_time) || "Set Time"}
-                                        </span>
-                                    </div>
-                                    <input
-                                        type="time"
-                                        value={slotForm.start_time}
-                                        onChange={(e) => setSlotForm({ ...slotForm, start_time: e.target.value })}
-                                        className="w-full px-6 py-4 bg-slate-900 rounded-2xl border border-slate-800 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none text-white font-bold"
-                                    />
-                                </div>
-                                <div>
-                                    <div className="flex justify-between items-center mb-2">
-                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">End Time</label>
-                                        <span className="text-[10px] font-bold text-sky-500 bg-sky-500/10 px-2 py-0.5 rounded-full">
-                                            {formatTimeTo12h(slotForm.end_time) || "Set Time"}
-                                        </span>
-                                    </div>
-                                    <input
-                                        type="time"
-                                        value={slotForm.end_time}
-                                        onChange={(e) => setSlotForm({ ...slotForm, end_time: e.target.value })}
-                                        className="w-full px-6 py-4 bg-slate-900 rounded-2xl border border-slate-800 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none text-white font-bold"
-                                    />
-                                </div>
+                                {(['start_time', 'end_time']).map((field) => {
+                                    const timeVal = slotForm[field] || "10:00"; 
+                                    const [hrStr, minStr] = timeVal.split(':');
+                                    let hr24 = parseInt(hrStr) || 10;
+                                    const min = minStr || "00";
+                                    const ampm = hr24 >= 12 ? 'PM' : 'AM';
+                                    let hr12 = hr24 % 12;
+                                    if (hr12 === 0) hr12 = 12;
+
+                                    const handleTimeChange = (newHr12, newMin, newAmPm) => {
+                                        let newHr24 = newHr12 % 12;
+                                        if (newAmPm === 'PM') newHr24 += 12;
+                                        setSlotForm({ ...slotForm, [field]: `${String(newHr24).padStart(2, '0')}:${newMin}` });
+                                    };
+
+                                    return (
+                                        <div key={field}>
+                                            <div className="flex justify-between items-center mb-2">
+                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">{field === 'start_time' ? 'Start Time' : 'End Time'}</label>
+                                                <span className="text-[10px] font-bold text-sky-500 bg-sky-500/10 px-2 py-0.5 rounded-full">
+                                                    {formatTimeTo12h(slotForm[field]) || "Set Time"}
+                                                </span>
+                                            </div>
+                                            <div className="flex bg-slate-900 rounded-2xl border border-slate-800 focus-within:border-sky-500 focus-within:ring-1 focus-within:ring-sky-500 overflow-hidden text-white font-bold h-[58px]">
+                                                <select
+                                                    value={hr12}
+                                                    onChange={(e) => handleTimeChange(parseInt(e.target.value), min, ampm)}
+                                                    className="bg-transparent px-3 py-4 outline-none border-r border-slate-800 appearance-none text-center hover:bg-slate-800 transition-colors flex-[1.5] cursor-pointer"
+                                                >
+                                                    {[...Array(12)].map((_, i) => <option key={i+1} value={i+1} className="bg-slate-900">{String(i+1).padStart(2, '0')}</option>)}
+                                                </select>
+                                                <select
+                                                    value={min}
+                                                    onChange={(e) => handleTimeChange(hr12, e.target.value, ampm)}
+                                                    className="bg-transparent px-3 py-4 outline-none border-r border-slate-800 appearance-none text-center hover:bg-slate-800 transition-colors flex-[1.5] cursor-pointer"
+                                                >
+                                                    {['00', '15', '30', '45'].map(m => <option key={m} value={m} className="bg-slate-900">{m}</option>)}
+                                                </select>
+                                                <select
+                                                    value={ampm}
+                                                    onChange={(e) => handleTimeChange(hr12, min, e.target.value)}
+                                                    className="bg-transparent px-3 py-4 outline-none appearance-none text-center text-sky-400 flex-[2] hover:bg-slate-800 transition-colors cursor-pointer"
+                                                >
+                                                    <option value="AM" className="bg-slate-900 text-white">AM</option>
+                                                    <option value="PM" className="bg-slate-900 text-white">PM</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
 
-                        <div className="flex gap-4 mt-12 relative z-10">
+                        <div className="flex gap-4 mt-10 relative z-10">
                             <button
-                                onClick={() => { setSlotBookingId(null); setSlotForm({ visit_date: "", start_time: "", end_time: "" }); }}
+                                onClick={() => { setSlotBookingId(null); setSlotForm({ visit_date: "", start_time: "", end_time: "" }); setIsReschedule(false); setRescheduleReason(""); }}
                                 className="flex-1 py-4 text-slate-500 font-bold hover:text-white hover:bg-white/5 rounded-2xl transition-all text-xs uppercase tracking-widest"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleCreateSlot}
-                                className="flex-[2] px-8 py-4 bg-sky-600 hover:bg-sky-500 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-[0_0_25px_rgba(14,165,233,0.4)] hover:shadow-[0_0_35px_rgba(14,165,233,0.6)] transition-all"
+                                className={`flex-[2] px-8 py-4 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all
+                                    ${isReschedule
+                                        ? 'bg-amber-600 hover:bg-amber-500 shadow-[0_0_25px_rgba(245,158,11,0.4)] hover:shadow-[0_0_35px_rgba(245,158,11,0.6)]'
+                                        : 'bg-sky-600 hover:bg-sky-500 shadow-[0_0_25px_rgba(14,165,233,0.4)] hover:shadow-[0_0_35px_rgba(14,165,233,0.6)]'
+                                    }`}
                             >
-                                Confirm & Notify
+                                {isReschedule ? '🔄 Reschedule & Notify' : '✓ Confirm & Notify'}
                             </button>
                         </div>
                     </div>
@@ -2525,9 +2731,7 @@ const ServiceProvider = () => {
                                 <img src="/favicon.png" alt="RentEase" className="w-16 h-16 object-contain relative right-2 top-0.5 z-10 drop-shadow-lg" />
                             </div>
                             <span className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter relative right-9">RentEase</span>
-                        </div>
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-indigo-600 dark:from-sky-400 dark:to-indigo-400 block relative left-14 bottom-1">Service Provider Dashboard</span>
-                    </div>
+                        </div>                    </div>
                 </div>
 
                 {/* Partner Status Card - REMOVED */}

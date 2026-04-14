@@ -543,6 +543,7 @@ const PropertyDetails = () => {
                                     <p className="text-gray-500 dark:text-gray-400 mb-1">Monthly Rent</p>
                                     <div className="flex items-baseline gap-1">
                                         <span className="text-4xl font-bold text-gray-900 dark:text-white">₹{property.price.toLocaleString()}</span>
+                                        <span className="text-sm font-medium text-gray-500">/ month {['PG', 'Hostel'].includes(property.property_type) ? '/ per person' : ''}</span>
                                     </div>
                                 </div>
                                 <div className="px-3 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-sm font-bold border border-green-500/20">

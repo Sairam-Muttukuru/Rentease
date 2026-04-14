@@ -19,7 +19,8 @@ exports.login = async (req, res) => {
 
         res.cookie("refreshToken", tokens.refreshToken, {
             httpOnly: true,
-            secure: false
+            secure: false,
+            sameSite: "lax"
         });
 
         res.json({

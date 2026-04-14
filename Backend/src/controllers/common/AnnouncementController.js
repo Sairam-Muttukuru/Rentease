@@ -27,6 +27,7 @@ exports.createAnnouncement = async (req, res) => {
         });
 
         // Email Notification Logic
+        const allEmails = await TenantModel.getEmailsByPropertyId(property_id);
         const landlord = await UserModel.findUserById(landlord_id);
         const landlordName = landlord ? `${landlord.first_name} ${landlord.last_name || ''}`.trim() : 'Your Landlord';
         
@@ -34,42 +35,30 @@ exports.createAnnouncement = async (req, res) => {
         const propertyName = property?.title || 'Your Managed Property';
         const roomNumber = property?.flat_number || '';
 
-        let tenantsToNotify = [];
-
-        if (target_type === 'specific' && target_tenant_id) {
-            const allTenants = await TenantModel.getFullTenantByProperty(property_id, landlord_id);
-            const targetTenant = allTenants.find(t => t.id == target_tenant_id);
-            if (targetTenant) tenantsToNotify.push(targetTenant);
-        } else {
-            tenantsToNotify = await TenantModel.getFullTenantByProperty(property_id, landlord_id);
-        }
-
         res.status(201).json(newAnnouncement);
 
         // Perform email sending in background (non-blocking)
         (async () => {
-            console.log(`Background process: Found ${tenantsToNotify.length} tenants to notify`);
+            console.log(`Background process: Found ${allEmails.length} unique emails to notify for Property ${property_id}`);
             const propertyImage = property?.images?.[0]?.url || null;
 
-            for (const tenant of tenantsToNotify) {
-                if (tenant.email) {
-                    try {
-                        await sendAnnouncementEmail({
-                            tenantEmail: tenant.email,
-                            tenantName: tenant.name || 'Tenant',
-                            landlordName: landlordName,
-                            propertyName: propertyName,
-                            roomNumber: roomNumber,
-                            propertyImage: propertyImage,
-                            announcementTitle: title,
-                            announcementContent: content,
-                            announcementCategory: category,
-                            announcementPriority: priority || 'medium'
-                        });
-                        console.log(`✅ Background: Email sent to ${tenant.email}`);
-                    } catch (err) {
-                        console.error(`❌ Background: Failed to send email to ${tenant.email}:`, err);
-                    }
+            for (const email of allEmails) {
+                try {
+                    await sendAnnouncementEmail({
+                        tenantEmail: email,
+                        tenantName: 'Resident', // Using generic name since we target multiple people
+                        landlordName: landlordName,
+                        propertyName: propertyName,
+                        roomNumber: roomNumber,
+                        propertyImage: propertyImage,
+                        announcementTitle: title,
+                        announcementContent: content,
+                        announcementCategory: category,
+                        announcementPriority: priority || 'medium'
+                    });
+                    console.log(`✅ Background: Broadcast email sent to ${email}`);
+                } catch (err) {
+                    console.error(`❌ Background: Failed to send broadcast email to ${email}:`, err);
                 }
             }
         })();

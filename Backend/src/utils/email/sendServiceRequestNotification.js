@@ -54,46 +54,74 @@ async function sendServiceRequestNotification(requestOrEmail, requestDetails) {
     } = details;
 
     const htmlContent = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-            <div style="text-align: center; border-bottom: 2px solid #6366f1; padding-bottom: 20px; margin-bottom: 20px;">
-                <h1 style="color: #6366f1; margin: 0;">New Service Request</h1>
-                <p style="color: #666; font-size: 16px;">Hello <strong>${providerName}</strong>, you have a new booking!</p>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>New Service Request</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+        <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
+            
+            <!-- Logo Header -->
+            <div style="padding: 24px; text-align: left; background: #ffffff; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px;">
+                <img src="${process.env.FRONTEND_URL}/favicon.png" alt="RentEase" style="height: 32px; width: 32px; border-radius: 8px;" />
+                <span style="font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">RentEase</span>
             </div>
 
-            <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px;">
-                <h2 style="color: #1f2937; margin-top: 0;">Booking Details</h2>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr>
-                        <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; color: #6b7280;">Service:</td>
-                        <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #111827;">${serviceName}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; color: #6b7280;">Scheduled For:</td>
-                        <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #111827;">${scheduledDate} at ${scheduledTime}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; color: #6b7280;">Location:</td>
-                        <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #111827;">${address}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; color: #6b7280;">Client Name:</td>
-                        <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #111827;">${tenantName}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; color: #6b7280;">Contact:</td>
-                        <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #111827;">${contactNumber || 'Not Provided'}</td>
-                    </tr>
-                </table>
-            </div>
+            <!-- Content Body -->
+            <div style="padding: 40px 32px;">
+                <span style="background: #e0e7ff; color: #4338ca; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">New Assignment</span>
+                <h1 style="color: #0f172a; margin: 16px 0 24px 0; font-size: 28px; font-weight: 800;">Hello ${providerName}, 👋</h1>
+                
+                <p style="font-size: 16px; color: #475569; line-height: 1.7; margin: 0 0 32px 0;">
+                    A new service request has been assigned to you. Please review the booking details below.
+                </p>
+                
+                <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 32px;">
+                    <h2 style="font-size: 12px; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 20px 0;">Booking Specifications</h2>
+                    
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 10px 0; color: #64748b; font-size: 14px;">Service</td>
+                            <td style="padding: 10px 0; color: #0f172a; font-size: 14px; font-weight: 700; text-align: right;">${serviceName}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 0; color: #64748b; font-size: 14px;">Schedule</td>
+                            <td style="padding: 10px 0; color: #0f172a; font-size: 14px; font-weight: 700; text-align: right;">${scheduledDate} @ ${scheduledTime}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 0; color: #64748b; font-size: 14px;">Client</td>
+                            <td style="padding: 10px 0; color: #0f172a; font-size: 14px; font-weight: 700; text-align: right;">${tenantName}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 0; color: #64748b; font-size: 14px;">Contact</td>
+                            <td style="padding: 10px 0; color: #6366f1; font-size: 14px; font-weight: 700; text-align: right;">${contactNumber || 'Not Provided'}</td>
+                        </tr>
+                        <tr style="border-top: 1px solid #e2e8f0;">
+                            <td style="padding: 14px 0 10px 0; color: #64748b; font-size: 14px;">Location</td>
+                            <td style="padding: 14px 0 10px 0; color: #0f172a; font-size: 14px; font-weight: 700; text-align: right;">${address}</td>
+                        </tr>
+                    </table>
+                </div>
 
-            <div style="text-align: center; margin-top: 30px;">
-                <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/provider/dashboard" style="display: inline-block; background-color: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View Request</a>
+                <div style="text-align: center;">
+                    <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" style="display: inline-block; background-color: #0f172a; color: #ffffff; padding: 18px 40px; border-radius: 12px; font-weight: 700; text-decoration: none; font-size: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);">
+                        Accept Request
+                    </a>
+                </div>
             </div>
-
-            <p style="text-align: center; color: #9ca3af; font-size: 12px; margin-top: 30px;">
-                Sent via RentEase Platform
-            </p>
+            
+            <!-- Footer -->
+            <div style="padding: 32px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+                <div style="font-weight: 800; color: #6366f1; font-size: 20px; margin-bottom: 8px;">RentEase</div>
+                <p style="font-size: 12px; color: #94a3b8; margin: 0;">Sent with ♥ from the RentEase Ecosystem.</p>
+                <p style="font-size: 12px; color: #94a3b8; margin-top: 20px;">&copy; ${new Date().getFullYear()} RentEase. All rights reserved.</p>
+            </div>
         </div>
+    </body>
+    </html>
     `;
 
     try {
