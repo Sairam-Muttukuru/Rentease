@@ -26,7 +26,11 @@ const PropertyBrowse = () => {
     maxPrice: '',
     type: 'all',
     bedrooms: '',
-    amenities: []
+    amenities: [],
+    sharing: '',
+    food: 'all',
+    seating: '',
+    shopType: ''
   });
 
   const [pagination, setPagination] = useState({
@@ -50,6 +54,11 @@ const PropertyBrowse = () => {
         status: 'Available',
         ...filters
       };
+
+      if (filters.sharing) params.sharing_capacity = filters.sharing;
+      if (filters.food !== 'all') params.food_included = filters.food;
+      if (filters.seating) params.seating_capacity = filters.seating;
+      if (filters.shopType) params.shop_use_type = filters.shopType;
 
       // Remove empty filters
       Object.keys(params).forEach(key => {
@@ -109,7 +118,11 @@ const PropertyBrowse = () => {
       maxPrice: '',
       type: 'all',
       bedrooms: '',
-      amenities: []
+      amenities: [],
+      sharing: '',
+      food: 'all',
+      seating: '',
+      shopType: ''
     });
     setPagination(prev => ({ ...prev, currentPage: 1 }));
   };
@@ -182,7 +195,7 @@ const PropertyBrowse = () => {
                   )}
                 </div>
 
-                {!loading && !error && pagination.totalPages > 1 && (
+                {!loading && !error && properties.length > 0 && pagination.totalPages > 1 && (
                   <Pagination
                     currentPage={pagination.currentPage}
                     totalPages={pagination.totalPages}

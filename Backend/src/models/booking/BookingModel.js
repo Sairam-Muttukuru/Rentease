@@ -78,7 +78,8 @@ exports.getBookingsByLandlord = async (landlordId) => {
       p.locality || ', ' || p.city as location,
       u.first_name || ' ' || u.last_name as "tenantName",
       u.email,
-      'Tenant' as "userType"
+      'Tenant' as "userType",
+      (SELECT image_url FROM property_images WHERE property_id = p.id ORDER BY is_cover DESC LIMIT 1) as "propertyImage"
     FROM bookings b
     JOIN properties p ON p.id = b.property_id
     JOIN users u ON u.id = b.user_id

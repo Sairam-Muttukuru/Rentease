@@ -546,10 +546,57 @@ const PropertyDetails = () => {
                                         <span className="text-sm font-medium text-gray-500">/ month {['PG', 'Hostel'].includes(property.property_type) ? '/ per person' : ''}</span>
                                     </div>
                                 </div>
-                                <div className="px-3 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-sm font-bold border border-green-500/20">
-                                    {property.status}
+                                <div className="flex flex-col items-end gap-2">
+                                    <div className="px-3 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-sm font-bold border border-green-500/20">
+                                        {property.status}
+                                    </div>
+                                    {['PG', 'Hostel'].includes(property.property_type) && (
+                                        <div className="text-[10px] font-black uppercase tracking-widest text-violet-500 bg-violet-500/10 px-2 py-0.5 rounded">
+                                            {property.sharing_capacity - property.tenant_count} vacancies left
+                                        </div>
+                                    )}
                                 </div>
                             </div>
+
+                            {/* PG Occupancy Progress Bar */}
+                            {['PG', 'Hostel'].includes(property.property_type) && (
+                                <div className="mb-8 p-6 bg-violet-600/5 dark:bg-violet-600/10 rounded-3xl border border-violet-600/10">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <Users size={18} className="text-violet-500" />
+                                            <span className="text-sm font-bold text-gray-700 dark:text-gray-300">Room Occupancy</span>
+                                        </div>
+                                        <span className="text-sm font-black text-violet-600 dark:text-violet-400">
+                                            {property.tenant_count} / {property.sharing_capacity} Seats
+                                        </span>
+                                    </div>
+                                    <div className="w-full h-3 bg-gray-200 dark:bg-white/5 rounded-full overflow-hidden shadow-inner">
+                                        <div 
+                                            className="h-full bg-violet-600 transition-all duration-1000 ease-out relative" 
+                                            style={{ width: `${Math.min((property.tenant_count / property.sharing_capacity) * 100, 100)}%` }}
+                                        >
+                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+                                        </div>
+                                    </div>
+                                    <div className="mt-3 flex justify-between items-center">
+                                        <p className="text-[10px] font-bold text-gray-500 dark:text-gray-500 uppercase tracking-loose">
+                                            {property.tenant_count === 0 ? "Be the first to move in!" : `${property.sharing_capacity - property.tenant_count} spots available now`}
+                                        </p>
+                                        <div className="flex -space-x-2">
+                                            {[...Array(property.tenant_count)].map((_, i) => (
+                                                <div key={i} className="w-6 h-6 rounded-full border-2 border-white dark:border-[#111] bg-violet-500 flex items-center justify-center text-[10px] text-white font-bold">
+                                                    {String.fromCharCode(65 + i)}
+                                                </div>
+                                            ))}
+                                            {[...Array(property.sharing_capacity - property.tenant_count)].map((_, i) => (
+                                                <div key={i} className="w-6 h-6 rounded-full border-2 border-white dark:border-[#111] bg-gray-200 dark:bg-white/10 flex items-center justify-center text-[10px] text-gray-400 font-bold border-dashed">
+                                                    +
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {property.status === 'Occupied' ? (
                                 <div className="bg-red-500/10 text-red-500 p-6 rounded-2xl flex flex-col items-center gap-3 text-center border border-red-500/20 mb-6">

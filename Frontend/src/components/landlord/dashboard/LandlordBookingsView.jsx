@@ -94,8 +94,12 @@ const LandlordBookingsView = ({ isDarkMode, bookings, onUpdateStatus, onRentToAp
                                 <tr key={booking.id} className={`group transition-colors ${isDarkMode ? 'hover:bg-slate-800/30' : 'hover:bg-slate-50'}`}>
                                     <td className="p-6">
                                         <div className="flex items-center gap-3">
-                                            <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
-                                                <Home size={16} className="text-violet-500" />
+                                            <div className={`w-12 h-12 rounded-lg overflow-hidden shrink-0 border ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+                                                <img 
+                                                    src={booking.propertyImage || booking.image_url || "https://via.placeholder.com/100"} 
+                                                    alt={booking.propertyName}
+                                                    className="w-full h-full object-cover"
+                                                />
                                             </div>
                                             <div>
                                                 <p className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{booking.propertyName}</p>

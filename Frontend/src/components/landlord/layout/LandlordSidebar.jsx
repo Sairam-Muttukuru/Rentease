@@ -46,7 +46,7 @@ const LandlordSidebar = ({ activeTab, setActiveTab, handleLogout, isDarkMode, is
                 <div className={`flex ${isExpanded ? 'flex-col items-center' : 'justify-center'} w-full`}>
                     <div className="flex items-center gap-3 mb-2">
                         <div className="relative group shrink-0">
-                            <div className="absolute inset-0 bg-emerald-500 blur-[15px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full" />
+                            <div className={`absolute inset-0 bg-emerald-500 blur-[15px] transition-opacity duration-500 rounded-full ${isDarkMode ? 'opacity-20 group-hover:opacity-40' : 'opacity-0'}`} />
                             <img
                                 src="/favicon.png"
                                 alt="RentEase Logo"

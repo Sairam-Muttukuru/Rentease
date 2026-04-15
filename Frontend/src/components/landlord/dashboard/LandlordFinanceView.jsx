@@ -113,7 +113,7 @@ const LandlordFinanceView = ({ isDarkMode, tenants, onUpdateStatus, setActiveTab
             </div>
 
             {/* Charts Section */}
-            <div className="h-[400px]">
+            <div className="h-[600px]">
                 <RevenueTrendsChart isDarkMode={isDarkMode} payments={realPayments.filter(p => !p.receipt_number?.startsWith('SEC-DEP'))} />
             </div>
 

@@ -78,8 +78,12 @@ const DashboardHome = ({
                                         {bookings.filter(b => b.status === 'PENDING').slice(0, 3).map((b, i) => (
                                             <div key={`booking-${b.id || i}`} className={`p-4 flex items-center justify-between transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 border-l-4 border-violet-500`}>
                                                 <div className="flex items-center gap-4">
-                                                    <div className="p-2 rounded-xl bg-violet-500/10 text-violet-500">
-                                                        <Home size={20} />
+                                                    <div className={`w-12 h-12 rounded-xl overflow-hidden shrink-0 border ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                                                        <img 
+                                                            src={b.propertyImage || b.image_url || "https://via.placeholder.com/100"} 
+                                                            alt={b.propertyName}
+                                                            className="w-full h-full object-cover"
+                                                        />
                                                     </div>
                                                     <div>
                                                         <p className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>New Visit Request for {b.propertyName}</p>

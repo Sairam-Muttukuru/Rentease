@@ -102,21 +102,90 @@ const FilterSidebar = ({ filters, setFilters, onApply, onClear, isOpen, onClose 
 
                     <div className="h-px bg-gray-200 dark:bg-white/5" />
 
-                    {/* Bedrooms */}
-                    <div>
-                        <h4 className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">Bedrooms</h4>
-                        <div className="grid grid-cols-4 gap-2">
-                            {['1', '2', '3', '4+'].map((bhk) => (
-                                <button
-                                    key={bhk}
-                                    onClick={() => handleChange('bedrooms', filters.bedrooms === bhk ? '' : bhk)}
-                                    className={`py-2 rounded-lg text-sm font-medium border transition-all ${filters.bedrooms === bhk ? 'bg-violet-600 border-violet-600 text-white' : 'border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5'}`}
-                                >
-                                    {bhk}
-                                </button>
-                            ))}
+                    {/* Standard Bedroom Filter (Only for Residential types) */}
+                    {(filters.type === 'APARTMENT' || filters.type === 'INDEPENDENT' || filters.type === 'VILLA' || filters.type === 'STUDIO' || filters.type === 'INDEPENDENT_FLOOR' || filters.type === 'all') && (
+                        <div>
+                            <h4 className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">Bedrooms</h4>
+                            <div className="grid grid-cols-4 gap-2">
+                                {['1', '2', '3', '4+'].map((bhk) => (
+                                    <button
+                                        key={bhk}
+                                        onClick={() => handleChange('bedrooms', filters.bedrooms === bhk ? '' : bhk)}
+                                        className={`py-2 rounded-lg text-sm font-medium border transition-all ${filters.bedrooms === bhk ? 'bg-violet-600 border-violet-600 text-white' : 'border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5'}`}
+                                    >
+                                        {bhk}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
+
+                    {/* PG Specific Filters */}
+                    {filters.type === 'PG' && (
+                        <>
+                            <div>
+                                <h4 className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">Sharing Capacity</h4>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {['1', '2', '3'].map((s) => (
+                                        <button
+                                            key={s}
+                                            onClick={() => handleChange('sharing', filters.sharing === s ? '' : s)}
+                                            className={`py-2 rounded-lg text-sm font-medium border transition-all ${filters.sharing === s ? 'bg-violet-600 border-violet-600 text-white' : 'border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5'}`}
+                                        >
+                                            {s === '1' ? 'Single' : s === '2' ? 'Double' : 'Triple'}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">Food & Mess</h4>
+                                <label className="flex items-center gap-3 cursor-pointer group">
+                                    <div className={`w-10 h-6 rounded-full transition-colors relative ${filters.food === 'true' ? 'bg-violet-600' : 'bg-gray-200 dark:bg-white/10'}`}>
+                                        <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${filters.food === 'true' ? 'left-5' : 'left-1'}`} />
+                                    </div>
+                                    <input 
+                                        type="checkbox" 
+                                        className="hidden" 
+                                        checked={filters.food === 'true'}
+                                        onChange={() => handleChange('food', filters.food === 'true' ? 'all' : 'true')}
+                                    />
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">Food Included</span>
+                                </label>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Office Specific Filters */}
+                    {filters.type === 'OFFICE_SPACE' && (
+                        <div>
+                            <h4 className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">Min Seating Capacity</h4>
+                            <input
+                                type="number"
+                                placeholder="e.g. 10"
+                                value={filters.seating || ''}
+                                onChange={(e) => handleChange('seating', e.target.value)}
+                                className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white text-sm focus:ring-1 focus:ring-violet-500 outline-none"
+                            />
+                        </div>
+                    )}
+
+                    {/* Shop Specific Filters */}
+                    {filters.type === 'COMMERCIAL_SHOP' && (
+                        <div>
+                            <h4 className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">Shop Category</h4>
+                            <select
+                                value={filters.shopType || ''}
+                                onChange={(e) => handleChange('shopType', e.target.value)}
+                                className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 text-gray-900 dark:text-white text-sm focus:ring-1 focus:ring-violet-500 outline-none appearance-none"
+                            >
+                                <option value="" className="bg-white dark:bg-[#0a0a0a]">All Categories</option>
+                                <option value="Retail" className="bg-white dark:bg-[#0a0a0a]">Retail</option>
+                                <option value="Showroom" className="bg-white dark:bg-[#0a0a0a]">Showroom</option>
+                                <option value="Warehouse" className="bg-white dark:bg-[#0a0a0a]">Warehouse / Godown</option>
+                                <option value="Restaurant" className="bg-white dark:bg-[#0a0a0a]">Restaurant / Cafe</option>
+                            </select>
+                        </div>
+                    )}
 
                     <div className="h-px bg-gray-200 dark:bg-white/5" />
 

@@ -99,7 +99,11 @@ exports.getAllProperties = async (filters = {}) => {
     amenities, // Array of amenity IDs
     sortBy = 'newest',
     limit = 10,
-    offset = 0
+    offset = 0,
+    sharing_capacity,
+    food_included,
+    seating_capacity,
+    shop_use_type
   } = filters;
 
   let query = `
@@ -179,34 +183,30 @@ exports.getAllProperties = async (filters = {}) => {
     }
   }
 
-  if (furnishing && furnishing !== 'all') {
-    query += ` AND p.house_floor_type = $${paramCount}`; // Assuming furnishing maps to house_floor_type or similar field, verify? 
-    // Wait, the creating code put 'furnishing' nowhere? checking createProperty...
-    // createProperty doesn't seem to have 'furnishing' column explicitly? 
-    // Ah, wait. Schema check. 
-    // The previous createProperty calls used fields like 'property_type', 'bedrooms', etc. 
-    // Looking at createProperty: 'house_floor_type', 'duplex_type', but no 'furnishing'?
-    // Wait, checking the input form in implementing... 'Furnished', 'Semi', 'Unfurnished'.
-    // The model has 'house_floor_type' which might be it? 
-    // Let's assume for now it's missing or named differently. property_type is generic.
-    // I will double check the schema lines 9-17.
-    // lines are: property_type, price, orientation, bedrooms, bathrooms, area_sqft...
-    // No furnishing column? 
-    // Let's assume it's NOT there for a moment and skip it to avoid SQL error, 
-    // OR it might be 'room_type' for PG? 
-    // Re-reading Level 3 requirements: Furnishing is mandatory.
-    // If column missing, I might need to add it or it is mixed in description.
-    // For now, I will skip filtering by furnishing if column doesn't exist to avoid crash. 
-    // I see 'house_floor_type' used in values... maybe that is it? 
-    // Let's comment this out for safety unless I'm sure.
-    // Actually, looking at mock data: details: { furnishing: "Furnished" }. 
-    // It implies backend should have it. 
-    // Let's check 'createProperty' again.
-    // createProperty inserts into properties... 
-    // columns: landlord_id, title, description, property_type, price, orientation, bedrooms, bathrooms, area_sqft, city, locality, address, is_featured...
-    // building_name, flat_number... is_gated... has_lift... 
-    // NO FURNISHING COLUMN VISIBLE in lines 9-18 of PropertyModel.js
     // I will SKIP furnishing filter for now in the SQL to prevent crash.
+
+  if (sharing_capacity && sharing_capacity !== 'all') {
+    query += ` AND p.sharing_capacity = $${paramCount}`;
+    values.push(sharing_capacity);
+    paramCount++;
+  }
+
+  if (food_included && food_included !== 'all') {
+    query += ` AND p.food_included = $${paramCount}`;
+    values.push(food_included === 'true');
+    paramCount++;
+  }
+
+  if (seating_capacity) {
+    query += ` AND p.seating_capacity >= $${paramCount}`;
+    values.push(seating_capacity);
+    paramCount++;
+  }
+
+  if (shop_use_type) {
+    query += ` AND p.shop_use_type ILIKE $${paramCount}`;
+    values.push(`%${shop_use_type}%`);
+    paramCount++;
   }
 
   if (status) {
@@ -260,7 +260,8 @@ exports.getAllProperties = async (filters = {}) => {
 ========================= */
 exports.getPropertiesCount = async (filters = {}) => {
   const {
-    search, city, locality, minPrice, maxPrice, propertyType, bedrooms, status
+    search, city, locality, minPrice, maxPrice, propertyType, bedrooms, status, amenities,
+    sharing_capacity, food_included, seating_capacity, shop_use_type
   } = filters;
 
   let query = `
@@ -295,7 +296,40 @@ exports.getPropertiesCount = async (filters = {}) => {
     }
   }
 
-  // Amenities check for count omitted for speed, or add if needed.
+  if (amenities && amenities.length > 0) {
+    query += ` AND (
+      SELECT COUNT(DISTINCT pa.amenity_id)
+      FROM property_amenities pa
+      WHERE pa.property_id = p.id AND pa.amenity_id = ANY($${paramCount}::int[])
+    ) = $${paramCount + 1}`;
+    values.push(amenities);
+    values.push(amenities.length);
+    paramCount += 2;
+  }
+
+  if (sharing_capacity && sharing_capacity !== 'all') {
+    query += ` AND p.sharing_capacity = $${paramCount}`;
+    values.push(sharing_capacity);
+    paramCount++;
+  }
+
+  if (food_included && food_included !== 'all') {
+    query += ` AND p.food_included = $${paramCount}`;
+    values.push(food_included === 'true');
+    paramCount++;
+  }
+
+  if (seating_capacity) {
+    query += ` AND p.seating_capacity >= $${paramCount}`;
+    values.push(seating_capacity);
+    paramCount++;
+  }
+
+  if (shop_use_type) {
+    query += ` AND p.shop_use_type ILIKE $${paramCount}`;
+    values.push(`%${shop_use_type}%`);
+    paramCount++;
+  }
 
   const res = await db.query(query, values);
   return parseInt(res.rows[0].count);
