@@ -361,21 +361,14 @@ const MOCK_PROPERTIES = [
 
     id: 5,
 
-    title: "The Obsidian Studio",
-
-    location: "Arts District, Metro City",
-
-    price: 1500,
-
-    beds: 1,
-
-    baths: 1,
-
-    sqft: 600,
-
-    type: "Studio",
-
-    images: generateImages("https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&q=80&w=1000"),
+    title: "The Crystal Duplex",
+    location: "Elite Residency, Metro City",
+    price: 3800,
+    beds: 4,
+    baths: 4,
+    sqft: 2400,
+    type: "Duplex",
+    images: generateImages("https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&q=80&w=1000"),
 
     featured: false,
 
@@ -827,7 +820,7 @@ const PropertyCard = ({ property, onView }) => {
 
     >
 
-      <div className="relative h-80 overflow-hidden">
+      <div className="relative aspect-video overflow-hidden">
 
         {property.images.slice(0, 5).map((img, index) => (
 

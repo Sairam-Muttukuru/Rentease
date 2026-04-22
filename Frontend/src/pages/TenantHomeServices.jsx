@@ -4,12 +4,15 @@ import {
     Search, Shield, Star, Clock, CheckCircle2,
     PaintBucket, Hammer, Truck, Zap, Droplets,
     Sofa, Sparkles, ChevronRight, X, Calendar,
-    CreditCard, ArrowRight, Home, Menu, LayoutGrid, ChevronLeft, Loader2, MessageSquare
+    CreditCard, ArrowRight, Home, Menu, LayoutGrid, ChevronLeft, Loader2, MessageSquare,
+    ShoppingBag, Trash2, XCircle, Eye, Wrench
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useTheme } from '../context/ThemeContext';
 import axios from 'axios';
 import BASE_URL from '../utils/apiConfig';
+import { stripePromise } from '../stripe';
+import ServicePaymentModal from '../components/ServicePaymentModal';
 
 // Icon Mapping
 const ICON_MAP = {
@@ -49,8 +52,23 @@ export default function TenantHomeServices({ toggleSidebar, tenantData = {} }) {
     const [isLoading, setIsLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [bookingStep, setBookingStep] = useState(0); // 0: None, 1: Details, 2: Success
-    const [visitDate, setVisitDate]     = useState('');
-    const [visitTime, setVisitTime]     = useState('09:00');
+    const [visitDate, setVisitDate] = useState('');
+    const [visitTime, setVisitTime] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState('COD');
+
+    // Service Payment State
+    const [payingBooking, setPayingBooking] = useState(null);
+    const [isPayingService, setIsPayingService] = useState(false);
+
+    // Receipt Preview State
+    const [previewUrl, setPreviewUrl] = useState(null);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+    // Shopping Bag (Cart) State
+    const [myBookings, setMyBookings] = useState([]);
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+    const [cancellingBookingId, setCancellingBookingId] = useState(null);
+    const [cancelReason, setCancelReason] = useState('');
 
     // Fetch Categories on Mount
     useEffect(() => {
@@ -73,6 +91,11 @@ export default function TenantHomeServices({ toggleSidebar, tenantData = {} }) {
                 if (targetCategory) {
                     handleCategoryClick(targetCategory);
                 }
+            }
+
+            // Handle View state (Cart)
+            if (location.state?.view === 'MY_BOOKINGS') {
+                fetchMyBookings();
             }
         } catch (error) {
             console.error("Error fetching categories:", error);
@@ -101,19 +124,37 @@ export default function TenantHomeServices({ toggleSidebar, tenantData = {} }) {
     const fetchSubTypes = async (typeId) => {
         setIsLoading(true);
         try {
-            // Reusing the same endpoint structure, assuming tenant controller routes exist or proxy through general catalog
-            // We need to ensure TenantController has getSubTypes. 
-            // Wait, I need to check TenantController.js. 
-            // It likely needs an update to expose getSubTypes. 
-            // For now, I will optimistically implement this and then fix the backend controller.
             const res = await axios.get(`${BASE_URL}/api/tenants/catalog/sub-types/${typeId}`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
             });
-            setSubTypes(res.data);
-            setViewState('SUB_TYPES');
+            const fetchedSubTypes = res.data;
+            setSubTypes(fetchedSubTypes);
+
+            if (fetchedSubTypes.length === 0) {
+                // If there are no sub-types, immediately fetch services for this type
+                fetchServicesByType(typeId);
+            } else {
+                setViewState('SUB_TYPES');
+            }
         } catch (error) {
             console.error("Error fetching sub-types:", error);
             toast.error("Failed to load sub-service types.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fetchServicesByType = async (typeId) => {
+        setIsLoading(true);
+        try {
+            const res = await axios.get(`${BASE_URL}/api/tenants/catalog/services/${typeId}`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
+            });
+            setServices(res.data);
+            setViewState('SERVICES');
+        } catch (error) {
+            console.error("Error fetching services by type:", error);
+            toast.error("Failed to load services.");
         } finally {
             setIsLoading(false);
         }
@@ -152,9 +193,18 @@ export default function TenantHomeServices({ toggleSidebar, tenantData = {} }) {
     };
 
     const handleBack = () => {
+        if (viewState === 'MY_BOOKINGS') {
+            setViewState('CATEGORIES');
+            return;
+        }
         if (viewState === 'SERVICES') {
-            setViewState('SUB_TYPES');
+            if (!subTypes || subTypes.length === 0) {
+                setViewState('TYPES');
+            } else {
+                setViewState('SUB_TYPES');
+            }
             setSelectedService(null);
+            setSelectedSubType(null);
         } else if (viewState === 'SUB_TYPES') {
             setViewState('TYPES');
             setSelectedSubType(null);
@@ -164,17 +214,92 @@ export default function TenantHomeServices({ toggleSidebar, tenantData = {} }) {
         }
     };
 
+    const fetchMyBookings = async () => {
+        setIsLoading(true);
+        try {
+            const res = await axios.get(`${BASE_URL}/api/tenants/service-requests`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
+            });
+            setMyBookings(res.data);
+            setViewState('MY_BOOKINGS');
+        } catch (error) {
+            console.error("Error fetching bookings:", error);
+            toast.error("Failed to load your bookings.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleCancelBooking = async () => {
+        if (!cancelReason.trim()) {
+            toast.error("Please provide a reason for cancellation.");
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            await axios.post(`${BASE_URL}/api/tenants/service-requests/${cancellingBookingId}/cancel`,
+                { reason: cancelReason },
+                { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } }
+            );
+            toast.success("Booking cancelled successfully.");
+            setIsCancelModalOpen(false);
+            setCancelReason('');
+            fetchMyBookings();
+        } catch (error) {
+            console.error("Cancellation error:", error);
+            toast.error(error.response?.data?.error || "Failed to cancel booking.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handleBookNow = (service) => {
         setSelectedService(service);
-        // Pre-fill today's date as default
-        const todayStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
-        setVisitDate(todayStr);
+        setVisitDate(''); // Removed default today's date
+        setVisitTime(''); // Removed default time
+        setPaymentMethod('COD');
         setBookingStep(1);
+    };
+
+    const handlePayNow = async (booking) => {
+        setPayingBooking(booking);
+    };
+
+    const handlePreviewReceipt = async (receiptNumber) => {
+        try {
+            setIsLoading(true);
+            const response = await axios.get(`${BASE_URL}/api/payment/download-service-receipt/${receiptNumber}`, {
+                headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` },
+                responseType: 'blob'
+            });
+            const blob = new Blob([response.data], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            setPreviewUrl(url);
+            setIsPreviewOpen(true);
+        } catch (error) {
+            console.error("Preview failed:", error);
+            toast.error("Failed to load receipt preview.");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const confirmBooking = async () => {
         if (!visitDate) {
             toast.error('Please select a visit date.');
+            return;
+        }
+
+        if (!visitTime) {
+            toast.error('Please select a preferred visit time.');
+            return;
+        }
+
+        // Strict validation preventing past dates upon submission to avoid interrupting manual typing
+        const today = new Date().toLocaleDateString('en-CA');
+        if (visitDate < today) {
+            toast.error('You cannot schedule a service for a past date.');
             return;
         }
 
@@ -187,9 +312,9 @@ export default function TenantHomeServices({ toggleSidebar, tenantData = {} }) {
                 booking_date: visitDate,
                 booking_time: visitTime,
                 address: tenantData.address || tenantData.locality || "Address on file",
-                service_type: selectedCategory?.name || "Home Service",
+                service_type: selectedService.name || selectedCategory?.name || "Home Service",
                 priority: "Normal",
-                payment_method: "Cash" // Default for now
+                payment_method: paymentMethod
             };
 
             const res = await axios.post(`${BASE_URL}/api/tenants/service-request`, bookingData, {
@@ -209,11 +334,17 @@ export default function TenantHomeServices({ toggleSidebar, tenantData = {} }) {
         }
     };
 
+    const handleClosePreview = () => {
+        if (previewUrl) window.URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(null);
+        setIsPreviewOpen(false);
+    };
+
     const closeModals = () => {
         setBookingStep(0);
         setSelectedService(null);
         setVisitDate('');
-        setVisitTime('09:00');
+        setVisitTime('');
     };
 
     // Helper to get Icon
@@ -227,22 +358,35 @@ export default function TenantHomeServices({ toggleSidebar, tenantData = {} }) {
 
             {/* Header & Navigation */}
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-600 to-indigo-600 p-8 md:p-12 text-white shadow-2xl transition-all duration-500">
-                <div className="relative z-10 max-w-2xl">
-                    <div className="flex items-center gap-4 mb-4">
-                        {viewState !== 'CATEGORIES' && (
+                <div className="relative z-10 max-w-4xl w-full">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                        <div className="flex items-center gap-4">
+                            {viewState !== 'CATEGORIES' && (
+                                <button
+                                    onClick={handleBack}
+                                    className="p-2 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full transition-all"
+                                >
+                                    <ChevronLeft size={24} />
+                                </button>
+                            )}
+                            <h1 className="text-3xl md:text-5xl font-black tracking-tight">
+                                {viewState === 'CATEGORIES' && "Expert Home Services"}
+                                {viewState === 'TYPES' && selectedCategory?.name}
+                                {viewState === 'SUB_TYPES' && selectedType?.name}
+                                {viewState === 'SERVICES' && selectedSubType?.name}
+                                {viewState === 'MY_BOOKINGS' && "My Service Cart"}
+                            </h1>
+                        </div>
+
+                        {(viewState === 'CATEGORIES' || viewState === 'TYPES' || viewState === 'SUB_TYPES' || viewState === 'SERVICES') && (
                             <button
-                                onClick={handleBack}
-                                className="p-2 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full transition-all"
+                                onClick={fetchMyBookings}
+                                className="flex items-center gap-2 px-6 py-3 bg-white text-violet-600 rounded-2xl font-black shadow-xl hover:scale-105 active:scale-95 transition-all w-fit"
                             >
-                                <ChevronLeft size={24} />
+                                <ShoppingBag size={20} />
+                                <span>My Bookings</span>
                             </button>
                         )}
-                        <h1 className="text-3xl md:text-5xl font-black tracking-tight">
-                            {viewState === 'CATEGORIES' && "Expert Home Services"}
-                            {viewState === 'TYPES' && selectedCategory?.name}
-                            {viewState === 'SUB_TYPES' && selectedType?.name}
-                            {viewState === 'SERVICES' && selectedSubType?.name}
-                        </h1>
                     </div>
 
                     <p className="text-lg text-violet-100 mb-8 font-medium">
@@ -250,10 +394,11 @@ export default function TenantHomeServices({ toggleSidebar, tenantData = {} }) {
                         {viewState === 'TYPES' && selectedCategory?.description}
                         {viewState === 'SUB_TYPES' && selectedType?.description}
                         {viewState === 'SERVICES' && selectedSubType?.description}
+                        {viewState === 'MY_BOOKINGS' && "Manage your active and past service bookings here."}
                     </p>
 
                     {viewState === 'CATEGORIES' && (
-                        <div className="relative group">
+                        <div className="relative group max-w-2xl">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-violet-500 transition-colors" />
                             <input
                                 type="text"
@@ -475,12 +620,6 @@ export default function TenantHomeServices({ toggleSidebar, tenantData = {} }) {
                                                     Book <ArrowRight size={16} />
                                                 </button>
                                             </div>
-                                            <button
-                                                onClick={() => navigate('../messages')}
-                                                className={`w-full mt-3 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-colors border ${isDarkMode ? 'border-slate-600 text-slate-300 hover:bg-slate-700' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
-                                            >
-                                                <MessageSquare size={16} /> Chat with Provider
-                                            </button>
                                         </div>
                                     </div>
                                 ))}
@@ -488,6 +627,145 @@ export default function TenantHomeServices({ toggleSidebar, tenantData = {} }) {
                                     <div className={`col-span-full py-12 text-center rounded-3xl border border-dashed ${isDarkMode ? 'border-slate-700 text-slate-400' : 'border-slate-300 text-slate-500'}`}>
                                         <p>No active services found for this sub-type.</p>
                                     </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* View: MY_BOOKINGS */}
+                    {viewState === 'MY_BOOKINGS' && (
+                        <div className="animate-in slide-in-from-bottom-4 duration-500">
+                            <div className="flex items-center justify-between mb-8">
+                                <div>
+                                    <h2 className={`text-2xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Active Bookings</h2>
+                                    <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Track and manage your service requests.</p>
+                                </div>
+                                <button
+                                    onClick={() => setViewState('CATEGORIES')}
+                                    className={`px-4 py-2 rounded-xl text-sm font-bold border transition-all ${isDarkMode ? 'border-slate-700 hover:bg-slate-800 text-slate-300' : 'border-slate-200 hover:bg-slate-50 text-slate-600'}`}
+                                >
+                                    Browse More Services
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4">
+                                {myBookings.length === 0 ? (
+                                    <div className={`py-20 text-center rounded-[40px] border-2 border-dashed ${isDarkMode ? 'border-slate-800 bg-slate-900/50' : 'border-slate-100 bg-slate-50/50'}`}>
+                                        <div className="w-20 h-20 bg-violet-100 text-violet-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                                            <ShoppingBag size={40} />
+                                        </div>
+                                        <h3 className={`text-xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Your Cart is Empty</h3>
+                                        <p className={`text-slate-500 mb-8 max-w-sm mx-auto`}>You haven't booked any services yet. Explore our top-rated home experts!</p>
+                                        <button
+                                            onClick={() => setViewState('CATEGORIES')}
+                                            className="px-8 py-3 bg-violet-600 text-white rounded-2xl font-black hover:bg-violet-700 shadow-xl shadow-violet-500/20 active:scale-95 transition-all"
+                                        >
+                                            Explore Services
+                                        </button>
+                                    </div>
+                                ) : (
+                                    myBookings.map((booking) => (
+                                        <div
+                                            key={booking.id}
+                                            className={`group relative overflow-hidden rounded-[32px] border transition-all duration-300 p-6 flex flex-col md:flex-row items-center gap-6 ${isDarkMode ? 'bg-slate-800/50 border-slate-700 hover:border-violet-500/50' : 'bg-white border-slate-100 hover:border-violet-200 shadow-xl shadow-slate-200/50'}`}
+                                        >
+                                            {/* Service Image */}
+                                            <div className="w-full md:w-32 h-32 rounded-2xl overflow-hidden shrink-0 shadow-lg">
+                                                <img
+                                                    src={booking.image_url || CATEGORY_IMAGES[booking.category_name] || CATEGORY_IMAGES.default}
+                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                                    alt={booking.service_name}
+                                                />
+                                            </div>
+
+                                            {/* Details */}
+                                            <div className="flex-1 text-center md:text-left">
+                                                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-2">
+                                                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${booking.status === 'Cancelled' ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30' :
+                                                            booking.status === 'Completed' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30' :
+                                                                'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30'
+                                                        }`}>
+                                                        {booking.status}
+                                                    </span>
+                                                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${isDarkMode ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'}`}>
+                                                        #{booking.id}
+                                                    </span>
+                                                </div>
+                                                <h3 className={`text-xl font-black mb-1 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{booking.service_name}</h3>
+                                                <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm font-medium text-slate-500">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Calendar size={14} className="text-violet-500" />
+                                                        {new Date(booking.booking_date).toLocaleDateString()}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Clock size={14} className="text-violet-500" />
+                                                        {booking.booking_time ? (() => {
+                                                            const [h, m] = booking.booking_time.split(':');
+                                                            const hr = parseInt(h || 0);
+                                                            return `${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`;
+                                                        })() : 'N/A'}
+                                                    </div>
+                                                </div>
+                                                {booking.cancellation_reason && (
+                                                    <p className="mt-3 text-xs font-bold text-rose-500 italic bg-rose-50 dark:bg-rose-900/10 p-2 rounded-lg">
+                                                        Reason: {booking.cancellation_reason}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                                {/* Price & Actions */}
+                                            <div className="flex flex-col items-center md:items-end gap-3 min-w-[120px]">
+                                                <p className={`text-2xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>₹{booking.amount}</p>
+                                                
+                                                {/* PAY NOW button — shown when Completed + Online + not yet paid */}
+                                                {booking.status === 'Completed' &&
+                                                 booking.payment_method === 'Online' &&
+                                                 booking.service_payment_status !== 'PAID' && (
+                                                    <button
+                                                        onClick={() => handlePayNow(booking)}
+                                                        className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm rounded-xl shadow-lg shadow-emerald-500/25 active:scale-95 transition-all"
+                                                    >
+                                                        <CreditCard size={15} /> Pay Now
+                                                    </button>
+                                                )}
+                                                {/* PAID badge */}
+                                                {booking.status === 'Completed' &&
+                                                 booking.payment_method === 'Online' &&
+                                                 booking.service_payment_status === 'PAID' && (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="px-4 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-wider rounded-full">
+                                                            ✔ Paid Online
+                                                        </span>
+                                                        <button 
+                                                            onClick={() => handlePreviewReceipt(booking.service_receipt_number)}
+                                                            className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-indigo-600 rounded-lg transition-colors"
+                                                            title="Preview Receipt"
+                                                        >
+                                                            <Eye size={16} />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                                {/* COD badge for completed */}
+                                                {booking.status === 'Completed' && booking.payment_method === 'COD' && (
+                                                    <span className="px-4 py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 text-[10px] font-black uppercase tracking-wider rounded-full">
+                                                        Cash on Delivery
+                                                    </span>
+                                                )}
+                                                {booking.status !== 'Cancelled' && booking.status !== 'Completed' && (
+                                                    <button
+                                                        onClick={() => {
+                                                            setCancellingBookingId(booking.id);
+                                                            setIsCancelModalOpen(true);
+                                                        }}
+                                                        className="flex items-center gap-2 text-rose-500 hover:text-rose-600 font-black text-sm transition-colors group/btn"
+                                                    >
+                                                        <Trash2 size={16} className="group-hover/btn:scale-110 transition-transform" />
+                                                        Cancel Service
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))
                                 )}
                             </div>
                         </div>
@@ -565,14 +843,7 @@ export default function TenantHomeServices({ toggleSidebar, tenantData = {} }) {
                                                     value={visitDate}
                                                     min={new Date().toLocaleDateString('en-CA')}
                                                     onChange={(e) => {
-                                                        const sel = e.target.value;
-                                                        const today = new Date().toLocaleDateString('en-CA');
-                                                        if (sel < today) {
-                                                            toast.info('Please select today or a future date.');
-                                                            setVisitDate(today);
-                                                        } else {
-                                                            setVisitDate(sel);
-                                                        }
+                                                        setVisitDate(e.target.value);
                                                     }}
                                                     className={`w-full px-3 py-2 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-violet-500
                                                         ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-900'}`}
@@ -583,12 +854,19 @@ export default function TenantHomeServices({ toggleSidebar, tenantData = {} }) {
                                                 <select
                                                     value={visitTime}
                                                     onChange={(e) => setVisitTime(e.target.value)}
+                                                    required
                                                     className={`w-full px-3 py-2 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-violet-500
                                                         ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-900'}`}
                                                 >
-                                                    {['08:00','09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00'].map(t => (
-                                                        <option key={t} value={t}>{t.replace(':','h ')+' '+(parseInt(t)<12?'AM':'PM')}</option>
-                                                    ))}
+                                                    <option value="" disabled>Select Time</option>
+                                                    {['08:00', '09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '19:30', '20:00', '21:00'].map(t => {
+                                                        const [hour, min] = t.split(':');
+                                                        let h = parseInt(hour, 10);
+                                                        const ampm = h >= 12 ? 'PM' : 'AM';
+                                                        h = h % 12 || 12; // Convert to 12hr representation
+                                                        const displayHour = h.toString().padStart(2, '0');
+                                                        return <option key={t} value={t}>{`${displayHour}:${min} ${ampm}`}</option>;
+                                                    })}
                                                 </select>
                                             </div>
                                         </div>
@@ -596,18 +874,24 @@ export default function TenantHomeServices({ toggleSidebar, tenantData = {} }) {
 
                                     {/* ── PRICE BREAKDOWN ── */}
                                     <div className={`rounded-xl p-4 mb-5 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-50'}`}>
-                                        <div className="flex justify-between mb-2">
-                                            <span className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Service Cost</span>
-                                            <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>₹{selectedService.base_price}</span>
+                                        <div className="flex justify-between">
+                                            <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Service Total</span>
+                                            <span className="font-black text-xl text-violet-600">₹{selectedService.base_price}</span>
                                         </div>
-                                        <div className="flex justify-between mb-2">
-                                            <span className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Platform Fee</span>
-                                            <span className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>₹50</span>
-                                        </div>
-                                        <div className={`flex justify-between pt-2 border-t border-dashed ${isDarkMode ? 'border-slate-700' : 'border-slate-300'}`}>
-                                            <span className={`font-bold ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>Total</span>
-                                            <span className="font-black text-xl text-violet-600">₹{parseFloat(selectedService.base_price) + 50}</span>
-                                        </div>
+                                    </div>
+
+                                    {/* ── PAYMENT METHOD ── */}
+                                    <div className={`rounded-xl p-4 mb-5 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-violet-500 mb-3">💳 Payment Method</p>
+                                        <select
+                                            value={paymentMethod}
+                                            onChange={(e) => setPaymentMethod(e.target.value)}
+                                            className={`w-full px-3 py-2 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-violet-500
+                                                ${isDarkMode ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-900'}`}
+                                        >
+                                            <option value="COD">Cash on Delivery (COD)</option>
+                                            <option value="Online">Online Payment (Card/UPI)</option>
+                                        </select>
                                     </div>
 
                                     {/* ── ACTION BUTTONS ── */}
@@ -646,6 +930,97 @@ export default function TenantHomeServices({ toggleSidebar, tenantData = {} }) {
                 </div>
             )}
 
+            {/* Cancellation Reason Modal */}
+            {isCancelModalOpen && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className={`w-full max-w-md p-8 rounded-[32px] shadow-2xl ${isDarkMode ? 'bg-slate-900 border border-slate-800' : 'bg-white'}`}>
+                        <div className="flex items-center gap-4 mb-6 text-rose-500">
+                            <div className="w-12 h-12 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center">
+                                <XCircle size={28} />
+                            </div>
+                            <h3 className={`text-2xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Cancel Service?</h3>
+                        </div>
+
+                        <p className={`text-sm font-medium mb-6 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                            We're sorry to see you cancel. Please tell us why so we can improve our service experts.
+                        </p>
+
+                        <div className="space-y-4 mb-8">
+                            <label className={`text-xs font-black uppercase tracking-widest ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Reason for cancellation</label>
+                            <textarea
+                                value={cancelReason}
+                                onChange={(e) => setCancelReason(e.target.value)}
+                                placeholder="Example: Change of plans, found alternative..."
+                                className={`w-full p-4 rounded-2xl border-2 text-sm font-bold focus:outline-none focus:ring-4 transition-all min-h-[120px] resize-none
+                                    ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white focus:ring-rose-500/20' : 'bg-slate-50 border-slate-100 text-slate-900 focus:ring-rose-500/20'}`}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <button
+                                onClick={() => {
+                                    setIsCancelModalOpen(false);
+                                    setCancelReason('');
+                                }}
+                                className={`py-4 rounded-2xl font-black text-sm transition-all ${isDarkMode ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                            >
+                                Nevermind
+                            </button>
+                            <button
+                                onClick={handleCancelBooking}
+                                disabled={isLoading}
+                                className="py-4 rounded-2xl bg-rose-500 text-white font-black text-sm shadow-xl shadow-rose-500/20 hover:bg-rose-600 active:scale-95 transition-all disabled:opacity-50"
+                            >
+                                {isLoading ? <Loader2 className="mx-auto animate-spin" size={18} /> : "Cancel Now"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ─── Service Payment Modal ─────────────────────────────── */}
+            {payingBooking && (
+                <ServicePaymentModal
+                    isDarkMode={isDarkMode}
+                    onClose={() => setPayingBooking(null)}
+                    booking={payingBooking}
+                    stripePromise={stripePromise}
+                    userName={tenantData.name || 'Tenant'}
+                    onSuccess={() => fetchMyBookings()}
+                />
+            )}
+
+            {/* ─── Receipt Preview Modal ───────────────────────────── */}
+            {isPreviewOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center md:justify-end md:pr-12 md:pb-10 bg-black/90 backdrop-blur-md p-4 md:p-10 animate-in fade-in duration-300 transition-all">
+                    {/* Professional Close Button */}
+                    <button 
+                        onClick={handleClosePreview}
+                        className="fixed top-6 right-6 md:top-12 md:right-12 group flex items-center gap-2 py-2 px-4 bg-slate-900 border border-slate-700 text-white rounded-xl shadow-2xl transition-all hover:bg-slate-800 z-[250]"
+                    >
+                        <span className="text-xs font-bold uppercase tracking-wider">Close Preview</span>
+                        <X size={18} className="text-slate-400 group-hover:text-white transition-colors" />
+                    </button>
+
+                    <div className="relative w-full max-w-5xl h-full flex flex-col animate-in zoom-in-95 duration-300">
+                        <div className="flex justify-between items-center mb-4 text-white">
+                            <h3 className="text-xl font-bold flex items-center gap-3">
+                                <div className="p-2 bg-violet-600 rounded-xl shadow-lg shadow-violet-600/20">
+                                    <CreditCard size={20} />
+                                </div>
+                                Receipt Preview
+                            </h3>
+                        </div>
+                        <div className="flex-1 bg-white rounded-2xl overflow-hidden shadow-2xl relative">
+                            <iframe 
+                                src={previewUrl} 
+                                className="w-full h-full border-none"
+                                title="Receipt PDF"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

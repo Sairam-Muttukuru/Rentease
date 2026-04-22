@@ -3,6 +3,7 @@ const TenantModel = require('../../models/tenant/TenantModel');
 const PropertyModel = require('../../models/landlord/PropertyModel');
 const UserModel = require('../../models/common/UserModel');
 const sendAnnouncementEmail = require('../../utils/email/sendAnnouncementEmail');
+const AuditService = require('../../services/common/AuditService');
 
 exports.createAnnouncement = async (req, res) => {
     try {
@@ -25,6 +26,8 @@ exports.createAnnouncement = async (req, res) => {
             target_type: target_type || 'all',
             target_tenant_id: target_tenant_id || null
         });
+
+        await AuditService.logAnnouncementAction(landlord_id, property_id, "Created", `Title: ${title}`);
 
         // Email Notification Logic
         const allEmails = await TenantModel.getEmailsByPropertyId(property_id);
@@ -82,6 +85,7 @@ exports.deleteAnnouncement = async (req, res) => {
     try {
         const { id } = req.params;
         await Announcement.delete(id);
+        await AuditService.logAnnouncementAction(req.user.id, "N/A", "Deleted", `Announcement ID: ${id}`);
         res.status(200).json({ message: "Announcement deleted" });
     } catch (error) {
         console.error("Error deleting announcement:", error);
@@ -91,15 +95,25 @@ exports.deleteAnnouncement = async (req, res) => {
 
 exports.getTenantAnnouncements = async (req, res) => {
     try {
-        // Find tenant record for this user
-        const tenantRecord = await TenantModel.getByUserId(req.user.id);
+        // Find ALL tenant records for this user (could be in multiple properties)
+        const tenantRecords = await TenantModel.getByUserId(req.user.id);
 
-        if (!tenantRecord) {
-            return res.status(404).json({ error: "Tenant record not found" });
+        if (!tenantRecords || tenantRecords.length === 0) {
+            return res.status(200).json([]); // Return empty array instead of 404
         }
 
-        const announcements = await Announcement.getAllForTenant(tenantRecord.property_id, tenantRecord.id);
-        res.status(200).json(announcements);
+        // Aggregate announcements for all properties the tenant is in
+        const allAnnouncements = [];
+        for (const record of tenantRecords) {
+            const propertyAnnouncements = await Announcement.getAllForTenant(record.property_id, record.id);
+            allAnnouncements.push(...propertyAnnouncements);
+        }
+
+        // Remove duplicates if any (though unlikely with target_tenant_id logic) and sort by date
+        const uniqueAnnouncements = Array.from(new Map(allAnnouncements.map(a => [a.id, a])).values());
+        uniqueAnnouncements.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        res.status(200).json(uniqueAnnouncements);
     } catch (error) {
         console.error("Error fetching tenant announcements:", error);
         res.status(500).json({ error: "Internal Server Error" });

@@ -46,7 +46,7 @@ const EditPropertyModal = ({ isOpen, onClose, property, onUpdate, isDarkMode }) 
         rent_due_day: property.rent_due_day || 5,
         late_penalty_amount: property.late_penalty_amount || 0,
         sharing_capacity: property.sharing_capacity || 1,
-        room_no: property.room_no || "",
+        room_number: property.room_number || property.room_no || "",
         guidelines: property.guidelines || ""
     });
 
@@ -123,9 +123,6 @@ const EditPropertyModal = ({ isOpen, onClose, property, onUpdate, isDarkMode }) 
         setIsSubmitting(true);
         try {
             await onUpdate({ ...property, ...formData, images, amenities });
-            toast.success("Property updated successfully!");
-        } catch (err) {
-            toast.error("Failed to update property");
         } finally {
             setIsSubmitting(false);
         }
@@ -182,7 +179,7 @@ const EditPropertyModal = ({ isOpen, onClose, property, onUpdate, isDarkMode }) 
                                 <>
                                     <div className="animate-in slide-in-from-left duration-300">
                                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Room Number</label>
-                                        <input name="room_no" value={formData.room_no} onChange={handleChange} className={inputClass} placeholder="e.g. 101, B-4" />
+                                        <input name="room_number" value={formData.room_number} onChange={handleChange} className={inputClass} placeholder="e.g. 101, B-4" />
                                     </div>
                                     <div className="animate-in slide-in-from-right duration-300">
                                         <label className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mb-2 flex items-center gap-1">

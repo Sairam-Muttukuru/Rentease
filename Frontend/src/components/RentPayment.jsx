@@ -215,8 +215,8 @@ const CheckoutForm = ({ amount, tenantId, propertyId, tenantName, isDarkMode, pa
 
       {/* 🧾 Receipt Modal */}
       {showReceipt && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[99999] flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 animate-in zoom-in-95 duration-300 relative overflow-hidden">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[999999] flex items-start justify-center p-4 pt-24 overflow-y-auto animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 mb-8 animate-in zoom-in-95 duration-300 relative overflow-hidden">
 
             {/* X Close button top-right */}
             <button

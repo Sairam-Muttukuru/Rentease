@@ -20,10 +20,10 @@ const createUser = async (user) => {
 
 const findUserByEmail = async (email) => {
     const res = await db.query(
-        "SELECT * FROM users WHERE email=$1",
+        "SELECT * FROM users WHERE LOWER(email) = LOWER($1)",
         [email]
     );
-    console.log("Finding user by email:", email, "Result:", res.rows[0]);
+    console.log("Finding user by email (case-insensitive):", email, "Result found:", !!res.rows[0]);
     return res.rows[0];
 };
 const updatePasswordByEmail = async (email, hashedPassword) => {
@@ -77,11 +77,11 @@ const updateUser = async (id, data) => {
 const findUserBySlug = async (slug) => {
     // Slug is expected to be "first-last" or "first_last" lowercase
     logger(slug, "findUserBySlug: INPUT");
-    const normalizedSlug = slug.toLowerCase().replace(/_/g, '-');
-    logger(normalizedSlug, "findUserBySlug: NORMALIZED");
+    const normalizedSlug = slug.toLowerCase().replace(/[_\s-]/g, '');
+    logger(normalizedSlug, "findUserBySlug: CLEANED");
 
     const res = await db.query(
-        "SELECT * FROM users WHERE LOWER(CONCAT(TRIM(first_name), '-', TRIM(last_name))) = $1",
+        "SELECT * FROM users WHERE LOWER(REPLACE(CONCAT(TRIM(first_name), TRIM(last_name)), ' ', '')) = $1",
         [normalizedSlug]
     );
 

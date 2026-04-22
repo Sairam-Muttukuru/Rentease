@@ -61,8 +61,12 @@ const LandlordTopbar = ({
                         <p className={`text-sm font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{user.name}</p>
                         <p className="text-[10px] lowercase font-bold text-slate-500">{user.email}</p>
                     </div>
-                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-600 flex items-center justify-center text-white font-black shadow-lg">
-                        {user.name?.charAt(0)}
+                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-600 flex items-center justify-center text-white font-black shadow-lg overflow-hidden border border-emerald-500/20">
+                        {user.avatar_url ? (
+                            <img src={user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                            <span>{user.name?.charAt(0)}</span>
+                        )}
                     </div>
                 </div>
             </div>

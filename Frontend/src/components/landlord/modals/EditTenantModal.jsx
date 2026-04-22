@@ -34,7 +34,12 @@ const EditTenantModal = ({ isOpen, onClose, tenant, onUpdate, isDarkMode }) => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        if (name === 'phone') {
+            const cleaned = value.replace(/\D/g, '').slice(0, 10);
+            setFormData(prev => ({ ...prev, [name]: cleaned }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     if (!isOpen || !tenant) return null;

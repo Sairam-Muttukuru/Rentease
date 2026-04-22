@@ -77,7 +77,7 @@ const FilterSidebar = ({ filters, setFilters, onApply, onClear, isOpen, onClose 
                                 { label: 'Apartment', value: 'APARTMENT' },
                                 { label: 'Independent House', value: 'INDEPENDENT' },
                                 { label: 'Villa', value: 'VILLA' },
-                                { label: 'Studio', value: 'STUDIO' },
+                                { label: 'Duplex House', value: 'DUPLEX' },
                                 { label: 'Independent Floor', value: 'INDEPENDENT_FLOOR' },
                                 { label: 'PG / Hostel', value: 'PG' },
                                 { label: 'Commercial Shop', value: 'COMMERCIAL_SHOP' },
@@ -103,7 +103,7 @@ const FilterSidebar = ({ filters, setFilters, onApply, onClear, isOpen, onClose 
                     <div className="h-px bg-gray-200 dark:bg-white/5" />
 
                     {/* Standard Bedroom Filter (Only for Residential types) */}
-                    {(filters.type === 'APARTMENT' || filters.type === 'INDEPENDENT' || filters.type === 'VILLA' || filters.type === 'STUDIO' || filters.type === 'INDEPENDENT_FLOOR' || filters.type === 'all') && (
+                    {(filters.type === 'APARTMENT' || filters.type === 'INDEPENDENT' || filters.type === 'VILLA' || filters.type === 'DUPLEX' || filters.type === 'INDEPENDENT_FLOOR' || filters.type === 'all') && (
                         <div>
                             <h4 className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">Bedrooms</h4>
                             <div className="grid grid-cols-4 gap-2">

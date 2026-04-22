@@ -22,6 +22,7 @@ router.delete("/services/:id", controller.deleteService);
 router.patch("/services/:id/toggle", controller.toggleService);
 router.get("/bookings", controller.getBookings);
 router.patch("/bookings/:id/status", controller.updateBookingStatus);
+router.get("/bookings/:id/receipt", controller.getReceipt);
 router.post("/slots", slotController.createSlot);
 router.put("/slots/reschedule", slotController.rescheduleSlot);
 

@@ -25,6 +25,7 @@ const LANDLORD_MENU = [
     { id: 'requests', icon: Wrench, label: 'Issues at Property' },
     { id: 'finance', icon: IndianRupee, label: 'Financials' },
     { id: 'bookings', icon: Calendar, label: 'Bookings' },
+    { id: 'home-services', icon: Wrench, label: 'Home Services' },
     { id: 'announcements', icon: Megaphone, label: 'Announcements' },
     { id: 'settings', icon: Home, label: 'Settings' }
 ];
@@ -44,17 +45,17 @@ const LandlordSidebar = ({ activeTab, setActiveTab, handleLogout, isDarkMode, is
 
             <div className={`border-b flex flex-col items-center transition-all duration-500 ease-in-out ${isExpanded ? 'p-8 pb-1 relative bottom-3' : 'p-4 pt-10'} ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
                 <div className={`flex ${isExpanded ? 'flex-col items-center' : 'justify-center'} w-full`}>
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className={`flex items-center gap-3 w-full ${isExpanded ? 'justify-start mb-2' : 'justify-center'}`}>
                         <div className="relative group shrink-0">
-                            <div className={`absolute inset-0 bg-emerald-500 blur-[15px] transition-opacity duration-500 rounded-full ${isDarkMode ? 'opacity-20 group-hover:opacity-40' : 'opacity-0'}`} />
+                            <div className={`absolute inset-0 bg-emerald-400 blur-[15px] transition-opacity duration-500 rounded-full ${isDarkMode ? 'opacity-20 group-hover:opacity-40' : 'opacity-0'}`} />
                             <img
                                 src="/favicon.png"
                                 alt="RentEase Logo"
-                                className={`object-contain relative z-10 drop-shadow-lg transition-all duration-500 ease-in-out ${isExpanded ? 'w-16 h-16' : 'w-10 h-10'}`}
+                                className={`object-contain transition-all duration-500 ease-in-out ${isExpanded ? 'w-13 h-12' : 'w-11 h-11'}`}
                             />
                         </div>
                         {isExpanded && (
-                            <span className={`text-[25px] font-black tracking-tighter animate-in fade-in slide-in-from-left-2 relative right-5 duration-500 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                            <span className={`text-2xl relative right-5 font-black tracking-tighter animate-in fade-in slide-in-from-left-2 duration-500 ${isDarkMode ? 'text-white' : 'text-black'}`}>
                                 RentEase
                             </span>
                         )}
@@ -62,7 +63,7 @@ const LandlordSidebar = ({ activeTab, setActiveTab, handleLogout, isDarkMode, is
                     {isExpanded && (
                         <>
                             <div className="w-full h-px bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent mb-2 animate-in fade-in duration-700"></div>
-                            <span className="text-[12px] font-black uppercase tracking-[0.15em] text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-600 block text-center animate-in fade-in slide-in-from-bottom-2 duration-500 relative bottom-5 left-5">
+                            <span className="text-[12px] font-black uppercase tracking-[0.15em] text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-600 block text-center animate-in fade-in slide-in-from-bottom-2 duration-500 relative bottom-5 left-12">
                                 Landlord Dashboard
                             </span>
                         </>

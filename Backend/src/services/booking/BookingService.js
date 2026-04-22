@@ -6,6 +6,7 @@ const NotificationService = require("../common/NotificationService");
 const PropertyModel = require('../../models/landlord/PropertyModel');
 const UserModel = require('../../models/common/UserModel');
 const sendBookingStatusNotification = require("../../utils/email/sendBookingStatusNotification");
+const AuditService = require('../common/AuditService');
 
 class BookingService {
     // --- Property Visit Bookings ---
@@ -138,7 +139,10 @@ class BookingService {
 
         const request = await ServiceRequestModel.create(enrichedData);
 
-        // Trigger Async Notification
+        // Audit Log
+        await AuditService.logServiceAction(userId, request.id, "Requested Service", `Service: ${data.service_type}`);
+
+        // Trigger Async Notifications
         this._handleServiceRequestNotification(request).catch(err => console.error("Service request notification failed:", err));
 
         return request;
@@ -154,14 +158,54 @@ class BookingService {
         return result;
     }
 
+    async cancelServiceRequest(requestId, userId, reason) {
+        const request = await ServiceRequestModel.cancelRequest(requestId, userId, reason);
+        if (!request) throw new Error("Request not found or access denied");
+
+        // Notify Provider
+        if (request.assigned_provider_id) {
+            const ProviderModel = require("../../models/serviceProvider/ServiceProviderModel");
+            const provider = await ProviderModel.getProviderById(request.assigned_provider_id);
+            if (provider && provider.user_id) {
+                await NotificationService.createNotification(
+                    provider.user_id,
+                    'booking_cancelled',
+                    "🚫 Service Cancelled",
+                    `The request for ${request.service_type || 'service'} has been cancelled by the user. Reason: ${reason}`
+                );
+            }
+        }
+        return request;
+    }
+
     /**
      * Private helper for service request notifications
      */
     async _handleServiceRequestNotification(request) {
-        // 1. Email Notification
+        // 1. Notify Provider (Assigned Expert)
         await sendServiceRequestNotification(request);
 
-        // 2. Internal Notification for Provider
+        // 2. Notify Tenant (Requester Confirmation)
+        try {
+            const sendTenantServiceBookingEmail = require("../../utils/email/sendTenantServiceBookingEmail");
+            const details = await ServiceRequestModel.getBookingDetails(request.id);
+            if (details && details.email) {
+                await sendTenantServiceBookingEmail(details.email, {
+                    tenantName: details.user_name || details.tenant_name || "Valued Customer",
+                    serviceName: details.service_name || "Home Service",
+                    providerName: details.provider_name || "RentEase Partner",
+                    scheduledDate: details.booking_date ? new Date(details.booking_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBD',
+                    scheduledTime: details.booking_time || 'TBD',
+                    amount: details.amount,
+                    paymentMethod: details.payment_method,
+                    address: details.address
+                });
+            }
+        } catch (error) {
+            console.error("Tenant service notification failed:", error);
+        }
+
+        // 3. Internal Notification for Provider
         if (request.assigned_provider_id) {
             const ProviderModel = require("../../models/serviceProvider/ServiceProviderModel");
             const provider = await ProviderModel.getProviderById(request.assigned_provider_id);

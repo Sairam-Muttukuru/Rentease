@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
     LayoutDashboard, ClipboardList, Wallet, UserCircle, BarChart3, Bell, CheckCircle2, Clock,
-    AlertCircle, MapPin, Phone, Calendar, ChevronRight, Menu, X, XCircle, TrendingUp, TrendingDown,
+    AlertCircle, MapPin, Phone, Calendar, ChevronRight, ChevronDown, Menu, X, XCircle, TrendingUp, TrendingDown,
     Star, MessageSquare, Search, LogOut, CreditCard, Zap, CalendarCheck, Mail, LifeBuoy, MessageCircle, FileText,
     Building2, Sun, Moon, LayoutGrid, Plus, Edit2, Trash2, Home, Sparkles, Paintbrush, Fan, Hammer, Wrench, Lock,
     Briefcase, Hourglass, IndianRupee, Eye, EyeOff, Camera, Upload, Loader, Layers, Image, Check, MoreVertical, Paperclip, Send
@@ -22,6 +22,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
 import logo from "/favicon.png"; // UPDATED LOGO
+import PreLoader from '../components/ui/PreLoader';
+import { initSocket, disconnectSocket } from '../utils/socket';
 
 const ICON_MAP = {
     Fan, Sparkles, Zap, Paintbrush, Wrench, Hammer, Home, Star, LayoutGrid, ClipboardList
@@ -30,6 +32,10 @@ const ICON_MAP = {
 const API_BASE_URL = window.location.hostname === 'localhost'
     ? "http://localhost:5000/api/service-provider"
     : "https://rentease-1-pwm5.onrender.com/api/service-provider";
+
+const COMMON_API_URL = window.location.hostname === 'localhost'
+    ? "http://localhost:5000/api"
+    : "https://rentease-1-pwm5.onrender.com/api";
 
 // Axios Interceptor for Auth
 const api = axios.create({
@@ -45,7 +51,7 @@ api.interceptors.request.use((config) => {
 });
 
 // --- MOCK DATA & CONSTANTS ---
-const INITIAL_STATS = { totalServices: 0, activeServices: 0, pendingJobs: 0, totalEarnings: 0 };
+const INITIAL_STATS = { totalServices: 0, activeServices: 0, pendingJobs: 0, totalEarnings: 0, pendingPayments: 0 };
 
 // 2. INITIAL PROVIDER PROFILE
 const INITIAL_PROFILE = {
@@ -58,6 +64,56 @@ const INITIAL_PROFILE = {
     company_name: "",
     service_type: "",
     phone: ""
+};
+
+// --- NOTIFICATION DROPDOWN ---
+const NotificationDropdown = ({ notifications, markAsRead, markAllAsRead, isDarkMode, onClose }) => {
+    return (
+        <div className={`absolute top-14 right-0 w-80 md:w-96 rounded-3xl shadow-2xl border overflow-hidden z-[100] animate-in fade-in zoom-in-95 duration-200 ${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'}`}>
+            <div className={`p-4 border-b flex justify-between items-center ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+                <h3 className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Notifications</h3>
+                {notifications.some(n => !n.is_read) && (
+                    <button onClick={markAllAsRead} className="text-xs font-bold text-indigo-500 hover:text-indigo-600">Mark all read</button>
+                )}
+            </div>
+            <div className="max-h-[450px] overflow-y-auto scrollbar-hide">
+                {notifications.length === 0 ? (
+                    <div className="p-12 text-center text-slate-500">
+                        <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <Bell size={24} className="opacity-20" />
+                        </div>
+                        <p className="text-sm font-bold">No new alerts found</p>
+                    </div>
+                ) : (
+                    notifications.map(n => (
+                        <div
+                            key={n.id}
+                            onClick={() => { markAsRead(n.id); if (!n.is_read) onClose?.(); }}
+                            className={`p-5 border-b transition-all cursor-pointer relative group ${n.is_read ? (isDarkMode ? 'bg-slate-900/50 grayscale' : 'bg-white opacity-70') : (isDarkMode ? 'bg-indigo-500/5 hover:bg-slate-800' : 'bg-indigo-50/50 hover:bg-slate-50')} ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}
+                        >
+                            {!n.is_read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500" />}
+                            <div className="flex gap-4">
+                                <div className={`mt-1 p-2.5 rounded-xl h-fit shadow-sm ${n.type === 'booking' ? 'bg-indigo-500 text-white' :
+                                    n.type === 'payment' ? 'bg-emerald-500 text-white' :
+                                        'bg-slate-500 text-white'
+                                    }`}>
+                                    {n.type === 'booking' ? <CalendarCheck size={16} strokeWidth={3} /> : <Zap size={16} strokeWidth={3} />}
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'} mb-0.5`}>{n.title}</h4>
+                                    <p className="text-[12px] font-medium text-slate-500 dark:text-slate-400 leading-snug">{n.message}</p>
+                                    <div className="flex items-center gap-2 mt-3 opacity-60">
+                                        <Clock size={10} />
+                                        <p className="text-[10px] font-bold uppercase tracking-tight">{new Date(n.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+    );
 };
 
 // 3. INITIAL SERVICES (My Services) - Fallback
@@ -119,6 +175,32 @@ const MOCK_SCHEDULE = [
 ];
 
 // --- HELPERS ---
+const getServiceDisplayName = (job) => {
+    if (!job) return "Service Request";
+
+    const name = job.name || job.service || job.service_name;
+    const type = job.type_name || job.type || job.service_type;
+    const category = job.category_name || job.category;
+
+    const isGeneric = (str) => !str || ['standard', 'normal', 'general', 'service', 'maintenance', 'home service'].includes(str.toLowerCase().trim());
+
+    // 1. If we have a real name (not an ID placeholder or generic), use it
+    if (name && !name.match(/service\s*#?\s*\d+/i) && name.length > 2 && !isGeneric(name)) return name;
+
+    // 2. If we have a descriptive Type or Category
+    if (type && !isGeneric(type)) return type;
+    if (category && !isGeneric(category)) return category;
+
+    // 3. Fallbacks for specific keyword matches
+    if (name && name.toLowerCase().includes('plumb')) return "Plumbing Service";
+    if (name && name.toLowerCase().includes('elect')) return "Electrical Service";
+    if (name && name.toLowerCase().includes('clean')) return "Cleaning Service";
+
+    // 4. Final Fallback if absolutely everything is generic
+    if (name && !name.match(/service\s*#?\s*\d+/i) && !isGeneric(name)) return name;
+    return "Home Service";
+};
+
 const getServiceImage = (serviceName = "") => {
     // If it's a URL already, return it
     if (typeof serviceName === 'string' && serviceName.startsWith('http')) return serviceName;
@@ -126,11 +208,12 @@ const getServiceImage = (serviceName = "") => {
     const s = String(serviceName).toLowerCase();
 
     // 1. Check for local PNG mappings (High Priority)
-    if (s.includes('ac') || s.includes('appliance') || s.includes('geyser') || s.includes('washing') || s.includes('refrigerator')) return "/ac.png";
-    if (s.includes('cleaning')) return "/cleaning.png";
-    if (s.includes('elect')) return "/electrical.png";
-    if (s.includes('paint')) return "/painting.png";
-    if (s.includes('plumb') || s.includes('tap') || s.includes('toilet')) return "/plumbing.png";
+    if (/\b(ac|air conditioner|appliance|geyser|washing|refrigerator)\b/.test(s)) return "/ac.png";
+    if (/\b(cleaning|clean|mop|sweep)\b/.test(s)) return "/cleaning.png";
+    if (/\b(elect|electrical|wiring|socket)\b/.test(s)) return "/electrical.png";
+    if (/\b(paint|painting|color)\b/.test(s)) return "/painting.png";
+    if (/\b(plumb|tap|toilet|pipe|water)\b/.test(s)) return "/plumbing.png";
+    if (/\b(carp|carpentry|door|wood|lock|furniture|accessory)\b/.test(s)) return "/carpentry.png";
 
     return "/cleaning.png"; // Global Fallback
 };
@@ -165,8 +248,10 @@ const StatCard = ({ label, value, icon: Icon, color, sub, trend, trendUp }) => (
             <div className={`p-4 rounded-2xl bg-${color}-500 text-white shadow-lg shadow-${color}-500/30 transform group-hover:scale-110 transition-transform duration-300 relative z-10`}>
                 <Icon size={24} strokeWidth={2.5} />
             </div>
-            {/* Background Glow */}
-            <div className={`absolute -right-4 -bottom-4 w-24 h-24 bg-${color}-500/10 blur-2xl rounded-full transition-opacity group-hover:opacity-100 opacity-50`} />
+            {/* Background Glow - ONLY IN DARK MODE */}
+            {typeof theme !== 'undefined' && theme === 'dark' && (
+                <div className={`absolute -right-4 -bottom-4 w-24 h-24 bg-${color}-500/10 blur-2xl rounded-full transition-opacity group-hover:opacity-100 opacity-50`} />
+            )}
         </div>
     </div>
 );
@@ -212,6 +297,10 @@ const ProfileView = ({ user, profile, onUpdate }) => {
     }, [profile]);
 
     const handleSave = () => {
+        if (formData.phone && formData.phone.length !== 10) {
+            toast.error("Phone number must be exactly 10 digits");
+            return;
+        }
         onUpdate(formData);
         setIsEditing(false);
     };
@@ -365,16 +454,27 @@ const ProfileView = ({ user, profile, onUpdate }) => {
                                 placeholder="Enter company name"
                             />
                         </div>
-                        {/* Service Type */}
+                        {/* Service Type Dropdown */}
                         <div className="group">
                             <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Service Type</label>
-                            <input
-                                disabled={!isEditing}
-                                value={formData.service_type}
-                                onChange={(e) => setFormData({ ...formData, service_type: e.target.value })}
-                                className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none font-bold text-slate-900 dark:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                                placeholder="e.g. Plumbing"
-                            />
+                            <div className="relative">
+                                <select
+                                    disabled={!isEditing}
+                                    value={formData.service_type}
+                                    onChange={(e) => setFormData({ ...formData, service_type: e.target.value })}
+                                    className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none font-bold text-slate-900 dark:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm appearance-none cursor-pointer"
+                                >
+                                    <option value="" disabled>Select Primary Service</option>
+                                    <option value="Electrical">Electrical</option>
+                                    <option value="Plumbing">Plumbing</option>
+                                    <option value="Carpentry">Carpentry</option>
+                                    <option value="Home Cleaning">Cleaning & Housekeeping</option>
+                                    <option value="Ac and Appliance repair">AC and Appliance</option>
+                                    <option value="Painting">Painting</option>
+                                    <option value="All in One">All in One (General)</option>
+                                </select>
+                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                            </div>
                         </div>
                         {/* Phone */}
                         <div className="group">
@@ -382,9 +482,12 @@ const ProfileView = ({ user, profile, onUpdate }) => {
                             <input
                                 disabled={!isEditing}
                                 value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                onChange={(e) => {
+                                    const cleaned = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                    setFormData({ ...formData, phone: cleaned });
+                                }}
                                 className="w-full px-5 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none font-bold text-slate-900 dark:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                                placeholder="+91..."
+                                placeholder="10-digit phone number"
                             />
                         </div>
                         {/* City */}
@@ -515,9 +618,20 @@ const CategoryCard = ({ category }) => {
 
     return (
         <div className="relative group cursor-pointer overflow-hidden rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
-            <div className="h-40 overflow-hidden relative">
-                <img src={category.image_url || category.image} alt={category.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <div className="relative aspect-[4/3] overflow-hidden shrink-0 bg-slate-100 dark:bg-slate-900 shadow-inner">
+                {/* Blurred Backdrop */}
+                <img
+                    src={category.image_url || category.image}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover blur-3xl opacity-40 scale-125"
+                />
+                {/* Main Fitted Image */}
+                <img
+                    src={category.image_url || category.image}
+                    alt={category.name}
+                    className="relative w-full h-full object-contain group-hover:scale-110 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10" />
                 <div className="absolute bottom-4 left-4 flex items-center gap-3">
                     <div className={`p-2 ${colorClasses[category.color] || 'bg-slate-500'} text-white rounded-xl shadow-lg ring-4 ring-white/20`}>
                         <Icon size={18} />
@@ -693,6 +807,7 @@ const AddEntityForm = ({ type, label, onSave, onCancel, parentId, initialData })
         if ((type === 'service' || type === 'sub-type') && !formData.description) return toast.warning("Please enter at least one description point");
 
         setIsLoading(true);
+        const loadingToast = toast.loading(initialData ? `Updating ${label}...` : `Creating ${label}...`);
 
         try {
             let imageUrl = null;
@@ -701,26 +816,16 @@ const AddEntityForm = ({ type, label, onSave, onCancel, parentId, initialData })
             }
 
             const payload = {
-                ...initialData, // CRITICAL: Preserve IDs (service_id, type_id, etc.)
+                ...initialData,
                 ...formData,
                 image_url: imageUrl || formData.preview || null,
             };
 
-            if (type === 'type') {
-                payload.category_id = parentId;
-            } else if (type === 'sub-type') {
-                payload.type_id = parentId;
-            } else if (type === 'service') {
-                // If the parent was a sub-type, we need to preserve the path correctly
-                if (parentId && initialData?.sub_type_id) {
-                    payload.sub_type_id = parentId;
-                }
-            }
-
             await onSave(payload, initialData?.id);
+            toast.dismiss(loadingToast);
         } catch (error) {
             console.error(error);
-            toast.error("Failed to save");
+            toast.update(loadingToast, { render: "Failed to save changes", type: "error", isLoading: false, autoClose: 3000 });
         } finally {
             setIsLoading(false);
         }
@@ -740,6 +845,9 @@ const AddEntityForm = ({ type, label, onSave, onCancel, parentId, initialData })
                         </h2>
                         <div className="h-1 w-12 bg-indigo-500 rounded-full mt-2"></div>
                     </div>
+                    <button type="button" onClick={onCancel} className="p-3 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-all group shadow-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        <X size={20} className="text-slate-400 group-hover:text-rose-500 group-hover:rotate-90 transition-all duration-300" />
+                    </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-10">
@@ -879,14 +987,17 @@ const AddEntityForm = ({ type, label, onSave, onCancel, parentId, initialData })
 
 // --- 4. BOOKINGS VIEW (Service Jobs Workflow) ---
 const BookingsView = ({ bookings, onUpdateStatus }) => {
+    const { theme } = useTheme();
+    const isDarkMode = theme === 'dark';
+
     const getStatusColor = (status) => {
         switch (status) {
-            case 'New Request': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
-            case 'Accepted': return 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300';
-            case 'In Progress': return 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300';
-            case 'Completed': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300';
-            case 'Rejected': return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300';
-            default: return 'bg-slate-100 text-slate-700';
+            case 'Pending': return isDarkMode ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-slate-100 text-slate-500 border-slate-200';
+            case 'Accepted': return 'bg-indigo-100 text-indigo-600 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800';
+            case 'In Progress': return 'bg-cyan-100 text-cyan-600 border-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-800';
+            case 'Completed': return 'bg-emerald-100 text-emerald-600 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800';
+            case 'Cancelled': return 'bg-rose-100 text-rose-600 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800';
+            default: return 'bg-slate-100 text-slate-600 border-slate-200';
         }
     };
 
@@ -895,11 +1006,13 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
             <SectionHeader title="Service Bookings" />
             <div className="grid gap-6">
                 {bookings.map(job => (
-                    <div key={job.id} className="bg-white/80 dark:bg-slate-800/60 backdrop-blur-xl p-5 rounded-[2rem] border border-slate-200/50 dark:border-white/10 shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 group relative overflow-hidden">
-                        {/* Status Glow Background (Smaller) */}
-                        <div className={`absolute -right-10 -top-10 w-48 h-48 rounded-full blur-[60px] opacity-15 pointer-events-none 
-                            ${job.status === 'Accepted' || job.status === 'Completed' ? 'bg-emerald-500' :
-                                job.status === 'Rejected' ? 'bg-rose-500' : 'bg-indigo-500'}`} />
+                    <div key={job.id} className="bg-white/90 dark:bg-slate-800/60 backdrop-blur-xl p-5 rounded-[2rem] border border-slate-200 dark:border-white/10 shadow-sm dark:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 group relative overflow-hidden">
+                        {/* Status Glow Background (Dark Mode Only) */}
+                        {isDarkMode && (
+                            <div className={`absolute -right-10 -top-10 w-48 h-48 rounded-full blur-[60px] opacity-15 pointer-events-none 
+                                ${job.status === 'Completed' ? 'bg-emerald-500' :
+                                    job.status === 'Cancelled' ? 'bg-rose-500' : 'bg-indigo-500'}`} />
+                        )}
 
                         <div className="flex flex-col lg:flex-row justify-between gap-6 relative z-10">
                             <div className="flex flex-col md:flex-row items-center md:items-start gap-6 flex-1">
@@ -907,8 +1020,8 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
                                 <div className="relative shrink-0">
                                     <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden border-2 border-white dark:border-slate-700 shadow-lg transform group-hover:scale-105 transition-transform duration-300">
                                         <img
-                                            src={getServiceImage(job.service)}
-                                            alt={job.service}
+                                            src={job.service_image_url || getServiceImage(getServiceDisplayName(job))}
+                                            alt={getServiceDisplayName(job)}
                                             className="w-full h-full object-cover"
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
@@ -922,7 +1035,7 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
                                 <div className="flex-1 text-center md:text-left min-w-0">
                                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-3">
                                         <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white tracking-tight truncate max-w-full">
-                                            {job.service || job.service_name}
+                                            {getServiceDisplayName(job)}
                                         </h3>
                                         <div className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-sm border ${getStatusColor(job.status)}`}>
                                             {job.status}
@@ -943,8 +1056,12 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
                                                 <p className="text-slate-800 dark:text-slate-200 font-bold text-[13px] flex items-center gap-2">
                                                     <Calendar size={14} className="text-indigo-500 shrink-0" />
                                                     <span className="truncate">
-                                                        {job.booking_date ? new Date(job.booking_date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }) : 'Date N/A'}
-                                                        {job.booking_time ? <span className="text-slate-400 font-medium ml-1">at {job.booking_time}</span> : ''}
+                                                        {job.requested_date ? new Date(job.requested_date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }) : 'Date N/A'}
+                                                        {job.requested_time && (() => {
+                                                            const [h, m] = job.requested_time.split(':');
+                                                            const hr = parseInt(h);
+                                                            return <span className="text-slate-400 font-medium ml-1">at {`${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`}</span>;
+                                                        })()}
                                                     </span>
                                                 </p>
                                             </div>
@@ -958,9 +1075,18 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
                                                         <Clock size={13} className="text-emerald-500 shrink-0" />
                                                         <span>
                                                             {new Date(job.visit_date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}
-                                                            {job.start_time && (() => { const [h,m]=job.start_time.split(':'); const hr=parseInt(h); return <span className="ml-1">{`${hr%12||12}:${m} ${hr>=12?'PM':'AM'}`}</span>; })()}
-                                                            {job.end_time && (() => { const [h,m]=job.end_time.split(':'); const hr=parseInt(h); return <span className="text-emerald-500/70 font-medium ml-1">{`– ${hr%12||12}:${m} ${hr>=12?'PM':'AM'}`}</span>; })()}
+                                                            {job.start_time && (() => { const [h, m] = job.start_time.split(':'); const hr = parseInt(h); return <span className="ml-1">{`${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`}</span>; })()}
+                                                            {job.end_time && (() => { const [h, m] = job.end_time.split(':'); const hr = parseInt(h); return <span className="text-emerald-500/70 font-medium ml-1">{`– ${hr % 12 || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`}</span>; })()}
                                                         </span>
+                                                    </p>
+                                                </div>
+                                            ) : job.status === 'Cancelled' ? (
+                                                <div className="flex flex-col gap-1 bg-rose-50 dark:bg-rose-900/20 p-3 rounded-2xl border border-rose-100 dark:border-rose-900/30">
+                                                    <span className="text-[9px] font-black text-rose-500 uppercase tracking-widest flex items-center gap-1">
+                                                        <XCircle size={10} /> Booking Cancelled
+                                                    </span>
+                                                    <p className="text-rose-700 dark:text-rose-400 font-bold text-xs italic leading-relaxed">
+                                                        "{job.cancellation_reason || "User provided no specific reason"}"
                                                     </p>
                                                 </div>
                                             ) : (
@@ -982,7 +1108,7 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
                                                         <Zap size={14} className="fill-current" />
                                                     </div>
                                                     <p className="text-slate-800 dark:text-slate-200 font-bold text-sm truncate uppercase tracking-tight">
-                                                        {job.category_name || "General"}
+                                                        {job.type_name && !job.type_name.toLowerCase().includes('standard') ? job.type_name : "General Task"}
                                                     </p>
                                                 </div>
                                             </div>
@@ -990,7 +1116,7 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
                                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Category</span>
                                                 <div className="mt-0.5 inline-flex">
                                                     <span className="px-2.5 py-1 bg-white dark:bg-slate-700/50 text-indigo-600 dark:text-indigo-300 rounded-full border border-indigo-100 dark:border-indigo-900/50 text-[10px] font-black uppercase tracking-wider shadow-sm">
-                                                        {job.type_name || "Standard"}
+                                                        {job.category_name && !job.category_name.toLowerCase().includes('general') ? job.category_name : "Home Service"}
                                                     </span>
                                                 </div>
                                             </div>
@@ -1032,11 +1158,10 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
                                         <div className="flex flex-col gap-2 w-full">
                                             <button
                                                 onClick={() => onUpdateStatus(job.id, 'Schedule', null, job)}
-                                                className={`w-full px-6 py-2.5 text-white rounded-xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg ${
-                                                    job.visit_date
-                                                        ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20'
-                                                        : 'bg-sky-500 hover:bg-sky-600 shadow-sky-500/20'
-                                                }`}
+                                                className={`w-full px-6 py-2.5 text-white rounded-xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg ${job.visit_date
+                                                    ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20'
+                                                    : 'bg-sky-500 hover:bg-sky-600 shadow-sky-500/20'
+                                                    }`}
                                             >
                                                 <Calendar size={14} /> {job.visit_date ? 'Reschedule Visit' : 'Schedule Visit'}
                                             </button>
@@ -1077,7 +1202,8 @@ const BookingsView = ({ bookings, onUpdateStatus }) => {
 };
 
 // --- 5. EARNINGS VIEW (Stats & History) ---
-const EarningsView = ({ stats, bookings }) => {
+// --- 5. EARNINGS VIEW (Stats & History) ---
+const EarningsView = ({ stats, bookings, onViewReceipt }) => {
     const completedJobs = bookings.filter(b => b.status === "Completed");
 
     return (
@@ -1085,10 +1211,11 @@ const EarningsView = ({ stats, bookings }) => {
             <SectionHeader title="Earnings & History" />
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatCard label="Total Earnings" value={`\u20B9${stats.totalEarnings}`} icon={Wallet} color="indigo" trend="+5%" trendUp={true} />
-                <StatCard label="Pending Jobs" value={stats.pendingJobs} icon={CreditCard} color="blue" sub="Upcoming" />
-                <StatCard label="Total Services" value={stats.totalServices} icon={CheckCircle2} color="blue" />
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <StatCard label="Settled Earnings" value={`\u20B9${stats.totalEarnings}`} icon={Wallet} color="indigo" trend="+5%" trendUp={true} />
+                <StatCard label="Pending Payment" value={`\u20B9${stats.pendingPayments}`} icon={CreditCard} color="amber" sub="Online Pending" />
+                <StatCard label="Pending Jobs" value={stats.pendingJobs} icon={Clock} color="blue" sub="Upcoming" />
+                <StatCard label="Total Services" value={stats.totalServices} icon={CheckCircle2} color="emerald" />
             </div>
 
             {/* History Table */}
@@ -1102,25 +1229,49 @@ const EarningsView = ({ stats, bookings }) => {
                             <tr className="bg-slate-50/50 dark:bg-slate-900/20 text-xs uppercase text-slate-500 font-bold">
                                 <th className="px-6 py-4">Service</th>
                                 <th className="px-6 py-4">Customer</th>
-                                <th className="px-6 py-4">Date</th>
+                                <th className="px-6 py-4">Method</th>
+                                <th className="px-6 py-4">Status</th>
                                 <th className="px-6 py-4 text-right">Amount</th>
+                                <th className="px-6 py-4 text-center">Receipt</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
                             {completedJobs.length === 0 ? (
                                 <tr>
-                                    <td colSpan="4" className="px-6 py-10 text-center text-slate-400 font-bold">No completed jobs yet</td>
+                                    <td colSpan="6" className="px-6 py-10 text-center text-slate-400 font-bold">No completed jobs yet</td>
                                 </tr>
-                            ) : completedJobs.map(booking => (
-                                <tr key={booking.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/10 transition-colors">
-                                    <td className="px-6 py-4 font-medium text-slate-800 dark:text-white">{booking.service || booking.service_name}</td>
-                                    <td className="px-6 py-4 text-slate-500 text-sm">{booking.customer}</td>
-                                    <td className="px-6 py-4 text-slate-500 text-sm">
-                                        {booking.booking_date ? new Date(booking.booking_date).toLocaleDateString() : 'N/A'}
-                                    </td>
-                                    <td className="px-6 py-4 text-right font-bold text-slate-700 dark:text-slate-200">{'\u20B9'}{booking.amount}</td>
-                                </tr>
-                            ))}
+                            ) : completedJobs.map(booking => {
+                                const isPaid = booking.payment_method === 'COD' || booking.service_payment_status === 'PAID';
+                                return (
+                                    <tr key={booking.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/10 transition-colors">
+                                        <td className="px-6 py-4 font-medium text-slate-800 dark:text-white">{booking.service || booking.service_name}</td>
+                                        <td className="px-6 py-4 text-slate-500 text-sm">{booking.customer}</td>
+                                        <td className="px-6 py-4 uppercase text-[10px] font-black text-slate-400">{booking.payment_method || 'N/A'}</td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-tight ${isPaid
+                                                ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400'
+                                                : 'bg-amber-100 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400'
+                                                }`}>
+                                                {isPaid ? 'Paid' : 'Pending'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right font-bold text-slate-700 dark:text-slate-200">{'\u20B9'}{booking.amount}</td>
+                                        <td className="px-6 py-4 text-center">
+                                            {isPaid ? (
+                                                <button
+                                                    onClick={() => onViewReceipt(booking.id)}
+                                                    className="p-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-indigo-500 rounded-lg transition-all"
+                                                    title="Preview Receipt"
+                                                >
+                                                    <Eye size={18} />
+                                                </button>
+                                            ) : (
+                                                <span className="text-[10px] font-bold text-slate-300 uppercase">Wait</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
@@ -1235,9 +1386,10 @@ const UpcomingSchedule = ({ bookings }) => {
 
                     const startTime = fmt12h(item.start_time);
                     const endTime = fmt12h(item.end_time);
+                    const bookingTime = fmt12h(item.booking_time);
                     const timeLabel = startTime
                         ? (endTime ? `${startTime} – ${endTime}` : startTime)
-                        : (item.booking_time || null);
+                        : (bookingTime || null);
 
                     return (
                         <div key={item.id} className={`relative p-4 rounded-2xl border transition-all hover:-translate-y-0.5 hover:shadow-md
@@ -1265,14 +1417,14 @@ const UpcomingSchedule = ({ bookings }) => {
                                 <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest
                                     ${item.status === 'In Progress' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                                         : item.status === 'Accepted' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
+                                            : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
                                     {item.status}
                                 </span>
                             </div>
 
                             {/* Service Name */}
                             <h4 className="font-black text-slate-900 dark:text-white text-sm mb-2 leading-tight">
-                                {item.service || item.service_name || `Service #${item.service_id}`}
+                                {getServiceDisplayName(item)}
                             </h4>
 
                             {/* Details Row */}
@@ -1359,9 +1511,9 @@ const MessagesView = () => {
     };
 
     return (
-        <div className="h-[calc(100vh-140px)] flex gap-6 animate-in fade-in duration-500">
+        <div className="h-[calc(100vh-140px)] flex gap-6 animate-in fade-in duration-500 text-slate-900 dark:text-white">
             {/* Chat List */}
-            <div className="w-80 flex flex-col bg-white/70 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden">
+            <div className="w-80 flex flex-col bg-white/95 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-xl overflow-hidden">
                 <div className="p-4 border-b border-slate-100 dark:border-slate-700">
                     <h3 className="font-bold text-lg text-slate-800 dark:text-white mb-4">Messages</h3>
                     <div className="relative">
@@ -1639,30 +1791,36 @@ const HierarchicalServiceManager = ({
 
     const handleCreateEntity = async (formData, id) => {
         try {
+            // Re-inject parent IDs based on current view depth
+            const payload = { ...formData };
+
             if (view.depth === 'categories') {
-                if (id) await api.put(`/catalog/category/${id}`, formData);
-                else await api.post('/catalog/category', formData);
+                if (id) await api.put(`/catalog/category/${id}`, payload);
+                else await api.post('/catalog/category', payload);
                 onRefreshCategories();
+                toast.success(`Category ${id ? 'updated' : 'created'} successfully`);
             } else if (view.depth === 'types') {
-                if (id) await api.put(`/catalog/type/${id}`, formData);
-                else await api.post('/catalog/type', formData);
+                payload.category_id = view.category.id;
+                if (id) await api.put(`/catalog/type/${id}`, payload);
+                else await api.post('/catalog/type', payload);
                 fetchTypes(view.category.id);
+                toast.success(`Service Type ${id ? 'updated' : 'created'} successfully`);
             } else if (view.depth === 'sub-types') {
-                if (id) await api.put(`/catalog/sub-type/${id}`, formData);
-                else await api.post('/catalog/sub-type', formData);
+                payload.type_id = view.type.id;
+                if (id) await api.put(`/catalog/sub-type/${id}`, payload);
+                else await api.post('/catalog/sub-type', payload);
                 fetchSubTypes(view.type.id);
+                toast.success(`Sub-Type ${id ? 'updated' : 'created'} successfully`);
             } else {
-                const servicePayload = { ...formData };
-                servicePayload.type_id = view.type.id;
-                servicePayload.sub_type_id = view.subType?.id || null;
-                if (servicePayload.price) servicePayload.base_price = Number(servicePayload.price);
+                // Handling Service
+                payload.type_id = view.type.id;
+                payload.sub_type_id = view.subType?.id || null;
+                if (payload.price) payload.base_price = Number(payload.price);
 
                 if (id) {
-                    await onEditService({ ...servicePayload, id });
-                    toast.success("Service updated");
+                    await onEditService({ ...payload, id });
                 } else {
-                    await onAddService(servicePayload);
-                    // No need for toast here as onAddService has its own
+                    await onAddService(payload);
                 }
 
                 if (onRefreshServices) await onRefreshServices();
@@ -1671,7 +1829,9 @@ const HierarchicalServiceManager = ({
             setIsAdding(false);
             setEditingEntity(null);
         } catch (err) {
-            toast.error("Failed to save");
+            console.error("Save Error:", err);
+            // Error toast handled by handleSubmit
+            throw err;
         }
     };
 
@@ -1904,14 +2064,21 @@ const HierarchicalServiceManager = ({
                                 return (
                                     <div key={svc.id} className="group relative rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 flex flex-col h-full overflow-hidden">
                                         {/* Image Section completely edge-to-edge */}
-                                        <div className="h-52 w-full relative overflow-hidden bg-slate-100 dark:bg-slate-950 shrink-0">
+                                        <div className="aspect-[4/3] w-full relative overflow-hidden bg-slate-100 dark:bg-slate-950 shrink-0">
+                                            {/* Blurred backdrop for seamless fit */}
+                                            <img
+                                                src={displayImage}
+                                                alt=""
+                                                className="absolute inset-0 w-full h-full object-cover blur-3xl opacity-50 scale-125"
+                                            />
+                                            {/* Main fitted image */}
                                             <img
                                                 src={displayImage}
                                                 alt={svc.name}
-                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                                className="relative w-full h-full object-contain transition-transform duration-700 group-hover:scale-105"
                                             />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500" />
-                                            
+                                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-500" />
+
                                             {/* Price Tag floating on the image */}
                                             <div className="absolute bottom-5 left-5 z-10">
                                                 <span className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-1 block shadow-sm">Price Starts</span>
@@ -1935,27 +2102,40 @@ const HierarchicalServiceManager = ({
                                         <div className="flex flex-col flex-1 p-6 relative">
                                             <div className="flex-1 mb-6">
                                                 <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight tracking-tight mb-3 group-hover:text-indigo-500 transition-colors line-clamp-2">
-                                                    {svc.name}
+                                                    {getServiceDisplayName(svc)}
                                                 </h3>
 
-                                                {svc.description && (
-                                                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                                                        {svc.description.replace(/•/g, '').trim()}
-                                                    </p>
-                                                )}
+                                                {/* Point-based Description */}
+                                                <div className="mt-4 space-y-2">
+                                                    {svc.description ? (
+                                                        svc.description.split(/[•\n]/).filter(p => p.trim()).map((point, idx) => (
+                                                            <div key={idx} className="flex gap-2 items-start group/point">
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0 group-hover/point:scale-125 transition-transform" />
+                                                                <p className="text-[11px] font-medium text-slate-600 dark:text-slate-400 leading-relaxed">
+                                                                    {point.trim()}
+                                                                </p>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <p className="text-[11px] text-slate-500 italic opacity-60">Professional service description pending...</p>
+                                                    )}
+                                                </div>
                                             </div>
 
                                             {/* Action Button at bottom */}
                                             {isAdded ? (
-                                                <div className="w-full py-3.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl font-black tracking-widest flex justify-center items-center gap-2 border border-emerald-200 dark:border-emerald-500/20 text-[11px] uppercase shadow-inner">
-                                                    <Check size={16} strokeWidth={3} /> Added to Catalog
-                                                </div>
+                                                <button
+                                                    onClick={() => onEditService(matched || svc)}
+                                                    className="w-full py-3.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black tracking-widest flex justify-center items-center gap-2 border border-slate-200 dark:border-slate-700 text-[10px] uppercase transition-all hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600"
+                                                >
+                                                    <Edit2 size={16} /> Manage Service
+                                                </button>
                                             ) : (
                                                 <button
                                                     onClick={() => onAddService({ ...svc, service_id: svc.id, price: svc.price || svc.base_price })}
-                                                    className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-500 hover:to-blue-400 text-white rounded-2xl font-black tracking-widest flex justify-center items-center gap-2 shadow-xl shadow-indigo-600/30 transition-all text-[11px] uppercase group-hover:shadow-indigo-600/50 active:scale-[0.98]"
+                                                    className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black tracking-widest flex justify-center items-center gap-2 shadow-lg shadow-indigo-600/20 transition-all text-[10px] uppercase active:scale-95"
                                                 >
-                                                    <Plus size={16} strokeWidth={3} /> Add Service
+                                                    <Plus size={16} strokeWidth={3} /> Add To Catalog
                                                 </button>
                                             )}
                                         </div>
@@ -1978,6 +2158,8 @@ const ServiceProvider = () => {
     const setActiveTab = (tabName) => {
         navigate(`/service-provider/dashboard/${tabName}`);
     };
+    const { theme } = useTheme();
+    const isDarkMode = theme === 'dark';
     const { user } = useAuth();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -1991,7 +2173,43 @@ const ServiceProvider = () => {
     const [isAddingService, setIsAddingService] = useState(false);
     const [editingService, setEditingService] = useState(null);
     const [reviews, setReviews] = useState([]);
-    const [refreshTrigger, setRefreshTrigger] = useState(0); // Trigger for catalog refresh // Added reviews state
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+    const [notifications, setNotifications] = useState([]);
+    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+    const unreadCount = notifications.filter(n => !n.is_read).length;
+
+    // --- SOCKETS FOR REAL-TIME NOTIFICATIONS ---
+    useEffect(() => {
+        if (user && user.id) {
+            const socket = initSocket(user.id);
+
+            socket.on('new_notification', (notification) => {
+                // Add to notifications list
+                setNotifications(prev => [notification, ...prev]);
+
+                // Show toast
+                toast.info(notification.message, {
+                    position: "top-right",
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                });
+
+                // If it's a payment, refresh stats and bookings
+                if (notification.type === 'payment') {
+                    api.get('/overview').then(res => setStats(res.data));
+                    api.get('/bookings').then(res => setBookings(res.data));
+                }
+            });
+
+            return () => {
+                socket.off('new_notification');
+                disconnectSocket();
+            };
+        }
+    }, [user]);
 
     // --- REJECTION STATE ---
     const [rejectionBookingId, setRejectionBookingId] = useState(null);
@@ -1999,9 +2217,40 @@ const ServiceProvider = () => {
 
     // --- SLOT STATE ---
     const [slotBookingId, setSlotBookingId] = useState(null);
-    const [slotForm, setSlotForm] = useState({ visit_date: "", start_time: "", end_time: "" });
+    const [slotForm, setSlotForm] = useState({
+        visit_date: "",
+        start_time: "",
+        end_time: "",
+        workers: [{ name: "", phone: "" }] // Supports 1, 2, or 3 workers
+    });
     const [isReschedule, setIsReschedule] = useState(false);
     const [rescheduleReason, setRescheduleReason] = useState("");
+
+    // --- RECEIPT PREVIEW STATE ---
+    const [previewUrl, setPreviewUrl] = useState(null);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+    const handleViewReceipt = async (bookingId) => {
+        try {
+            const response = await api.get(`/bookings/${bookingId}/receipt`, {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+            setPreviewUrl(url);
+            setIsPreviewOpen(true);
+        } catch (error) {
+            console.error("Error fetching receipt:", error);
+            toast.error("Failed to load receipt.");
+        }
+    };
+
+    const handleClosePreview = () => {
+        setIsPreviewOpen(false);
+        if (previewUrl) {
+            window.URL.revokeObjectURL(previewUrl);
+            setPreviewUrl(null);
+        }
+    };
 
     // --- FILTER CATEGORIES & SERVICES ---
     const { filteredCategories, filteredServices, filteredStats } = React.useMemo(() => {
@@ -2076,6 +2325,43 @@ const ServiceProvider = () => {
         { name: 'Sun', completed: 28, pending: 10 }
     ];
 
+    const fetchNotifications = async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            const res = await axios.get(`${COMMON_API_URL}/notifications`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setNotifications(res.data);
+        } catch (error) {
+            console.error("Notifications Fetch Error:", error);
+        }
+    };
+
+    const markAsRead = async (id) => {
+        try {
+            const token = localStorage.getItem("accessToken");
+            // Optimistic update
+            setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+            await axios.patch(`${COMMON_API_URL}/notifications/${id}/read`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        } catch (error) {
+            console.error("Failed to mark as read", error);
+        }
+    };
+
+    const markAllAsRead = async () => {
+        try {
+            const token = localStorage.getItem("accessToken");
+            setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+            await axios.patch(`${COMMON_API_URL}/notifications/read-all`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        } catch (error) {
+            console.error("Failed to mark all as read", error);
+        }
+    };
+
     // --- DATA FETCHING ---
     useEffect(() => {
         const fetchData = async () => {
@@ -2087,7 +2373,8 @@ const ServiceProvider = () => {
                     api.get('/bookings'),
                     api.get('/catalog/categories'),
                     api.get('/profile'),
-                    api.get('/reviews') // Added reviews fetch
+                    api.get('/reviews'),
+                    axios.get(`${COMMON_API_URL}/notifications`, { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } })
                 ]);
 
                 if (results[0].status === 'fulfilled') setStats(results[0].value.data);
@@ -2109,19 +2396,27 @@ const ServiceProvider = () => {
                         about: profileData.about_us || profileData.about || "",
                         city: profileData.service_area || profileData.city || ""
                     });
-                } else {
-                    console.error("Profile Fetch Error:", results[4].reason);
-                }
+                } else console.error("Profile Fetch Error:", results[4].reason);
 
                 if (results[5].status === 'fulfilled') setReviews(results[5].value.data);
                 else console.error("Reviews Fetch Error:", results[5].reason);
+
+                if (results[6].status === 'fulfilled') setNotifications(results[6].value.data);
+                else console.error("Notifications Fetch Error:", results[6].reason);
             } catch (err) {
                 console.error("Fetch Data Error:", err);
                 toast.error("Failed to load dashboard data");
             } finally {
-                setIsLoading(false);
+                const elapsedTime = Date.now() - startTime;
+                const minWait = 4000; // Increased to 4s as requested for cinematic feel
+                if (elapsedTime < minWait) {
+                    setTimeout(() => setIsLoading(false), minWait - elapsedTime);
+                } else {
+                    setIsLoading(false);
+                }
             }
         };
+        const startTime = Date.now();
         fetchData();
     }, []);
 
@@ -2137,6 +2432,7 @@ const ServiceProvider = () => {
         try {
             const res = await api.put('/profile', {
                 company_name: newProfile.company_name,
+                service_type: newProfile.service_type,
                 service_area: newProfile.city,
                 phone: newProfile.phone,
                 experience: newProfile.experience,
@@ -2148,10 +2444,14 @@ const ServiceProvider = () => {
                 about: res.data.about_us,
                 city: res.data.service_area
             });
+            // Re-fetch categories and earnings to reflect specialty changes
+            const categoriesRes = await api.get('/catalog/categories');
+            setCategories(categoriesRes.data);
+
             toast.success("Profile updated successfully!");
         } catch (err) {
             toast.error("Failed to update profile");
-            throw err; // Re-throw to handle dependency calls (like handleImageUpload)
+            throw err;
         }
     };
 
@@ -2173,11 +2473,11 @@ const ServiceProvider = () => {
             }
 
             await api.post('/services', payload);
-            
+
             // Re-fetch the entire list to cleanly synchronize the frontend with correctly built data references
             const updatedServices = await api.get('/services');
             setServices(updatedServices.data);
-            
+
             setIsAddingService(false);
             setRefreshTrigger(prev => prev + 1); // Refresh catalog
             toast.success("Service added successfully!");
@@ -2244,14 +2544,13 @@ const ServiceProvider = () => {
         }
     };
 
-    const handleUpdateBookingStatus = async (id, newStatus, reason = null) => {
+    const handleUpdateBookingStatus = async (id, newStatus, reason = null, job = null) => {
         if (newStatus === 'Rejected' && !reason) {
             setRejectionBookingId(id);
             return;
         }
 
         if (newStatus === 'Schedule') {
-            const job = arguments[3]; // job object passed as 4th arg
             if (job && job.visit_date) {
                 // Already has a scheduled slot — open reschedule modal
                 setIsReschedule(true);
@@ -2260,7 +2559,12 @@ const ServiceProvider = () => {
             }
             setRescheduleReason("");
             setSlotBookingId(id);
-            setSlotForm({ visit_date: "", start_time: "", end_time: "" });
+            setSlotForm({
+                visit_date: "",
+                start_time: "",
+                end_time: "",
+                workers: job?.worker_details?.length > 0 ? job.worker_details : [{ name: "", phone: "" }]
+            });
             return;
         }
 
@@ -2296,33 +2600,39 @@ const ServiceProvider = () => {
             return toast.warning("Please provide a reason for rescheduling");
         }
 
+        // Validate workers
+        const validWorkers = slotForm.workers.filter(w => w.name.trim() && w.phone.trim());
+        if (validWorkers.length === 0) {
+            return toast.warning("Please add at least one worker with both name and phone number");
+        }
+
         try {
+            const payload = {
+                service_request_id: slotBookingId,
+                ...slotForm,
+                worker_details: validWorkers
+            };
+
             if (isReschedule) {
-                await api.put('/slots/reschedule', {
-                    service_request_id: slotBookingId,
-                    ...slotForm,
-                    reason: rescheduleReason
-                });
-                // Update bookings state with new slot times
+                payload.reason = rescheduleReason;
+                await api.put('/slots/reschedule', payload);
+                // Update bookings state with new slot times and workers
                 setBookings(bookings.map(b => b.id === slotBookingId
-                    ? { ...b, visit_date: slotForm.visit_date, start_time: slotForm.start_time, end_time: slotForm.end_time }
+                    ? { ...b, visit_date: slotForm.visit_date, start_time: slotForm.start_time, end_time: slotForm.end_time, worker_details: validWorkers }
                     : b
                 ));
                 toast.success("Visit rescheduled & customer notified!");
             } else {
-                await api.post('/slots', {
-                    service_request_id: slotBookingId,
-                    ...slotForm
-                });
-                // Update bookings state with slot times
+                await api.post('/slots', payload);
+                // Update bookings state with slot times and workers
                 setBookings(bookings.map(b => b.id === slotBookingId
-                    ? { ...b, visit_date: slotForm.visit_date, start_time: slotForm.start_time, end_time: slotForm.end_time }
+                    ? { ...b, visit_date: slotForm.visit_date, start_time: slotForm.start_time, end_time: slotForm.end_time, worker_details: validWorkers }
                     : b
                 ));
                 toast.success("Visit scheduled & customer notified!");
             }
             setSlotBookingId(null);
-            setSlotForm({ visit_date: "", start_time: "", end_time: "" });
+            setSlotForm({ visit_date: "", start_time: "", end_time: "", workers: [{ name: "", phone: "" }] });
             setRescheduleReason("");
             setIsReschedule(false);
         } catch (err) {
@@ -2348,9 +2658,9 @@ const ServiceProvider = () => {
                         {/* Stats */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             <StatCard label="Total Services" value={filteredStats.totalServices} icon={Briefcase} color="indigo" />
-                            <StatCard label="Active Services" value={filteredStats.activeServices} icon={Zap} color="emerald" sub="Online" />
+                            <StatCard label="Total Earnings" value={`\u20B9${stats.totalEarnings}`} icon={IndianRupee} color="indigo" trend="+5%" trendUp={true} sub="Settled" />
+                            <StatCard label="Pending Payment" value={`\u20B9${stats.pendingPayments}`} icon={CreditCard} color="amber" sub="Online Pending" />
                             <StatCard label="Pending Jobs" value={stats.pendingJobs} icon={Hourglass} color="blue" sub="Action Needed" />
-                            <StatCard label="Total Earnings" value={`\u20B9${stats.totalEarnings}`} icon={IndianRupee} color="indigo" trend="+5%" trendUp={true} sub="Total" />
                         </div>
 
                         {/* Graphs Section */}
@@ -2390,7 +2700,7 @@ const ServiceProvider = () => {
                             </div>
 
                             {/* Weekly Activity Bar Chart */}
-                            <div className="bg-white/70 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl p-6 overflow-hidden flex flex-col">
+                            <div className="bg-white/90 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-xl p-6 overflow-hidden flex flex-col">
                                 <h3 className="font-bold text-xl text-slate-800 dark:text-white mb-6">This Week's Activity</h3>
                                 <div className="w-full flex-1" style={{ height: '300px', minHeight: '300px' }}>
                                     <LazyChart>
@@ -2452,7 +2762,7 @@ const ServiceProvider = () => {
 
                         {/* Recent Activity (Full Width) */}
                         <div className="grid grid-cols-1 gap-6">
-                            <div className="w-full bg-white/70 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl p-6">
+                            <div className="w-full bg-white/90 dark:bg-slate-800/50 backdrop-blur-xl rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-xl p-6">
                                 <div className="flex justify-between items-center mb-6">
                                     <h3 className="font-bold text-xl text-slate-800 dark:text-white">Recent Activity</h3>
                                     <button onClick={() => setActiveTab('requests')} className="text-indigo-600 font-bold text-sm hover:underline">View All</button>
@@ -2462,11 +2772,11 @@ const ServiceProvider = () => {
                                         <div key={job.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border border-slate-100 dark:border-slate-700 hover:scale-[1.02] transition-transform group">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm">
-                                                    <img src={getServiceImage(job.service)} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                                                    <img src={job.service_image_url || getServiceImage(getServiceDisplayName(job))} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
                                                 </div>
                                                 <div>
                                                     <div className="flex items-center gap-2 mb-1">
-                                                        <h3 className="font-bold text-slate-900 dark:text-white">{job.service || job.service_name || `Service #${job.service_id}`}</h3>
+                                                        <h3 className="font-bold text-slate-900 dark:text-white">{getServiceDisplayName(job)}</h3>
                                                         {job.priority && (
                                                             <span className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider 
                                                             ${job.priority === 'High' ? 'bg-red-100 text-red-600 dark:bg-red-900/30' :
@@ -2519,7 +2829,7 @@ const ServiceProvider = () => {
             case 'requests':
                 return <BookingsView bookings={bookings} onUpdateStatus={handleUpdateBookingStatus} />;
             case 'earnings':
-                return <EarningsView stats={stats} bookings={bookings} />;
+                return <EarningsView stats={stats} bookings={bookings} onViewReceipt={handleViewReceipt} />;
             case 'reviews':
                 return <ReviewsFullView reviews={reviews} />;
             case 'support':
@@ -2528,6 +2838,15 @@ const ServiceProvider = () => {
                 return null;
         }
     };
+
+    if (isLoading) {
+        const fullName = user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : (user?.name || profile?.company_name || "Partner");
+        return <PreLoader
+            userName={fullName}
+            isDarkMode={isDarkMode}
+            role="Partner"
+        />;
+    }
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-500 flex font-sans selection:bg-indigo-200 dark:selection:bg-indigo-900/30 text-slate-900 dark:text-slate-100">
@@ -2587,128 +2906,164 @@ const ServiceProvider = () => {
 
             {/* Schedule / Reschedule Slot Modal */}
             {slotBookingId && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
-                    <div className={`rounded-[2.5rem] shadow-2xl max-w-lg w-full p-10 border animate-in zoom-in-95 duration-300 relative overflow-hidden
-                        ${isReschedule
-                            ? 'bg-slate-950 shadow-amber-900/20 border-amber-500/20'
-                            : 'bg-slate-950 shadow-sky-900/20 border-sky-500/20'
-                        }`}>
-                        <div className={`absolute top-0 right-0 w-48 h-48 rounded-full blur-3xl -mr-24 -mt-24 pointer-events-none ${isReschedule ? 'bg-amber-500/10' : 'bg-sky-500/10'}`} />
-
-                        <div className="flex items-center gap-6 mb-8 relative z-10">
-                            <div className={`w-16 h-16 rounded-3xl border flex items-center justify-center shadow-lg
-                                ${isReschedule
-                                    ? 'bg-amber-950 border-amber-500/30 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.3)]'
-                                    : 'bg-sky-950 border-sky-500/30 text-sky-400 shadow-[0_0_20px_rgba(14,165,233,0.3)]'
-                                }`}>
-                                <Calendar size={36} />
-                            </div>
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-slate-900 rounded-3xl shadow-2xl max-w-lg w-full p-8 border border-slate-800 animate-in zoom-in-95 duration-300 relative">
+                        <div className="flex items-center justify-between mb-8">
                             <div>
-                                <h3 className="text-3xl font-black text-white tracking-tight uppercase">
+                                <h3 className="text-2xl font-bold text-white tracking-tight">
                                     {isReschedule ? 'Reschedule Visit' : 'Schedule Visit'}
                                 </h3>
-                                <p className={`text-xs font-bold tracking-widest uppercase mt-1 ${isReschedule ? 'text-amber-400' : 'text-sky-400'}`}>
-                                    {isReschedule ? 'Set a new date & notify customer' : 'Notify customer of arrival time'}
+                                <p className="text-sm text-slate-400 mt-1 font-medium">
+                                    {isReschedule ? 'Update slot and notify customer' : 'Set a professional arrival window'}
                                 </p>
+                            </div>
+                            <div className={`p-3 rounded-2xl ${isReschedule ? 'bg-amber-500/10 text-amber-500' : 'bg-indigo-500/10 text-indigo-500'}`}>
+                                <Calendar size={24} />
                             </div>
                         </div>
 
-                        <div className="space-y-6 relative z-10">
+                        <div className="space-y-6">
                             {/* Reschedule reason — only shown when rescheduling */}
                             {isReschedule && (
-                                <div>
-                                    <label className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-2 block">Reason for Rescheduling <span className="text-rose-400">*</span></label>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Reason for Adjustment</label>
                                     <textarea
                                         value={rescheduleReason}
                                         onChange={(e) => setRescheduleReason(e.target.value)}
-                                        placeholder="e.g. Emergency repair came up, will visit on the new date instead..."
-                                        rows={3}
-                                        className="w-full px-5 py-4 bg-slate-900 rounded-2xl border border-amber-800/50 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none text-white placeholder:text-slate-600 font-medium resize-none text-sm leading-relaxed"
+                                        placeholder="Briefly explain the change to the customer..."
+                                        rows={2}
+                                        className="w-full px-5 py-4 bg-slate-800/50 rounded-2xl border border-slate-800 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 outline-none text-white text-sm leading-relaxed"
                                     />
                                 </div>
                             )}
 
-                            <div>
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Visit Date</label>
-                                <input
-                                    type="date"
-                                    value={slotForm.visit_date}
-                                    onChange={(e) => setSlotForm({ ...slotForm, visit_date: e.target.value })}
-                                    className="w-full px-6 py-4 bg-slate-900 rounded-2xl border border-slate-800 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none text-white font-bold"
-                                />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">Visit Date</label>
+                                    <input
+                                        type="date"
+                                        value={slotForm.visit_date}
+                                        onChange={(e) => setSlotForm({ ...slotForm, visit_date: e.target.value })}
+                                        className="w-full px-5 py-3.5 bg-slate-800/50 rounded-2xl border border-slate-800 focus:border-indigo-500/50 outline-none text-white font-bold text-sm"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">From</label>
+                                        <select
+                                            value={slotForm.start_time}
+                                            onChange={(e) => setSlotForm({ ...slotForm, start_time: e.target.value })}
+                                            className="w-full px-4 py-3.5 bg-slate-800/50 rounded-2xl border border-slate-800 focus:border-indigo-500/50 outline-none text-white font-bold text-sm"
+                                        >
+                                            <option value="">Start</option>
+                                            {[...Array(48)].map((_, i) => {
+                                                const hour = Math.floor(i / 2);
+                                                const minute = i % 2 === 0 ? "00" : "30";
+                                                const val = `${hour.toString().padStart(2, '0')}:${minute}`;
+                                                return (
+                                                    <option key={i} value={val} className="text-slate-900 bg-white">
+                                                        {`${hour % 12 || 12}:${minute} ${hour >= 12 ? 'PM' : 'AM'}`}
+                                                    </option>
+                                                );
+                                            })}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-1">To</label>
+                                        <select
+                                            value={slotForm.end_time}
+                                            onChange={(e) => setSlotForm({ ...slotForm, end_time: e.target.value })}
+                                            className="w-full px-4 py-3.5 bg-slate-800/50 rounded-2xl border border-slate-800 focus:border-indigo-500/50 outline-none text-white font-bold text-sm"
+                                        >
+                                            <option value="">End</option>
+                                            {[...Array(48)].map((_, i) => {
+                                                const hour = Math.floor(i / 2);
+                                                const minute = i % 2 === 0 ? "00" : "30";
+                                                const val = `${hour.toString().padStart(2, '0')}:${minute}`;
+                                                return (
+                                                    <option key={i} value={val} className="text-slate-900 bg-white">
+                                                        {`${hour % 12 || 12}:${minute} ${hour >= 12 ? 'PM' : 'AM'}`}
+                                                    </option>
+                                                );
+                                            })}
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                {(['start_time', 'end_time']).map((field) => {
-                                    const timeVal = slotForm[field] || "10:00"; 
-                                    const [hrStr, minStr] = timeVal.split(':');
-                                    let hr24 = parseInt(hrStr) || 10;
-                                    const min = minStr || "00";
-                                    const ampm = hr24 >= 12 ? 'PM' : 'AM';
-                                    let hr12 = hr24 % 12;
-                                    if (hr12 === 0) hr12 = 12;
-
-                                    const handleTimeChange = (newHr12, newMin, newAmPm) => {
-                                        let newHr24 = newHr12 % 12;
-                                        if (newAmPm === 'PM') newHr24 += 12;
-                                        setSlotForm({ ...slotForm, [field]: `${String(newHr24).padStart(2, '0')}:${newMin}` });
-                                    };
-
-                                    return (
-                                        <div key={field}>
-                                            <div className="flex justify-between items-center mb-2">
-                                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block">{field === 'start_time' ? 'Start Time' : 'End Time'}</label>
-                                                <span className="text-[10px] font-bold text-sky-500 bg-sky-500/10 px-2 py-0.5 rounded-full">
-                                                    {formatTimeTo12h(slotForm[field]) || "Set Time"}
-                                                </span>
-                                            </div>
-                                            <div className="flex bg-slate-900 rounded-2xl border border-slate-800 focus-within:border-sky-500 focus-within:ring-1 focus-within:ring-sky-500 overflow-hidden text-white font-bold h-[58px]">
-                                                <select
-                                                    value={hr12}
-                                                    onChange={(e) => handleTimeChange(parseInt(e.target.value), min, ampm)}
-                                                    className="bg-transparent px-3 py-4 outline-none border-r border-slate-800 appearance-none text-center hover:bg-slate-800 transition-colors flex-[1.5] cursor-pointer"
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center px-1">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Team Assigned ({slotForm.workers.length}/3)</label>
+                                    {slotForm.workers.length < 3 && (
+                                        <button
+                                            onClick={() => setSlotForm({ ...slotForm, workers: [...slotForm.workers, { name: "", phone: "" }] })}
+                                            className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors"
+                                        >
+                                            + Add Member
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="space-y-3">
+                                    {slotForm.workers.map((worker, index) => (
+                                        <div key={index} className="flex gap-2 group">
+                                            <input
+                                                placeholder="Name"
+                                                value={worker.name}
+                                                onChange={(e) => {
+                                                    const newWorkers = [...slotForm.workers];
+                                                    newWorkers[index].name = e.target.value;
+                                                    setSlotForm({ ...slotForm, workers: newWorkers });
+                                                }}
+                                                className="flex-[2] px-4 py-3 bg-slate-800/30 rounded-xl border border-slate-800 focus:border-indigo-500/30 outline-none text-white text-sm"
+                                            />
+                                            <input
+                                                placeholder="Phone"
+                                                value={worker.phone}
+                                                onChange={(e) => {
+                                                    const newWorkers = [...slotForm.workers];
+                                                    newWorkers[index].phone = e.target.value;
+                                                    setSlotForm({ ...slotForm, workers: newWorkers });
+                                                }}
+                                                className="flex-[1.5] px-4 py-3 bg-slate-800/30 rounded-xl border border-slate-800 focus:border-indigo-500/30 outline-none text-white text-sm"
+                                            />
+                                            {slotForm.workers.length > 1 && (
+                                                <button
+                                                    onClick={() => {
+                                                        const newWorkers = slotForm.workers.filter((_, i) => i !== index);
+                                                        setSlotForm({ ...slotForm, workers: newWorkers });
+                                                    }}
+                                                    className="p-2 text-slate-500 hover:text-rose-500 transition-colors"
                                                 >
-                                                    {[...Array(12)].map((_, i) => <option key={i+1} value={i+1} className="bg-slate-900">{String(i+1).padStart(2, '0')}</option>)}
-                                                </select>
-                                                <select
-                                                    value={min}
-                                                    onChange={(e) => handleTimeChange(hr12, e.target.value, ampm)}
-                                                    className="bg-transparent px-3 py-4 outline-none border-r border-slate-800 appearance-none text-center hover:bg-slate-800 transition-colors flex-[1.5] cursor-pointer"
-                                                >
-                                                    {['00', '15', '30', '45'].map(m => <option key={m} value={m} className="bg-slate-900">{m}</option>)}
-                                                </select>
-                                                <select
-                                                    value={ampm}
-                                                    onChange={(e) => handleTimeChange(hr12, min, e.target.value)}
-                                                    className="bg-transparent px-3 py-4 outline-none appearance-none text-center text-sky-400 flex-[2] hover:bg-slate-800 transition-colors cursor-pointer"
-                                                >
-                                                    <option value="AM" className="bg-slate-900 text-white">AM</option>
-                                                    <option value="PM" className="bg-slate-900 text-white">PM</option>
-                                                </select>
-                                            </div>
+                                                    <X size={16} />
+                                                </button>
+                                            )}
                                         </div>
-                                    );
-                                })}
+                                    ))}
+                                </div>
                             </div>
-                        </div>
 
-                        <div className="flex gap-4 mt-10 relative z-10">
-                            <button
-                                onClick={() => { setSlotBookingId(null); setSlotForm({ visit_date: "", start_time: "", end_time: "" }); setIsReschedule(false); setRescheduleReason(""); }}
-                                className="flex-1 py-4 text-slate-500 font-bold hover:text-white hover:bg-white/5 rounded-2xl transition-all text-xs uppercase tracking-widest"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleCreateSlot}
-                                className={`flex-[2] px-8 py-4 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all
-                                    ${isReschedule
-                                        ? 'bg-amber-600 hover:bg-amber-500 shadow-[0_0_25px_rgba(245,158,11,0.4)] hover:shadow-[0_0_35px_rgba(245,158,11,0.6)]'
-                                        : 'bg-sky-600 hover:bg-sky-500 shadow-[0_0_25px_rgba(14,165,233,0.4)] hover:shadow-[0_0_35px_rgba(14,165,233,0.6)]'
-                                    }`}
-                            >
-                                {isReschedule ? '🔄 Reschedule & Notify' : '✓ Confirm & Notify'}
-                            </button>
+                            <div className="flex gap-3 pt-4 border-t border-slate-800">
+                                <button
+                                    onClick={() => {
+                                        setSlotBookingId(null);
+                                        setSlotForm({ visit_date: "", start_time: "", end_time: "", workers: [{ name: "", phone: "" }] });
+                                        setRescheduleReason("");
+                                        setIsReschedule(false);
+                                    }}
+                                    className="flex-1 py-4 text-slate-500 font-bold hover:text-white transition-all text-xs uppercase tracking-widest"
+                                >
+                                    Discard
+                                </button>
+                                <button
+                                    onClick={handleCreateSlot}
+                                    className={`flex-[2] py-4 rounded-2xl font-bold text-xs uppercase tracking-widest text-white shadow-xl transition-all active:scale-[0.98]
+                                        ${isReschedule
+                                            ? 'bg-amber-600 hover:bg-amber-500 shadow-amber-900/10'
+                                            : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-900/10'}`}
+                                >
+                                    {isReschedule ? 'Update & Notify' : 'Confirm Visit'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2724,14 +3079,13 @@ const ServiceProvider = () => {
             {/* SIDEBAR */}
             <aside className={`w-72 bg-white/95  dark:bg-slate-900/95 backdrop-blur-xl h-screen fixed left-0 top-0 flex flex-col text-slate-600 dark:text-slate-300 z-50 border-r border-slate-200 dark:border-white/10 shadow-2xl transition-all duration-300 transform lg:translate-x-0 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
                 <div className="p-8 border-b border-slate-200 dark:border-white/10">
-                    <div className="flex flex-col items-start gap-1">
-                        <div className="flex items-center gap-4">
-                            <div className="relative group">
-                                <div className="absolute inset-0 bg-sky-500 blur-[20px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full"></div>
-                                <img src="/favicon.png" alt="RentEase" className="w-16 h-16 object-contain relative right-2 top-0.5 z-10 drop-shadow-lg" />
-                            </div>
-                            <span className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter relative right-9">RentEase</span>
-                        </div>                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="relative group">
+                            <div className="absolute inset-0 bg-sky-500 blur-[20px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full"></div>
+                            <img src="/favicon.png" alt="RentEase" className="w-14 h-13 object-contain relative z-10 drop-shadow-lg" />
+                        </div>
+                        <span className="text-2xl font-black text-slate-900 dark:text-white relative right-4 tracking-tighter">RentEase</span>
+                    </div>
                 </div>
 
                 {/* Partner Status Card - REMOVED */}
@@ -2786,7 +3140,7 @@ const ServiceProvider = () => {
                         <div className="flex flex-col">
                             <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-indigo-600 dark:from-sky-400 dark:to-indigo-500 tracking-tight leading-tight">Service Provider Dashboard</h2>
                             <div className="flex items-center gap-2">
-                                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Welcome back, <span className="text-sky-500 dark:text-sky-400 font-bold">{profile?.company_name || user?.company_name || user?.name || user?.first_name || user?.email?.split('@')[0] || 'Partner'}</span></p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Welcome back, <span className="text-sky-500 dark:text-sky-400 font-bold">{user?.first_name || user?.name || profile?.company_name || 'Partner'}</span></p>
                             </div>
                         </div>
                     </div>
@@ -2794,10 +3148,32 @@ const ServiceProvider = () => {
                     {/* Right: Actions */}
                     <div className="flex items-center gap-6">
                         <div className="relative">
-                            <button className="p-2 rounded-full text-slate-400 hover:text-sky-500 hover:bg-slate-100 dark:hover:bg-white/5 transition-all">
+                            <button
+                                onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                                className={`p-2.5 rounded-2xl border transition-all relative ${isDarkMode
+                                    ? 'border-slate-800 text-slate-400 hover:text-white hover:bg-white/5'
+                                    : 'border-slate-200 text-slate-500 hover:bg-slate-50'
+                                    } ${isNotificationOpen ? (isDarkMode ? 'bg-white/10 text-white' : 'bg-slate-100 text-slate-900') : ''}`}
+                            >
                                 <Bell size={20} />
-                                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse" />
+                                {unreadCount > 0 && (
+                                    <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white dark:border-slate-900 animate-pulse shadow-sm" />
+                                )}
                             </button>
+
+                            {isNotificationOpen && (
+                                <div className="fixed inset-0 z-40" onClick={() => setIsNotificationOpen(false)} />
+                            )}
+
+                            {isNotificationOpen && (
+                                <NotificationDropdown
+                                    notifications={notifications}
+                                    markAsRead={markAsRead}
+                                    markAllAsRead={markAllAsRead}
+                                    isDarkMode={isDarkMode}
+                                    onClose={() => setIsNotificationOpen(false)}
+                                />
+                            )}
                         </div>
                         <div className="scale-90"><ThemeToggle /></div>
                         <div className="h-8 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" />
@@ -2839,6 +3215,41 @@ const ServiceProvider = () => {
 
             {/* Mobile Sidebar Overlay */}
             {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm" />}
+
+            {/* RECEIPT PREVIEW MODAL */}
+            {isPreviewOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-2xl animate-in fade-in duration-300">
+                    {/* Professional Close Button */}
+                    <button 
+                        onClick={handleClosePreview}
+                        className="fixed top-6 right-6 md:top-12 md:right-12 group flex items-center gap-2 py-2 px-4 bg-slate-900 border border-slate-700 text-white rounded-xl shadow-2xl transition-all hover:bg-slate-800 z-[250]"
+                    >
+                        <span className="text-xs font-bold uppercase tracking-wider">Close Preview</span>
+                        <X size={18} className="text-slate-400 group-hover:text-white transition-colors" />
+                    </button>
+
+                    <div className="relative w-full max-w-5xl h-full flex flex-col pt-12 md:pt-4 animate-in zoom-in-95 duration-300 ml-0 lg:ml-12 mt-12 md:mt-20">
+                        <div className="flex justify-between items-center mb-6 text-white px-2">
+                            <h3 className="text-2xl font-black flex items-center gap-4 tracking-tight">
+                                <div className="p-3 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-600/20">
+                                    <Wrench size={24} />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-white">Service Receipt</span>
+                                    <span className="text-[10px] text-indigo-300 uppercase tracking-[0.2em] font-black">Professional Partner Record</span>
+                                </div>
+                            </h3>
+                        </div>
+                        <div className="flex-1 bg-white rounded-[32px] overflow-hidden shadow-2xl relative border-8 border-white/10">
+                            <iframe 
+                                src={previewUrl} 
+                                className="w-full h-full border-none"
+                                title="Service Receipt PDF"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

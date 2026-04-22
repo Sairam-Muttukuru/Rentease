@@ -149,7 +149,10 @@ const TenantSettings = ({
                                     <input
                                         type="tel"
                                         value={user.phone}
-                                        onChange={(e) => setUser({ ...user, phone: e.target.value })}
+                                        onChange={(e) => {
+                                            const cleaned = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                            setUser({ ...user, phone: cleaned });
+                                        }}
                                         className={`w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-violet-500 outline-none transition-colors duration-500 ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'}`}
                                     />
                                 </div>

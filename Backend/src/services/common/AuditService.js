@@ -33,6 +33,31 @@ class AuditService {
         const action = `${actionType} User (ID: ${targetUserId})${details ? ` - ${details}` : ""}`;
         return this.log(actorId, action);
     }
+
+    static async logServiceAction(actorId, requestId, actionType, details = "") {
+        const action = `${actionType} Service Request (ID: ${requestId})${details ? ` - ${details}` : ""}`;
+        return this.log(actorId, action);
+    }
+
+    static async logComplaintAction(actorId, complaintId, actionType, details = "") {
+        const action = `${actionType} Complaint (ID: ${complaintId})${details ? ` - ${details}` : ""}`;
+        return this.log(actorId, action);
+    }
+
+    static async logBookingAction(actorId, bookingId, actionType, details = "") {
+        const action = `${actionType} House Visit Request (ID: ${bookingId})${details ? ` - ${details}` : ""}`;
+        return this.log(actorId, action);
+    }
+
+    static async logAnnouncementAction(actorId, propertyId, actionType, details = "") {
+        const action = `${actionType} Announcement for Property (ID: ${propertyId})${details ? ` - ${details}` : ""}`;
+        return this.log(actorId, action);
+    }
+
+    static async logAmenityAction(actorId, actionType, details = "") {
+        const action = `${actionType} Amenity${details ? ` - ${details}` : ""}`;
+        return this.log(actorId, action);
+    }
 }
 
 module.exports = AuditService;

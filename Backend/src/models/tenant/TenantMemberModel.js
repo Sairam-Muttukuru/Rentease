@@ -4,10 +4,10 @@ exports.create = async (data) => {
   await db.query(
     `
     INSERT INTO tenant_members
-    (tenant_id, full_name, phone, relation, is_primary, tenant_emailid)
-    VALUES ($1,$2,$3,$4,$5,$6)
+    (tenant_id, full_name, phone, relation, is_primary, tenant_emailid, lease_start, lease_end, rent_amount, rent_due_day)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
     `,
-    [data.tenant_id, data.full_name, data.phone, data.relation, data.is_primary, data.tenant_emailid]
+    [data.tenant_id, data.full_name, data.phone, data.relation, data.is_primary, data.tenant_emailid, data.lease_start, data.lease_end, data.rent_amount, data.rent_due_day]
   );
 };
 

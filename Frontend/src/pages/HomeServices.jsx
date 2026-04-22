@@ -279,7 +279,8 @@ const BookingModal = ({ isOpen, onClose, service, onConfirm, initialAddress }) =
         date: '',
         time: '',
         address: initialAddress || '',
-        contact_number: ''
+        contact_number: '',
+        payment_method: 'COD'
     });
 
     useEffect(() => {
@@ -290,6 +291,12 @@ const BookingModal = ({ isOpen, onClose, service, onConfirm, initialAddress }) =
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        if (formData.contact_number && formData.contact_number.length !== 10) {
+            toast.error("Contact number must be exactly 10 digits");
+            return;
+        }
+
         onConfirm(formData);
     };
 
@@ -339,10 +346,16 @@ const BookingModal = ({ isOpen, onClose, service, onConfirm, initialAddress }) =
                                             className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 transition-colors dark:text-white font-medium"
                                             onChange={e => {
                                                 const selected = e.target.value;
-                                                const today = new Date().toLocaleDateString('en-CA');
-                                                if (selected < today) {
-                                                    setFormData({ ...formData, date: today });
-                                                    toast.info("Please select a date from today onwards.");
+                                                if (!selected) return;
+                                                // Use midnight-normalised Date objects to avoid locale string bugs
+                                                const selectedDate = new Date(selected + 'T00:00:00');
+                                                const today = new Date();
+                                                today.setHours(0, 0, 0, 0);
+                                                if (selectedDate < today) {
+                                                    const todayStr = today.toLocaleDateString('en-CA');
+                                                    setFormData({ ...formData, date: todayStr });
+                                                    // Use a fixed toastId so it never stacks
+                                                    toast.info("Please select a date from today onwards.", { toastId: 'date-warn' });
                                                 } else {
                                                     setFormData({ ...formData, date: selected });
                                                 }
@@ -350,27 +363,23 @@ const BookingModal = ({ isOpen, onClose, service, onConfirm, initialAddress }) =
                                         />
                                     </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Time</label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="time"
-                                            required
-                                            value={formData.time}
-                                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 transition-colors dark:text-white font-medium"
-                                            onChange={e => setFormData({ ...formData, time: e.target.value })}
-                                        />
-                                        <select
-                                            className="p-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 transition-colors dark:text-white font-medium"
-                                            onChange={e => setFormData({ ...formData, ampm: e.target.value })}
-                                            value={formData.ampm || ""}
-                                            required
-                                        >
-                                            <option value="" disabled>AM/PM</option>
-                                            <option value="AM">AM</option>
-                                            <option value="PM">PM</option>
-                                        </select>
-                                    </div>
+                                <div className="space-y-2 col-span-1">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Time Slot</label>
+                                    <select
+                                        required
+                                        value={formData.time}
+                                        className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 transition-colors dark:text-white font-bold"
+                                        onChange={e => setFormData({ ...formData, time: e.target.value })}
+                                    >
+                                        <option value="" disabled>Select Time</option>
+                                        {['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','19:30','20:00','21:00'].map(t => {
+                                            const [hour, min] = t.split(':');
+                                            let h = parseInt(hour, 10);
+                                            const ampm = h >= 12 ? 'PM' : 'AM';
+                                            const displayH = h % 12 || 12;
+                                            return <option key={t} value={t}>{`${displayH}:${min} ${ampm}`}</option>;
+                                        })}
+                                    </select>
                                 </div>
                             </div>
 
@@ -379,10 +388,13 @@ const BookingModal = ({ isOpen, onClose, service, onConfirm, initialAddress }) =
                                 <input
                                     type="tel"
                                     required
-                                    placeholder="Enter your contact number"
+                                    placeholder="10-digit contact number"
                                     value={formData.contact_number}
                                     className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 transition-colors dark:text-white font-medium"
-                                    onChange={e => setFormData({ ...formData, contact_number: e.target.value })}
+                                    onChange={e => {
+                                        const cleaned = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                        setFormData({ ...formData, contact_number: cleaned });
+                                    }}
                                 />
                             </div>
 
@@ -411,9 +423,25 @@ const BookingModal = ({ isOpen, onClose, service, onConfirm, initialAddress }) =
                                 </select>
                             </div>
 
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Payment Method</label>
+                                <select
+                                    className="w-full p-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl outline-none focus:border-indigo-500 transition-colors dark:text-white font-medium"
+                                    onChange={e => setFormData({ ...formData, payment_method: e.target.value })}
+                                    value={formData.payment_method || "COD"}
+                                >
+                                    <option value="COD">Cash on Delivery (COD)</option>
+                                    <option value="Online">Online Payment (Card/UPI)</option>
+                                </select>
+                            </div>
+
                             <div className="flex items-start gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl">
                                 <ShieldCheck size={16} className="text-emerald-600 mt-0.5" />
-                                <p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Payment will be collected after service completion. No upfront charge.</p>
+                                <p className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">
+                                    {formData.payment_method === 'Online'
+                                        ? "You will pay securely online after the service provider completes the job."
+                                        : "Payment will be collected in cash after service completion. No upfront charge."}
+                                </p>
                             </div>
                         </form>
                     </div>
@@ -542,14 +570,14 @@ const HomeServices = () => {
             setLoading(false);
         }
     };
- 
+
     const fetchTypes = async (categoryId) => {
         setLoading(true);
         try {
             const res = await axios.get(`${import.meta.env.VITE_API_URL || 'https://rentease-1-pwm5.onrender.com'}/api/tenants/catalog/types/${categoryId}`);
             const fetchedTypes = res.data;
             setTypes(fetchedTypes);
- 
+
             if (fetchedTypes.length > 0) {
                 // Automatically select the first type and fetch its services
                 handleTypeSelect(fetchedTypes[0]);
@@ -564,7 +592,7 @@ const HomeServices = () => {
             setLoading(false);
         }
     };
- 
+
     const fetchServices = async (typeId) => {
         setLoading(true);
         try {
@@ -580,7 +608,7 @@ const HomeServices = () => {
             setLoading(false);
         }
     };
- 
+
     const fetchSubTypes = async (typeId) => {
         setLoading(true);
         try {
@@ -610,7 +638,7 @@ const HomeServices = () => {
             setLoading(false);
         }
     };
- 
+
     // fetchServicesByCategory is no longer the primary entry point but kept for fallback if needed
     const fetchServicesByCategory = async (categoryId) => {
         setLoading(true);
@@ -624,12 +652,12 @@ const HomeServices = () => {
             setLoading(false);
         }
     };
- 
+
     const handleCategoryClick = (category) => {
         setSelectedCategory(category);
         fetchTypes(category.id);
     };
- 
+
     const handleTypeSelect = (type) => {
         setSelectedType(type);
         const isAC = selectedCategory?.name?.toLowerCase().includes('ac and appliance');
@@ -639,12 +667,12 @@ const HomeServices = () => {
             fetchServices(type.id);
         }
     };
- 
+
     const handleSubTypeSelect = (subType) => {
         setSelectedSubType(subType);
         fetchServicesBySubType(subType.id);
     };
- 
+
     const handleBack = () => {
         if (selectedSubType) {
             setSelectedSubType(null);
@@ -660,12 +688,12 @@ const HomeServices = () => {
         setTypes([]);
         setSubTypes([]);
     };
- 
+
     const handleServiceClick = (service) => {
         setSelectedServiceDetails(service);
         setIsDetailsModalOpen(true);
     };
- 
+
     const handleBookClick = (service) => {
         const token = localStorage.getItem('accessToken');
         if (!token) {
@@ -676,7 +704,7 @@ const HomeServices = () => {
         setSelectedService(service);
         setIsBookingModalOpen(true);
     };
- 
+
     const handleBookingConfirm = async (formData) => {
         // Ensure we send the global service ID (which is 'id' if fetching from public catalog, or 'service_id' if from provider list)
         // But for public catalog, 'id' IS the service_id.
@@ -684,26 +712,26 @@ const HomeServices = () => {
         // Let's assume selectedService has 'id' as primary key of WHATEVER table it came from.
         // If it came from 'st.getServices', it's provider_services join services.
         // If it came from 'st.getCatalogServices', it's services table.
- 
+
         // selectedService comes from provider_services JOIN services
         // id = service_id (from services table, due to select s.*)
         // provider_id = from provider_services
         // price = from provider_services
- 
+
         const payload = {
             service_id: selectedService.id, // This is the Service ID
             provider_id: selectedService.provider_id, // This is the Provider ID
             amount: selectedService.price || selectedService.base_price,
             address: formData.address,
             contact_number: formData.contact_number,
-            property_image: propertyImage, // Send property image to backend
-            payment_method: 'COD',
+            property_image: propertyImage,
+            payment_method: formData.payment_method,
             booking_date: formData.date,
-            booking_time: `${formData.time} ${formData.ampm || ''}`.trim(),
-            service_type: selectedService.type_name || selectedService.category_name || 'Standard', // Use type from service object
+            booking_time: formData.time, // Now saves as direct 24hr string "HH:mm"
+            service_type: selectedService.name || selectedService.type_name || selectedService.category_name || 'Standard', // Use specific name as priority
             priority: formData.priority || 'Normal'
         };
- 
+
         const token = localStorage.getItem('accessToken');
         try {
             await axios.post(`${import.meta.env.VITE_API_URL || 'https://rentease-1-pwm5.onrender.com'}/api/tenants/service-request`, payload, {
@@ -731,9 +759,6 @@ const HomeServices = () => {
 
                 <div className="max-w-5xl mx-auto text-center relative z-10">
                     <div className="opacity-100 transform-none">
-                        <span className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-slate-100 dark:bg-slate-800/80 backdrop-blur-md border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold uppercase tracking-wider mb-8 shadow-sm">
-                            <Star className="w-3 h-3 text-amber-500 fill-amber-500" /> Rated #1 Home Services in India
-                        </span>
                         <h1 className="text-5xl md:text-8xl font-black text-slate-900 dark:text-white mb-8 tracking-tighter leading-[1.1]">
                             Your Home, <br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600">Our Priority.</span>
@@ -915,9 +940,9 @@ const HomeServices = () => {
                                                 className="group relative overflow-hidden rounded-[32px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-5 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer h-72 flex flex-col"
                                             >
                                                 <div className="h-44 overflow-hidden rounded-2xl mb-4 relative bg-slate-50 dark:bg-slate-950">
-                                                    <img 
-                                                        src={st.image_url || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=2669&auto=format&fit=crop"} 
-                                                        alt={st.name} 
+                                                    <img
+                                                        src={st.image_url || "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=2669&auto=format&fit=crop"}
+                                                        alt={st.name}
                                                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                                     />
                                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />

@@ -4,8 +4,8 @@ const sendMail = require("../utils/email/sendMail");
 
 console.log("📅 RentReminderCron: High-End Professional Template Loaded.");
 
-// Schedule: Runs every day at 1:05 PM (Style validation)
-cron.schedule("05 13 * * *", async () => {
+// Schedule: Runs every day at 8:30 PM (Style validation)
+cron.schedule("30 20 * * *", async () => {
     console.log("[RentReminderCron] 🔄 Starting professional rent reminder task...");
 
     try {
@@ -83,7 +83,7 @@ cron.schedule("05 13 * * *", async () => {
                 // Determine display rent and split
                 let displayBalance = rawBalance;
                 let isSplit = false;
-                
+
                 if (isBachelor && !isPG && occupants.length > 1) {
                     displayBalance = rawBalance / occupants.length;
                     isSplit = true;
@@ -106,12 +106,12 @@ cron.schedule("05 13 * * *", async () => {
 
                 const formatDate = (d) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
                 const cycleRange = `${formatDate(firstUnpaidCycleStart)} - ${formatDate(firstUnpaidCycleEnd)}`;
-                
+
                 const landlordFull = `${tenant.landlord_first_name} ${tenant.landlord_last_name}`;
                 const propertyImg = tenant.property_image || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=600";
-                
+
                 const subject = `⚠️ Payment Overdue: ₹${displayBalance.toLocaleString()} for ${tenant.property_title}`;
-                
+
                 // Recipients: If Bachelors/PG, all. Else, just primary.
                 const recipients = (isBachelor || isPG) ? occupants : occupants.filter(oc => oc.email === tenant.user_email);
                 if (recipients.length === 0 && tenant.user_email) recipients.push({ email: tenant.user_email, name: tenant.first_name });
@@ -175,7 +175,7 @@ cron.schedule("05 13 * * *", async () => {
                     await sendMail(recipient.email, subject, html);
                     console.log(`[RentReminderCron] ✅ REMINDER SENT | User: ${recipient.name || 'Resident'} | Email: ${recipient.email} | Amount: ₹${displayBalance.toLocaleString()} | Type: ${isSplit ? 'Split Share' : (isPG ? 'Individual PG' : 'Standard')}`);
                 }
-                
+
                 await db.query("UPDATE tenants SET last_reminder_sent_at = NOW() WHERE id = $1", [tenant.id]);
             }
         }

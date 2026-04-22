@@ -124,6 +124,9 @@ exports.getProperties = async () =>
 exports.togglePropertyStatus = async (id) =>
   db.query(`UPDATE properties SET status = CASE WHEN status='Suspended' THEN 'Available' ELSE 'Suspended' END WHERE id=$1`, [id]);
 
+exports.getPropertyById = async (id) =>
+  (await db.query("SELECT * FROM properties WHERE id = $1", [id])).rows[0];
+
 exports.togglePropertyFake = async (id) =>
   db.query(`UPDATE properties SET is_fake = NOT is_fake WHERE id=$1`, [id]);
 

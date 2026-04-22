@@ -1,1 +1,42 @@
-[{"name":"Water Lekage Repair","category_name":"Ac and Appliance repair"},{"name":"Lock Installation / Replacement","category_name":"Carpentry"},{"name":"Door Repair (Alignment / Hinge Issue)","category_name":"Carpentry"},{"name":"Door Installation","category_name":"Carpentry"},{"name":"Bed Polishing","category_name":"Carpentry"},{"name":"Bed Assembly","category_name":"Carpentry"},{"name":"Geyser Repair Service","category_name":"Ac and Appliance repair"},{"name":"Geyser installation","category_name":"Ac and Appliance repair"},{"name":"Heating Element Replacement","category_name":"Ac and Appliance repair"},{"name":"Geyser Cleaning & Maintenance","category_name":"Ac and Appliance repair"}]
+[
+    {
+        "name": "Water Lekage Repair",
+        "category_name": "Ac and Appliance repair"
+    },
+    {
+        "name": "Lock Installation / Replacement",
+        "category_name": "Carpentry"
+    },
+    {
+        "name": "Door Repair (Alignment / Hinge Issue)",
+        "category_name": "Carpentry"
+    },
+    {
+        "name": "Door Installation",
+        "category_name": "Carpentry"
+    },
+    {
+        "name": "Bed Polishing",
+        "category_name": "Carpentry"
+    },
+    {
+        "name": "Bed Assembly",
+        "category_name": "Carpentry"
+    },
+    {
+        "name": "Geyser Repair Service",
+        "category_name": "Ac and Appliance repair"
+    },
+    {
+        "name": "Geyser installation",
+        "category_name": "Ac and Appliance repair"
+    },
+    {
+        "name": "Heating Element Replacement",
+        "category_name": "Ac and Appliance repair"
+    },
+    {
+        "name": "Geyser Cleaning & Maintenance",
+        "category_name": "Ac and Appliance repair"
+    }
+]

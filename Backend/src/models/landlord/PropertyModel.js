@@ -16,8 +16,8 @@ exports.createProperty = async (data) => {
      shop_use_type, water_available,
      office_type, seating_capacity, cabins_available, conference_room,
      security_deposit, rent_escalation_desc, upi_id,
-     late_penalty_amount, rent_due_day, guidelines, latitude, longitude, qr_code, sharing_capacity)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44, $45)
+     late_penalty_amount, rent_due_day, guidelines, latitude, longitude, qr_code, sharing_capacity, room_number)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44, $45, $46)
     RETURNING *;
   `;
 
@@ -73,7 +73,8 @@ exports.createProperty = async (data) => {
     data.latitude || null,
     data.longitude || null,
     data.qr_code || null,
-    data.sharing_capacity || 1
+    data.sharing_capacity || 1,
+    data.room_number || null
   ];
 
   return (await db.query(query, values)).rows[0];
@@ -453,8 +454,9 @@ exports.updateProperty = async (id, landlordId, data) => {
       longitude = $41,
       qr_code = $42,
       sharing_capacity = $43,
+      room_number = $44,
       updated_at = NOW()
-    WHERE id = $44 AND landlord_id = $45
+    WHERE id = $45 AND landlord_id = $46
     RETURNING *;
   `;
 
@@ -508,6 +510,7 @@ exports.updateProperty = async (id, landlordId, data) => {
     data.longitude,
     data.qr_code,
     data.sharing_capacity || 1,
+    data.room_number || null,
 
     id,
     landlordId

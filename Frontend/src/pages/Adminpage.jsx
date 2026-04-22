@@ -615,9 +615,16 @@ const PropertyManagement = () => {
                         <div>
                             <div className="flex justify-between items-start">
                                 <h4 className={`font-black text-2xl leading-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{selectedProp.title}</h4>
+                            <div className="flex flex-col items-end gap-1.5 -mt-4">
                                 <Badge variant={selectedProp.status === 'Occupied' ? 'success' : selectedProp.status === 'Suspended' ? 'danger' : 'warning'}>
                                     {selectedProp.status}
                                 </Badge>
+                                {selectedProp.is_fake && (
+                                    <span className="bg-rose-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest flex items-center gap-1 shadow-lg border border-rose-500 animate-pulse">
+                                        <AlertCircle size={10} /> FAKE REPORTED
+                                    </span>
+                                )}
+                            </div>
                             </div>
                             <p className="text-slate-500 flex items-center gap-2 mt-2 font-medium">
                                 <MapPin size={16} /> {selectedProp.address || `${selectedProp.locality}, ${selectedProp.city}`}
@@ -1096,6 +1103,7 @@ const Payments = () => {
                             <th className="px-8 py-5 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Date & Time</th>
                             <th className="px-8 py-5 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Amount</th>
                             <th className="px-8 py-5 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Status</th>
+                            <th className="px-8 py-5 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase text-right">Action</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
@@ -1125,6 +1133,15 @@ const Payments = () => {
                                     <td className="px-8 py-5 text-sm font-medium text-slate-600 dark:text-slate-400">{formattedDate}</td>
                                     <td className="px-8 py-5 font-bold text-slate-900 dark:text-white text-lg">₹{Number(p.amount || 0).toLocaleString()}</td>
                                     <td className="px-8 py-5"><Badge variant="success">Completed</Badge></td>
+                                    <td className="px-8 py-5 text-right">
+                                        <button 
+                                            onClick={() => window.open(p.receipt_url || '#', '_blank')}
+                                            className="p-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-indigo-500 rounded-lg transition-all group"
+                                            title="View Receipt"
+                                        >
+                                            <Eye size={18} className="group-hover:scale-110 transition-transform" />
+                                        </button>
+                                    </td>
                                 </tr>
                             );
                         })}
@@ -1153,105 +1170,31 @@ const AuditLogs = () => {
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
                         {logs.map(l => (
-                            <tr key={l.id} className="hover:bg-indigo-50/30 transition-colors duration-150 group">
-                                <td className="px-8 py-5 text-sm text-slate-700 dark:text-slate-200 font-bold group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{l.action}</td>
-                                <td className="px-8 py-5">
-                                    <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800/50 px-3 py-1.5 rounded-xl inline-block shadow-sm">{l.performed_by}</span>
+                            <tr key={l.id} className="hover:bg-indigo-500/[0.04] dark:hover:bg-indigo-500/[0.08] transition-all duration-300 group relative">
+                                <td className="px-8 py-6 text-sm text-slate-700 dark:text-slate-200 font-bold group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-all">
+                                    <div className="flex items-center gap-3">
+                                        {/* Dynamic Accent Line on Hover */}
+                                        <div className="w-1 h-0 group-hover:h-6 bg-indigo-500 rounded-full transition-all duration-300 absolute left-0" />
+                                        {l.action}
+                                    </div>
                                 </td>
-                                <td className="px-8 py-5 text-xs text-slate-500 dark:text-slate-400 font-bold">{new Date(l.timestamp).toLocaleString()}</td>
+                                <td className="px-8 py-6">
+                                    <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800/50 px-3 py-1.5 rounded-xl inline-block shadow-sm group-hover:shadow-indigo-500/10 transition-all">{l.performed_by}</span>
+                                </td>
+                                <td className="px-8 py-6 text-xs text-slate-500 dark:text-slate-400 font-bold opacity-80 group-hover:opacity-100 transition-all">
+                                    {new Date(l.timestamp).toLocaleString('en-IN', {
+                                        day: '2-digit',
+                                        month: '2-digit',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: true
+                                    })}
+                                </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
-            </div>
-        </div>
-    );
-};
-// --- NEW SECTION: LIVE SERVICE TRACKER ---
-const LiveServiceTracker = () => {
-    const [jobs, setJobs] = useState([]);
-    const [stats, setStats] = useState({ active: 0, pending: 0, completed: 0 });
-    const { theme } = useTheme();
-    const isDarkMode = theme === 'dark';
-
-    useEffect(() => {
-        const fetchTrackerData = async () => {
-            try {
-                const res = await axios.get(`${API_URL}/tracker`, getAuthConfig());
-                setJobs(res.data.jobs);
-                setStats(res.data.stats);
-            } catch (err) {
-                console.error("Failed to fetch tracker data", err);
-            }
-        };
-        fetchTrackerData();
-        const interval = setInterval(fetchTrackerData, 30000); // Polling every 30s
-        return () => clearInterval(interval);
-    }, []);
-
-    return (
-        <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
-            <SectionHeader title="Live Service Tracker" />
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="p-6 rounded-3xl bg-indigo-600 text-white shadow-xl shadow-indigo-500/20 relative overflow-hidden">
-                    <div className="relative z-10">
-                        <p className="text-xs font-bold uppercase tracking-widest opacity-80">Currently Active</p>
-                        <h3 className="text-4xl font-black mt-2">{stats.active}</h3>
-                        <p className="text-xs mt-4 flex items-center gap-1"><Zap size={12} className="text-amber-300 animate-pulse" /> Live monitoring enabled</p>
-                    </div>
-                    <Activity size={80} className="absolute -right-4 -bottom-4 opacity-10 rotate-12" />
-                </div>
-                <div className={`${isDarkMode ? 'bg-slate-800/50' : 'bg-white'} p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-lg`}>
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Pending Dispatch</p>
-                    <h3 className="text-4xl font-black text-slate-900 dark:text-white mt-2">{stats.pending}</h3>
-                    <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-700 rounded-full mt-4 overflow-hidden">
-                        <div className="h-full bg-amber-500 w-[40%] rounded-full" />
-                    </div>
-                </div>
-                <div className={`${isDarkMode ? 'bg-slate-800/50' : 'bg-white'} p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-lg`}>
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Resolved Today</p>
-                    <h3 className="text-4xl font-black text-slate-900 dark:text-white mt-2">{stats.completed}</h3>
-                    <p className="text-xs text-emerald-500 font-bold mt-4 flex items-center gap-1"><CheckCircle size={12} /> +24% from yesterday</p>
-                </div>
-            </div>
-
-            <div className={`${isDarkMode ? 'bg-slate-800/50' : 'bg-white'} rounded-3xl border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden`}>
-                <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
-                    <h4 className="font-bold text-slate-800 dark:text-white">Active Maintenance Jobs</h4>
-                    <div className="flex gap-2">
-                        <span className="flex items-center gap-1.5 text-xs font-bold text-slate-500"><div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" /> Real-time Feed</span>
-                    </div>
-                </div>
-                <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
-                    {jobs.map(job => (
-                        <div key={job.id} className="p-6 flex flex-wrap items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors">
-                            <div className="flex items-center gap-4">
-                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${job.priority === 'Critical' ? 'bg-rose-100 text-rose-600' :
-                                    job.priority === 'High' ? 'bg-amber-100 text-amber-600' : 'bg-indigo-100 text-indigo-600'
-                                    }`}>
-                                    <Wrench size={20} />
-                                </div>
-                                <div>
-                                    <h5 className="font-bold text-slate-900 dark:text-white">{job.issue || job.service_type || 'Maintenance Request'}</h5>
-                                    <p className="text-xs text-slate-500 font-medium">Tenant: {job.tenant} • <span className="text-indigo-500">{new Date(job.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-8">
-                                <div className="text-right">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase">Provider</p>
-                                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300">{job.provider || 'Unassigned'}</p>
-                                </div>
-                                <div className="min-w-[120px]">
-                                    <Badge variant={job.status === 'In Progress' ? 'blue' : job.status === 'Dispatched' ? 'warning' : 'default'}>{job.status}</Badge>
-                                </div>
-                                <button className="p-2 text-slate-400 hover:text-indigo-600 transition-colors">
-                                    <ChevronRight size={18} />
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
             </div>
         </div>
     );
@@ -1368,14 +1311,7 @@ const RevenueAnalytics = () => {
                     { label: "Avg. Transaction", val: "₹4.2k", sub: "Trending up", icon: Activity, color: "blue" },
                     { label: "Refunds", val: "0.1%", sub: "Historically low", icon: XCircle, color: "rose" },
                 ].map((stat, i) => (
-                    <div key={i} className={`${isDarkMode ? 'bg-slate-800/50' : 'bg-white'} p-6 rounded-3xl border border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all`}>
-                        <div className={`w-10 h-10 rounded-xl bg-${stat.color}-100 dark:bg-${stat.color}-900/30 flex items-center justify-center text-${stat.color}-600 mb-4`}>
-                            <stat.icon size={20} />
-                        </div>
-                        <h5 className="text-2xl font-black text-slate-900 dark:text-white">{stat.val}</h5>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">{stat.label}</p>
-                        <p className="text-[10px] font-bold text-slate-500 mt-2 italic">{stat.sub}</p>
-                    </div>
+                    <StatCard key={i} label={stat.label} value={stat.val} sub={stat.sub} icon={stat.icon} color={stat.color} />
                 ))}
             </div>
         </div>
@@ -1416,8 +1352,7 @@ const Adminpage = () => {
             case 'complaints': return <ComplaintManagement />;
             case 'providers': return <ServiceProviders />;
             case 'payments': return <Payments />;
-            case 'tracker': return <LiveServiceTracker />;
-            case 'analytics': return <RevenueAnalytics />;
+            case 'revenue': return <RevenueAnalytics />;
             case 'logs': return <AuditLogs />;
             default: return <Overview stats={overviewStats} />;
         }
@@ -1483,10 +1418,9 @@ const Adminpage = () => {
                         { id: 'users', label: 'User Management', icon: Users },
                         { id: 'properties', label: 'Properties', icon: Building2 },
                         { id: 'complaints', label: 'Complaints', icon: MessageSquare },
-                        { id: 'tracker', label: 'Service Tracker', icon: Activity },
                         { id: 'providers', label: 'Service Providers', icon: Wrench },
+                        { id: 'revenue', label: 'Revenue Analytics', icon: TrendingUp },
                         { id: 'payments', label: 'Financials', icon: CreditCard },
-                        { id: 'analytics', label: 'Revenue Analytics', icon: BarChart3 },
                         { id: 'logs', label: 'System Logs', icon: History },
                     ].map((item) => (
                         <button

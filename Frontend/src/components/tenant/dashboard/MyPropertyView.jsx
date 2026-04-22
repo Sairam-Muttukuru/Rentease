@@ -170,8 +170,13 @@ const MyPropertyView = ({
                         <div className="absolute bottom-0 left-0 right-0 p-6 flex justify-between items-end">
                             <div className="animate-in slide-in-from-bottom-4 duration-700 delay-100">
                                 <h3 className="text-3xl font-bold text-white mb-1 shadow-black/50 drop-shadow-md">{user.propertyName}</h3>
-                                <p className="text-white/90 flex items-center gap-2 text-sm backdrop-blur-md bg-black/30 w-fit px-3 py-1 rounded-full">
+                                <p className="text-white/90 flex items-center gap-2 text-sm backdrop-blur-md bg-black/30 w-fit px-3 py-1 rounded-full whitespace-nowrap overflow-hidden max-w-full">
                                     <Building size={14} /> {user.address}
+                                    {(user.room_number || user.flat_number) && (
+                                        <span className="font-black text-amber-400 ml-1">
+                                            • {user.room_number ? `Room ${user.room_number}` : `Flat ${user.flat_number}`}
+                                        </span>
+                                    )}
                                 </p>
                             </div>
                             <div className="hidden sm:block shrink-0">

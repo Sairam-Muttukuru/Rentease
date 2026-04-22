@@ -163,7 +163,7 @@ export default function TenantMessagesView({ isDarkMode, currentUser, allPropert
             const formattedMessages = res.data.map(m => ({
                 id: m.id,
                 text: m.message_text,
-                sender: m.sender_id === currentUser?.id ? 'tenant' : 'landlord',
+                sender: Number(m.sender_id) === Number(currentUser?.user_id || currentUser?.id) ? 'tenant' : 'landlord',
                 timestamp: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 date: new Date(m.created_at).toLocaleDateString()
             }));

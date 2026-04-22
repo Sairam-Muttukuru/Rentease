@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useTheme } from "../../../context/ThemeContext";
 import Card from '../ui/Card';
-import { Bell, Calendar, Pin, AlertTriangle, PartyPopper, Wrench, Clock, Search } from 'lucide-react';
+import { Bell, Calendar, Pin, AlertTriangle, PartyPopper, Wrench, Clock, Search, Building } from 'lucide-react';
 import BASE_URL from '../../../utils/apiConfig';
 
 const NoticeBoardPage = () => {
@@ -37,24 +37,29 @@ const NoticeBoardPage = () => {
     }, []);
 
     const getIcon = (category) => {
-        switch (category) {
-            case 'Maintenance': return <Wrench size={18} />;
-            case 'Event': return <PartyPopper size={18} />;
+        const cat = (category || '').toLowerCase();
+        switch (cat) {
+            case 'maintenance': return <Wrench size={18} />;
+            case 'event': return <PartyPopper size={18} />;
+            case 'emergency': return <AlertTriangle size={18} />;
             default: return <Bell size={18} />;
         }
     };
 
     const getColor = (category) => {
-        switch (category) {
-            case 'Maintenance': return 'text-amber-500 bg-amber-500/10 border-amber-500/20';
-            case 'Event': return 'text-violet-500 bg-violet-500/10 border-violet-500/20';
+        const cat = (category || '').toLowerCase();
+        switch (cat) {
+            case 'maintenance': return 'text-amber-500 bg-amber-500/10 border-amber-500/20';
+            case 'event': return 'text-violet-500 bg-violet-500/10 border-violet-500/20';
+            case 'emergency': return 'text-rose-500 bg-rose-500/10 border-rose-500/20';
             default: return 'text-sky-500 bg-sky-500/10 border-sky-500/20';
         }
     };
 
     const filteredNotices = notices.filter(notice => {
-        const matchesFilter = filter === 'all' || notice.category.toLowerCase() === filter;
-        const matchesSearch = notice.title.toLowerCase().includes(searchQuery.toLowerCase()) || notice.content.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesFilter = filter === 'all' || (notice.category || '').toLowerCase() === filter;
+        const matchesSearch = (notice.title || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                             (notice.content || '').toLowerCase().includes(searchQuery.toLowerCase());
         return matchesFilter && matchesSearch;
     });
 
@@ -88,7 +93,7 @@ const NoticeBoardPage = () => {
 
             {/* Filter Tabs */}
             <div className="flex flex-wrap gap-2">
-                {['all', 'maintenance', 'event', 'general'].map((cat) => (
+                {['all', 'maintenance', 'event', 'general', 'emergency'].map((cat) => (
                     <button
                         key={cat}
                         onClick={() => setFilter(cat)}
@@ -143,7 +148,18 @@ const NoticeBoardPage = () => {
 
                             <div className={`mt-4 pt-4 border-t flex items-center justify-between text-xs sm:text-sm font-medium ${isDarkMode ? 'border-slate-800 text-slate-500' : 'border-slate-100 text-slate-500'}`}>
                                 <span className="flex items-center gap-2">Posted by: <span className={isDarkMode ? 'text-slate-300' : 'text-slate-700'}>{notice.author}</span></span>
-                                <span className="flex items-center gap-1"><Clock size={14} /> 2 mins read</span>
+                                <div className="flex items-center gap-4">
+                                    <span className="flex items-center gap-1.5">
+                                        <AlertTriangle size={14} className={notice.priority === 'high' ? 'text-rose-500' : 'text-amber-500'} />
+                                        <span className="capitalize">{notice.priority} Priority</span>
+                                    </span>
+                                    {notice.property_title && (
+                                        <span className="flex items-center gap-1.5">
+                                            <Building size={14} className="text-violet-500" />
+                                            <span>{notice.property_title}</span>
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     ))

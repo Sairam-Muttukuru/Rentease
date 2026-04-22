@@ -65,6 +65,9 @@ const AddTenantModal = ({ isOpen, onClose, properties, onSuccess, isDarkMode, pr
                 [name]: value,
                 monthly_rent: selectedProp ? selectedProp.price : prev.monthly_rent
             }));
+        } else if (name === 'phone') {
+            const cleaned = value.replace(/\D/g, '').slice(0, 10);
+            setFormData(prev => ({ ...prev, [name]: cleaned }));
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
@@ -72,6 +75,12 @@ const AddTenantModal = ({ isOpen, onClose, properties, onSuccess, isDarkMode, pr
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (formData.phone && formData.phone.length !== 10) {
+            toast.error("Phone number must be exactly 10 digits");
+            return;
+        }
+
         try {
             const token = localStorage.getItem("accessToken");
             if (!token) {

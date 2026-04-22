@@ -1,50 +1,88 @@
+/* eslint-disable no-unused-vars */
 import React from 'react';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, MapPin, Building } from 'lucide-react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import { useTheme } from "../../../context/ThemeContext";
 
 const MyPropertyCard = ({ user, propertyImages, currentImageIndex, navigate, isDarkMode }) => {
     return (
-        <Card className="p-0 overflow-hidden flex flex-col h-full hover:shadow-[0_0_30px_rgba(0,0,0,0.1)] transition-shadow duration-500">
-            <div className="relative h-48 sm:h-56 w-full shrink-0 overflow-hidden group">
+        <Card className="p-0 overflow-hidden flex flex-col hover:shadow-lg transition-all duration-300">
+            {/* Image Section */}
+            <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden group bg-slate-100 dark:bg-slate-900 shadow-inner">
+                {/* Blurred Backdrop */}
                 <img
-                    key={currentImageIndex} // Key added to trigger animation on index change
+                    src={propertyImages[currentImageIndex] || "https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2671&auto=format&fit=crop"}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover blur-3xl opacity-40 scale-125"
+                />
+                {/* Main Fitted Image */}
+                <img
+                    key={currentImageIndex}
                     src={propertyImages[currentImageIndex] || "https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2671&auto=format&fit=crop"}
                     alt="Property"
-                    className="w-full h-full object-cover animate-in fade-in group-hover:scale-105 transition-transform duration-1000"
+                    className="relative w-full h-full object-contain group-hover:scale-105 transition-transform duration-700"
                 />
-                <div className={`absolute inset-0 bg-gradient-to-t transition-colors duration-500 ${isDarkMode ? 'from-slate-900/90 to-transparent' : 'from-white/90 to-transparent'}`}></div>
-                <div className="absolute bottom-4 left-4">
-                    <h3 className={`text-xl font-bold transition-colors duration-500 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{user.propertyName}</h3>
-                    <p className={`text-sm transition-colors duration-500 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{user.address}</p>
-                </div>
+                <div className={`absolute inset-0 bg-gradient-to-t ${isDarkMode ? 'from-slate-900/80 to-transparent' : 'from-slate-900/40 to-transparent'} z-10`}></div>
+                
                 <div className="absolute top-4 right-4">
-                    <span className="bg-emerald-500/80 backdrop-blur-md text-white text-xs px-3 py-1 rounded-full border border-white/20 font-medium">Occupied</span>
+                    <span className="bg-emerald-500 text-white text-[10px] px-2.5 py-1 rounded-lg font-bold uppercase tracking-wider shadow-lg">Occupied</span>
+                </div>
+
+                <div className="absolute bottom-4 left-4 right-4 text-white">
+                    <h3 className="text-xl font-bold truncate tracking-tight">{user.propertyName}</h3>
+                    <div className="flex items-center gap-1.5 opacity-90 mt-0.5">
+                        <MapPin size={12} className="text-violet-400" />
+                        <p className="text-xs truncate">{user.address}</p>
+                    </div>
                 </div>
             </div>
 
-            <div className="p-6 flex-1 space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                    <div className={`p-3 rounded-lg border transition-colors duration-500 flex justify-between items-center ${isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-50 border-slate-200'}`}>
-                        <div>
-                            <p className={`text-xs uppercase tracking-wider transition-colors duration-500 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Landlord</p>
-                            <p className={`font-medium transition-colors duration-500 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{user.landlord}</p>
+            {/* Simplified Content Body */}
+            <div className="p-5 space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                    {/* Landlord Info */}
+                    <div className={`p-3 rounded-2xl border transition-colors ${isDarkMode ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                        <div className="flex justify-between items-start mb-1">
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Landlord</p>
+                            <button onClick={() => navigate('messages')} className="text-violet-500 hover:text-violet-600 transition-colors">
+                                <MessageSquare size={14} />
+                            </button>
                         </div>
-                        <button onClick={() => navigate('my-property')} className={`p-2 rounded-full transition-colors ${isDarkMode ? 'hover:bg-slate-700 text-slate-400 hover:text-white' : 'hover:bg-slate-200 text-slate-500 hover:text-slate-900'}`}>
-                            <MessageSquare size={16} />
-                        </button>
+                        <p className={`font-semibold text-sm truncate ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>{user.landlord}</p>
                     </div>
 
-                    <div className={`p-3 rounded-lg border transition-colors duration-500 ${isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-50 border-slate-200'}`}>
-                        <p className={`text-xs uppercase tracking-wider transition-colors duration-500 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>Monthly Rent</p>
-                        <p className={`font-bold transition-colors duration-500 ${isDarkMode ? 'text-violet-400' : 'text-violet-600'}`}>₹{Math.round(user.monthlyRent || 0).toLocaleString()}</p>
+                    {/* Rent Info */}
+                    <div className={`p-3 rounded-2xl border transition-colors ${isDarkMode ? 'bg-slate-800/40 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Monthly Rent</p>
+                        <p className={`font-bold text-sm ${isDarkMode ? 'text-violet-400' : 'text-violet-600'}`}>
+                            ₹{Math.round(user.monthlyRent || 0).toLocaleString()}
+                        </p>
                     </div>
                 </div>
+
+                {/* Assigned Unit */}
+                {(user.room_number || user.flat_number) && (
+                    <div className={`p-3 rounded-2xl border flex items-center gap-3 ${isDarkMode ? 'bg-slate-800/20 border-slate-700' : 'border-slate-100 bg-slate-50/50'}`}>
+                        <div className={`p-2 rounded-xl ${isDarkMode ? 'bg-slate-800 text-slate-400' : 'bg-white text-slate-400 shadow-sm'}`}>
+                            <Building size={16} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Unit Assigned</p>
+                            <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                                {user.room_number ? `Room ${user.room_number}` : `Flat ${user.flat_number}`}
+                            </p>
+                        </div>
+                    </div>
+                )}
             </div>
 
-            <div className="p-6 pt-0 mt-auto">
-                <Button variant="outline" className="w-full justify-center" onClick={() => navigate('my-property')}>
+            {/* Simple Action */}
+            <div className="p-5 pt-0">
+                <Button 
+                    className="w-full justify-center py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest bg-violet-600 text-white hover:bg-violet-700 shadow-md shadow-violet-600/10 transition-all duration-300"
+                    onClick={() => navigate('my-property')}
+                >
                     View Property Details
                 </Button>
             </div>
@@ -53,3 +91,6 @@ const MyPropertyCard = ({ user, propertyImages, currentImageIndex, navigate, isD
 };
 
 export default MyPropertyCard;
+
+
+

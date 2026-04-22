@@ -10,12 +10,12 @@ module.exports = async (email, password) => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Account Ready</title>
     </head>
-    <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Outfit', sans-serif;">
         <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
             
             <!-- Logo Header -->
             <div style="padding: 32px; text-align: left; background: #ffffff; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px;">
-                <img src="${process.env.FRONTEND_URL || 'https://rentease-home.vercel.app'}/favicon.png" alt="RentEase" style="height: 32px; width: 32px; border-radius: 8px;" />
+                <img src="cid:renteasefavicon" alt="RentEase" style="height: 32px; width: 32px; border-radius: 8px; object-fit: contain; background-color: #ffffff; padding: 2px;" />
                 <span style="font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">RentEase</span>
             </div>
 

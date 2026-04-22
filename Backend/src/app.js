@@ -39,15 +39,14 @@ app.use((req, res, next) => {
     if (!req.url.startsWith('/api')) return next();
 
     const start = Date.now();
-    
+
     res.on('finish', () => {
         const duration = Date.now() - start;
         const logObj = {
             api_call: `${req.method} ${req.url}`,
             status: res.statusCode,
-            duration: `${duration}ms`,
         };
-        
+
         if (req.body && Object.keys(req.body).length > 0) {
             // Trim long strings to avoid terminal spam (like base64 images)
             const cleanBody = {};
@@ -81,6 +80,7 @@ app.use("/api/service-provider", require("./routes/serviceProvider/ServiceProvid
 app.use("/api/service-provider/reviews", require("./routes/common/ReviewRoutes"));
 app.use("/api/announcement", require("./routes/common/AnnouncementRoutes"));
 app.use("/api/messages", require("./routes/common/MessageRoutes"));
+app.use("/api/watchlist", require("./routes/tenant/watchlistRoutes"));
 
 
 module.exports = app;

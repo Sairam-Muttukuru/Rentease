@@ -1,4 +1,5 @@
 const AmenityService = require("../../services/landlord/AmenityService");
+const AuditService = require("../../services/common/AuditService");
 
 exports.getAmenities = async (req, res) => {
   try {
@@ -14,6 +15,7 @@ exports.addCustomAmenity = async (req, res) => {
   try {
     const { name } = req.body;
     const newAmenity = await AmenityService.addCustomAmenity(name, req.user.id);
+    await AuditService.logAmenityAction(req.user.id, "Created Custom", `Name: ${name}`);
     res.status(201).json(newAmenity);
   } catch (err) {
     console.error("addCustomAmenity Error:", err);

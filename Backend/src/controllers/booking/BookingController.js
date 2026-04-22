@@ -1,9 +1,11 @@
 const BookingService = require('../../services/booking/BookingService');
+const AuditService = require('../../services/common/AuditService');
 
 exports.createBooking = async (req, res) => {
     try {
         const { propertyId, message, visitSlot } = req.body;
         const booking = await BookingService.createPropertyBooking(req.user.id, propertyId, message, visitSlot);
+        await AuditService.logBookingAction(req.user.id, booking.id, "Requested Visit", `Property ID: ${propertyId}`);
         res.status(201).json(booking);
     } catch (err) {
         console.error("Create Booking Error:", err);
@@ -42,6 +44,7 @@ exports.updateBookingStatus = async (req, res) => {
     try {
         const { status, visitSlot } = req.body;
         const booking = await BookingService.updatePropertyBookingStatus(req.params.id, status, visitSlot || null);
+        await AuditService.logBookingAction(req.user.id, req.params.id, "Updated Status", `New Status: ${status}`);
         res.json(booking);
     } catch (err) {
         res.status(500).json({ error: err.message });

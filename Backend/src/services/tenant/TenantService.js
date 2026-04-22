@@ -152,27 +152,25 @@ exports.addTenant = async (landlordId, propertyId, data) => {
     throw new Error("Unauthorized property");
   }
 
-  // 1️⃣ Handlers for structured data
   const full_name = data.primary_member?.full_name || data.full_name;
   const phone = data.primary_member?.phone || data.phone;
-  const email = data.primary_member?.email || data.email;
+  const trimmedEmail = (data.primary_member?.email || data.email || "").trim();
   const tenant_type = data.tenant_type || 'BACHELOR';
 
-  if (!full_name || !email) {
+  if (!full_name || !trimmedEmail) {
     throw new Error("Required fields missing (Name and Email are mandatory)");
   }
 
   // 2️⃣ 🔒 Security & Registration Check
   const pType = (property.property_type || "").toUpperCase();
   const fType = (property.family_type || "").toUpperCase();
-  
-  // Checks for PG, HOSTEL, or PG/HOSTEL variations
   const isSharedType = pType.includes('PG') || pType.includes('HOSTEL') || fType === 'BACHELORS';
-  const existingUser = await UserModel.findUserByEmail(email);
+
+  const existingUser = await UserModel.findUserByEmail(trimmedEmail);
 
   // For shared properties (PG/Bachelors), registration is mandatory
   if (isSharedType && !existingUser) {
-    throw new Error(`Security Alert: The account for '${email}' was not found. For PG/Hostel or Bachelor properties, every tenant MUST register an account on RentEase before being added.`);
+    throw new Error(`Security Alert: The account for '${trimmedEmail}' was not found. For PG/Hostel or Bachelor properties, every tenant MUST register an account on RentEase before being added.`);
   }
 
   // 3️⃣ 💰 Rent Calculation & Splitting Logic
@@ -199,6 +197,14 @@ exports.addTenant = async (landlordId, propertyId, data) => {
     throw new Error(`Forbidden: This property has reached its sharing capacity (${property.sharing_capacity} beds).`);
   }
 
+  // 3.1 📅 Construction of due date as a full DATE (not just a day number)
+  const baseDate = new Date(data.start_date || new Date());
+  let rentDueFinal = data.rent_due_date;
+  if (!rentDueFinal) {
+    // If no specific due date, default to the start_date to ensure cycles align with move-in
+    rentDueFinal = data.start_date || new Date().toISOString().split('T')[0];
+  }
+
   // 5️⃣ Insert tenant
   const tenant = await Tenant.create({
     landlord_id: landlordId,
@@ -206,9 +212,9 @@ exports.addTenant = async (landlordId, propertyId, data) => {
     tenant_type: tenant_type.toUpperCase(),
     monthly_rent: calculatedRent,
     payment_status: (data.payment_status || 'PENDING').toUpperCase(),
-    user_id: existingUser ? existingUser.id : null, // Allowed for family/couples
+    user_id: existingUser ? existingUser.id : null, 
     start_date: data.start_date || new Date().toISOString().split('T')[0],
-    rent_due_date: data.rent_due_date || property.rent_due_day
+    rent_due_date: rentDueFinal
   });
 
   // 2️⃣ Insert primary member
@@ -218,7 +224,7 @@ exports.addTenant = async (landlordId, propertyId, data) => {
     phone: phone,
     relation: "Self",
     is_primary: true,
-    tenant_emailid: email
+    tenant_emailid: trimmedEmail
   });
 
   // 3️⃣ Send Invitation Email (Fire-and-forget)
@@ -227,12 +233,12 @@ exports.addTenant = async (landlordId, propertyId, data) => {
   landlordUserPromise.then(async (landlordUser) => {
     try {
       await sendTenantInvitationEmail({
-        tenantEmail: email,
+        tenantEmail: trimmedEmail,
         tenantName: full_name,
         landlordName: landlordUser ? `${landlordUser.first_name} ${landlordUser.last_name}` : "Your Landlord",
         propertyName: property.title,
         propertyAddress: property.address,
-        monthlyRent: monthly_rent,
+        monthlyRent: calculatedRent,
         startDate: data.start_date,
         rentDueDate: data.rent_due_date,
         propertyImageUrl: (property.images && property.images.length > 0) ? property.images[0].url : null
@@ -242,7 +248,7 @@ exports.addTenant = async (landlordId, propertyId, data) => {
     }
   });
 
-  return tenant;
+  return { ...tenant, name: full_name };
 };
 
 exports.updateTenant = async (landlordId, tenantId, data) => {
@@ -429,25 +435,30 @@ exports.getDashboardData = async (requesterId, targetUserName = null) => {
     const startDateIST = new Date(startDateRaw.getTime() + (5.5 * 60 * 60 * 1000));
     const startDate = new Date(Date.UTC(startDateIST.getUTCFullYear(), startDateIST.getUTCMonth(), startDateIST.getUTCDate(), 12, 0, 0, 0));
 
-    // Rent cycles are anchored to rent_due_date
+    // Rent cycles are anchored to rent_due_date (which we now ensure is the cycle start day)
     const anchorDateSource = tenant.rent_due_date || tenant.start_date;
     const anchorDateRaw = new Date(anchorDateSource);
     const anchorDateIST = new Date(anchorDateRaw.getTime() + (5.5 * 60 * 60 * 1000));
-    const anchorDate = new Date(Date.UTC(anchorDateIST.getUTCFullYear(), anchorDateIST.getUTCMonth(), anchorDateIST.getUTCDate(), 12, 0, 0, 0));
+    
+    // Normalize anchorDate to have the same MONTH and YEAR as the move-in (start_date)
+    // to ensure the cycle calculation starts from the very beginning.
+    const anchorDate = new Date(Date.UTC(startDateIST.getUTCFullYear(), startDateIST.getUTCMonth(), anchorDateIST.getUTCDate(), 12, 0, 0, 0));
 
-    // Calculate months elapsed: count every rent cycle whose start date has arrived
+    // Calculate months elapsed
     let monthsElapsed = 0;
     if (getYMD(currentDate) >= getYMD(startDate)) {
-        // Calendar month difference between anchorDate and today
+        // If they have joined, they have at least 1 cycle started (the current one)
         let monthsDiff = (currentDate.getFullYear() - anchorDate.getFullYear()) * 12
                        + (currentDate.getMonth() - anchorDate.getMonth());
-        // If today's day-of-month >= anchor's day-of-month, this month's cycle has ALSO started
-        if (currentDate.getDate() >= anchorDate.getDate()) {
+        
+        // If today's day-of-month >= anchor's day-of-month, this cycle is definitely active.
+        // We also check today >= startDate to ensure we catch the very first day properly.
+        if (currentDate.getDate() >= anchorDate.getDate() || getYMD(currentDate) === getYMD(startDate)) {
             monthsDiff += 1;
         }
-        // Add 1 for the initial partial month ONLY if move-in was before the first anchor date
-        const hasInitialMonth = startDate < anchorDate ? 1 : 0;
-        monthsElapsed = Math.max(1, monthsDiff + hasInitialMonth);
+        
+        // Standardize to at least 1 month if they are currently residing
+        monthsElapsed = Math.max(1, monthsDiff);
     }
 
     const expectedRent = monthsElapsed * parseFloat(tenant.monthly_rent);

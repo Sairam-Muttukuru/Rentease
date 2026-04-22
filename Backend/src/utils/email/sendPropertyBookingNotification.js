@@ -31,7 +31,7 @@ async function sendPropertyBookingNotification(toEmail, details) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>New Booking Request</title>
     </head>
-    <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Outfit', sans-serif;">
         <div style="max-width: 620px; margin: 40px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
             
             <!-- Logo Header (Table-based for Bulletproof Rendering) -->
@@ -41,10 +41,10 @@ async function sendPropertyBookingNotification(toEmail, details) {
                         <table cellpadding="0" cellspacing="0" border="0">
                             <tr>
                                 <td style="vertical-align: middle; padding-right: 12px;">
-                                    <img src="${process.env.FRONTEND_URL || 'https://rentease-home.vercel.app'}/favicon.png" alt="Logo" width="32" height="32" style="display: block; width: 32px; height: 32px; border-radius: 8px;" />
+                                    <img src="cid:renteasefavicon" alt="Logo" width="32" height="32" style="display: block; width: 32px; height: 32px; border-radius: 8px; object-fit: contain; background-color: #ffffff; padding: 2px;" />
                                 </td>
                                 <td style="vertical-align: middle;">
-                                    <span style="font-size: 22px; font-weight: 800; color: #010101; letter-spacing: -0.5px; font-family: 'Segoe UI', Arial, sans-serif;">RentEase</span>
+                                    <span style="font-size: 22px; font-weight: 800; color: #010101; letter-spacing: -0.5px; font-family: 'Outfit', sans-serif;">RentEase</span>
                                 </td>
                             </tr>
                         </table>

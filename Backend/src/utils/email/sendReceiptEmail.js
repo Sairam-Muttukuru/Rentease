@@ -20,16 +20,17 @@ const sendReceiptEmail = (tenantEmail, payment) => {
             try {
                 const subject = `🧾 Payment Confirmation: ₹${payment.amount.toLocaleString()} for ${payment.property_title}`;
                 const propertyImage = payment.property_image || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=600';
-                
+
                 const html = `
                 <!DOCTYPE html>
                 <html lang="en">
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
                     <title>Digital Payment Receipt</title>
                 </head>
-                <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+                <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: 'Outfit', sans-serif;">
                     <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
                         
                         <!-- Logo Header (Table-based for Bulletproof Rendering) -->
@@ -39,10 +40,10 @@ const sendReceiptEmail = (tenantEmail, payment) => {
                                     <table cellpadding="0" cellspacing="0" border="0">
                                         <tr>
                                             <td style="vertical-align: middle; padding-right: 12px;">
-                                                <img src="${process.env.FRONTEND_URL || 'https://rentease-home.vercel.app'}/favicon.png" alt="Logo" width="32" height="32" style="display: block; width: 32px; height: 32px; border-radius: 8px;" />
+                                                <img src="cid:renteasefavicon" alt="RentEase" width="32" height="32" style="display: block; width: 32px; height: 32px; border-radius: 8px; object-fit: contain; background-color: #ffffff; padding: 2px;" />
                                             </td>
                                             <td style="vertical-align: middle;">
-                                                <span style="font-size: 22px; font-weight: 800; color: #010101; letter-spacing: -0.5px; font-family: 'Segoe UI', Arial, sans-serif;">RentEase</span>
+                                                <span style="font-size: 22px; font-weight: 800; color: #010101; letter-spacing: -0.5px; font-family: 'Outfit', sans-serif;">RentEase</span>
                                             </td>
                                         </tr>
                                     </table>
@@ -121,49 +122,108 @@ const sendReceiptEmail = (tenantEmail, payment) => {
         // 2️⃣ Professional PDF Design
         try {
             const faviconPath = sendMail.GlobalFaviconPath;
-            doc.rect(0, 0, doc.page.width, 140).fill("#1e1b4b");
+            const W = doc.page.width;
+            const H = doc.page.height;
 
+            // Header bar
+            doc.rect(0, 0, W, 130).fill("#1e1b4b");
             if (faviconPath) {
-                doc.image(faviconPath, 65, 45, { width: 55 });
+                doc.image(faviconPath, 48, 38, { width: 50 });
             } else {
-                doc.fillColor("#ffffff").fontSize(32).font("Helvetica-Bold").text("RE", 60, 50);
+                doc.fillColor("#ffffff").fontSize(28).font("Helvetica-Bold").text("RE", 48, 45);
             }
+            doc.fillColor("#ffffff").fontSize(26).font("Helvetica-Bold").text("RentEase", 110, 48);
+            doc.fillColor("#a5b4fc").fontSize(10).font("Helvetica").text("Smart Property Management", 110, 79);
+            doc.fillColor("#ffffff").fontSize(20).font("Helvetica-Bold")
+               .text("OFFICIAL RECEIPT", 0, 42, { align: "right", width: W - 48 });
+            doc.fillColor("#a5b4fc").fontSize(10).font("Helvetica")
+               .text(`Receipt No: ${payment.receipt_number || 'N/A'}`, 0, 70, { align: "right", width: W - 48 })
+               .text(`Issued: ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}`, 0, 86, { align: "right", width: W - 48 });
 
-            doc.fillColor("#ffffff").fontSize(28).font("Helvetica-Bold").text("RentEase", 135, 55);
-            doc.fillColor("#ffffff").fontSize(22).font("Helvetica-Bold").text("OFFICIAL RECEIPT", 0, 45, { align: "right", paddingRight: 50, width: doc.page.width - 50 });
-            doc.fillColor("#94a3b8").fontSize(10).font("Helvetica").text(`Receipt #: ${payment.receipt_number || 'N/A'}`, 0, 75, { align: "right", paddingRight: 50, width: doc.page.width - 50 });
-            doc.text(`Date Issued: ${new Date().toLocaleDateString('en-IN')}`, 0, 90, { align: "right", paddingRight: 50, width: doc.page.width - 50 });
+            // Green confirmation ribbon
+            doc.rect(0, 130, W, 46).fill("#059669");
+            doc.fillColor("#ffffff").fontSize(13).font("Helvetica-Bold")
+               .text("✓  PAYMENT CONFIRMED & VERIFIED", 0, 144, { align: "center", width: W });
 
-            const startY = 180;
-            const col1 = 50;
-            const col2 = 320;
+            // Party detail cards
+            const sectionY = 210;
+            const col1X = 48, col2X = W / 2 + 20, colW = W / 2 - 70;
 
-            doc.fillColor("#64748b").fontSize(10).font("Helvetica-Bold").text("BILLED TO", col1, startY);
-            doc.fillColor("#0f172a").fontSize(14).text(payment.tenant_name || "Resident", col1, startY + 15);
-            doc.fillColor("#475569").fontSize(10).font("Helvetica").text(`Tenant ID: ${payment.tenant_id || "N/A"}`, col1, startY + 35);
+            doc.rect(col1X, sectionY, colW, 120).fill("#f8fafc")
+               .rect(col1X, sectionY, colW, 120).lineWidth(1).strokeColor("#e2e8f0").stroke();
+            doc.rect(col2X, sectionY, colW, 120).fill("#f8fafc")
+               .rect(col2X, sectionY, colW, 120).lineWidth(1).strokeColor("#e2e8f0").stroke();
 
-            doc.fillColor("#64748b").fontSize(10).font("Helvetica-Bold").text("PAYMENT DETAILS", col2, startY);
-            doc.fillColor("#0f172a").fontSize(12).font("Helvetica-Bold").text(`Date: ${new Date(payment.payment_date || new Date()).toLocaleDateString('en-IN')}`, col2, startY + 15);
-            doc.fillColor("#475569").fontSize(10).font("Helvetica").text(`TXN ID: ${payment.transaction_id || "N/A"}`, col2, startY + 35);
+            // Left — Tenant
+            doc.fillColor("#6366f1").fontSize(9).font("Helvetica-Bold")
+               .text("BILLED TO (TENANT)", col1X + 16, sectionY + 14);
+            doc.fillColor("#0f172a").fontSize(14).font("Helvetica-Bold")
+               .text(payment.tenant_name || 'Resident', col1X + 16, sectionY + 30, { width: colW - 32 });
+            doc.fillColor("#64748b").fontSize(9).font("Helvetica")
+               .text(`Tenant ID : ${payment.tenant_id || 'N/A'}`, col1X + 16, sectionY + 56)
+               .text(`Property  : ${payment.property_title || 'N/A'}`, col1X + 16, sectionY + 72, { width: colW - 32 });
 
-            const tableY = startY + 110;
-            doc.rect(50, tableY, doc.page.width - 100, 35).fill("#f1f5f9");
-            doc.fillColor("#475569").fontSize(11).font("Helvetica-Bold").text("DESCRIPTION", 70, tableY + 12);
-            doc.text("AMOUNT", doc.page.width - 150, tableY + 12, { width: 80, align: "right" });
+            // Right — Landlord
+            doc.fillColor("#6366f1").fontSize(9).font("Helvetica-Bold")
+               .text("RECEIVED BY (LANDLORD)", col2X + 16, sectionY + 14);
+            doc.fillColor("#0f172a").fontSize(14).font("Helvetica-Bold")
+               .text(payment.landlord_name || 'Property Owner', col2X + 16, sectionY + 30, { width: colW - 32 });
+            doc.fillColor("#64748b").fontSize(9).font("Helvetica")
+               .text(`Payment Date   : ${new Date(payment.payment_date || new Date()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`, col2X + 16, sectionY + 56)
+               .text(`Transaction ID : ${payment.transaction_id || 'N/A'}`, col2X + 16, sectionY + 72, { width: colW - 32 })
+               .text(`Gateway        : ${payment.payment_gateway || 'Stripe'}`, col2X + 16, sectionY + 88, { width: colW - 32 });
 
-            doc.fillColor("#0f172a").fontSize(12).font("Helvetica").text(payment.property_title ? `Rent Payment - ${payment.property_title}` : "Monthly Rent Payment", 70, tableY + 55);
-            doc.font("Helvetica-Bold").text(`INR ${Number(payment.amount).toLocaleString()}`, doc.page.width - 180, tableY + 55, { width: 110, align: "right" });
+            // Payment table
+            const tableTop = sectionY + 148, tableW = W - 96;
+            doc.rect(col1X, tableTop, tableW, 32).fill("#1e1b4b");
+            doc.fillColor("#ffffff").fontSize(10).font("Helvetica-Bold")
+               .text("DESCRIPTION", col1X + 16, tableTop + 11)
+               .text("DUE DATE", col1X + tableW * 0.50, tableTop + 11, { width: 100 })
+               .text("AMOUNT (INR)", col1X + tableW * 0.72, tableTop + 11, { width: tableW * 0.28 - 16, align: "right" });
 
-            const boxY = tableY + 130;
-            doc.rect(doc.page.width - 280, boxY, 230, 60).fill("#f8fafc");
-            doc.rect(doc.page.width - 280, boxY, 230, 60).strokeColor("#cbd5e1").stroke();
-            doc.fillColor("#64748b").fontSize(12).font("Helvetica-Bold").text("TOTAL PAID", doc.page.width - 265, boxY + 23);
-            doc.fillColor("#4f46e5").fontSize(20).text(`INR ${Number(payment.amount).toLocaleString()}`, doc.page.width - 265, boxY + 20, { width: 200, align: "right" });
+            doc.rect(col1X, tableTop + 32, tableW, 44).fill("#f1f5f9");
+            const isDeposit = (payment.receipt_number || '').startsWith('SEC');
+            const desc = isDeposit
+                ? `Security Deposit — ${payment.property_title || 'Property'}`
+                : `Monthly Rent — ${payment.property_title || 'Property'}`;
+            const dueDateStr = payment.due_date
+                ? new Date(payment.due_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                : 'N/A';
 
-            doc.rotate(-12, { origin: [doc.page.width - 150, boxY + 120] });
-            doc.rect(doc.page.width - 200, boxY + 100, 160, 45).lineWidth(4).strokeColor("#10b981").stroke();
-            doc.fillColor("#10b981").fontSize(22).font("Helvetica-Bold").text("PAID IN FULL", doc.page.width - 200, boxY + 112, { width: 160, align: "center" });
-            doc.rotate(12, { origin: [doc.page.width - 150, boxY + 120] });
+            doc.fillColor("#0f172a").fontSize(11).font("Helvetica")
+               .text(desc, col1X + 16, tableTop + 46, { width: tableW * 0.45 })
+               .text(dueDateStr, col1X + tableW * 0.50, tableTop + 46, { width: 100 });
+            doc.font("Helvetica-Bold")
+               .text(`₹ ${Number(payment.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+                   col1X + tableW * 0.72, tableTop + 46, { width: tableW * 0.28 - 16, align: "right" });
+            doc.moveTo(col1X, tableTop + 76).lineTo(col1X + tableW, tableTop + 76)
+               .lineWidth(1).strokeColor("#e2e8f0").stroke();
+
+            // Total box
+            const totalBoxY = tableTop + 90, totalBoxX = col1X + tableW - 220;
+            doc.rect(totalBoxX, totalBoxY, 220, 68).fill("#eff6ff")
+               .rect(totalBoxX, totalBoxY, 220, 68).lineWidth(1.5).strokeColor("#6366f1").stroke();
+            doc.fillColor("#475569").fontSize(10).font("Helvetica-Bold")
+               .text("TOTAL AMOUNT PAID", totalBoxX + 14, totalBoxY + 12);
+            doc.fillColor("#1e1b4b").fontSize(22).font("Helvetica-Bold")
+               .text(`₹ ${Number(payment.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+                   totalBoxX + 14, totalBoxY + 30, { width: 192, align: "right" });
+
+            // PAID stamp
+            doc.save();
+            doc.rotate(-14, { origin: [col1X + 120, totalBoxY + 28] });
+            doc.rect(col1X + 40, totalBoxY + 2, 160, 56).lineWidth(4).strokeColor("#16a34a").stroke();
+            doc.fillColor("#16a34a").fontSize(24).font("Helvetica-Bold")
+               .text("PAID IN FULL", col1X + 40, totalBoxY + 16, { width: 160, align: "center", characterSpacing: 1.5 });
+            doc.restore();
+
+            // Footer
+            doc.rect(0, H - 80, W, 80).fill("#1e1b4b");
+            doc.fillColor("#a5b4fc").fontSize(10).font("Helvetica-Bold")
+               .text("RentEase", 0, H - 68, { align: "center", width: W });
+            doc.fillColor("#7c86b5").fontSize(8.5).font("Helvetica")
+               .text("support@rentease.com  |  Fast. Easy. Reliable.", 0, H - 52, { align: "center", width: W })
+               .text(`© ${new Date().getFullYear()} RentEase Home Management. All rights reserved.`, 0, H - 36, { align: "center", width: W });
 
             doc.end();
         } catch (pdfErr) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Menu, X, Sun, Moon, User, LogOut, LayoutDashboard, ChevronDown } from "lucide-react";
+import { Menu, X, Sun, Moon, User, LogOut, LayoutDashboard, ChevronDown, Bookmark, ShoppingBag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext'; // Added missing import heart
 import logo from "/favicon.png";
@@ -104,6 +104,21 @@ const Navbar = () => {
               </button>
 
               <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-2" />
+              
+              {user && user.role === 'TENANT' && (
+                <button
+                    onClick={() => {
+                        const slug = user?.name?.toLowerCase().replace(/\s+/g, '-') || 'user';
+                        navigate(`/${slug}/tenant/dashboard/services`, { state: { view: 'MY_BOOKINGS' } });
+                    }}
+                    className="p-2 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors relative group"
+                    title="My Booked Services"
+                >
+                    <ShoppingBag size={22} />
+                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-slate-900" />
+                </button>
+              )}
+
               <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
 
               <div className="flex gap-3 pl-2">
@@ -151,12 +166,24 @@ const Navbar = () => {
                             </button>
                           </>
                         ) : (
-                          <button
-                            onClick={handleDashboardClick}
-                            className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                          >
-                            <LayoutDashboard size={16} /> Dashboard
-                          </button>
+                          <>
+                            <button
+                              onClick={handleDashboardClick}
+                              className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                            >
+                              <LayoutDashboard size={16} /> Dashboard
+                            </button>
+                            <button
+                                onClick={() => {
+                                    const slug = user?.name?.toLowerCase().replace(/\s+/g, '-') || 'user';
+                                    navigate(`/${slug}/tenant/dashboard/watchlist`);
+                                    setIsDropdownOpen(false);
+                                }}
+                                className="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                            >
+                                <Bookmark size={16} /> My Watchlist
+                            </button>
+                          </>
                         )}
                         <button
                           onClick={handleLogout}
@@ -235,6 +262,16 @@ const Navbar = () => {
                 className="w-full py-3 text-slate-700 dark:text-slate-200 font-semibold bg-slate-100 dark:bg-slate-800 rounded-xl"
               >
                 Go to Dashboard
+              </button>
+              <button
+                onClick={() => {
+                    const slug = user?.name?.toLowerCase().replace(/\s+/g, '-') || 'user';
+                    navigate(`/${slug}/tenant/dashboard/watchlist`);
+                    setIsMenuOpen(false);
+                }}
+                className="w-full py-3 text-violet-600 dark:text-violet-400 font-bold bg-violet-600/10 rounded-xl flex items-center justify-center gap-2"
+              >
+                <Bookmark size={18} /> My Watchlist
               </button>
               <button
                 onClick={handleLogout}

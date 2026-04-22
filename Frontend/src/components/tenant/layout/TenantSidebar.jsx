@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Building, CreditCard, MessageSquare, Settings, Wrench, LogOut, FileText, Bell, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Home, Building, CreditCard, MessageSquare, Settings, Wrench, LogOut, FileText, Bell, ChevronLeft, ChevronRight, Bookmark } from 'lucide-react';
 import { useTheme } from "../../../context/ThemeContext";
 
 const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout, user }) => {
@@ -11,6 +11,7 @@ const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout
 
     const navItems = [
         { id: 'dashboard', path: `/${userName}/tenant/dashboard`, icon: Home, label: 'Dashboard' },
+        { id: 'watchlist', path: `/${userName}/tenant/dashboard/watchlist`, icon: Bookmark, label: 'Watchlist' },
         { id: 'notices', path: `/${userName}/tenant/dashboard/notices`, icon: Bell, label: 'Notice Board' },
         { id: 'my-property', path: `/${userName}/tenant/dashboard/my-property`, icon: Building, label: 'My Property' },
         { id: 'services', path: `/${userName}/tenant/dashboard/services`, icon: Wrench, label: 'Home Services' },
@@ -68,20 +69,20 @@ const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout
                         className={`
                             object-contain relative z-10 drop-shadow-lg
                             transition-all duration-500 ease-in-out
-                            ${isExpanded ? 'w-16 h-16' : 'w-14 h-14 scale-125 ml-0 hover:scale-[1.35]'}
+                            ${isExpanded ? 'w-13 h-12' : 'w-11 h-11'}
                         `}
                     />
                 </div>
 
                 {/* Text — stays in DOM, fades and collapses horizontally */}
                 <div className={`
-                    flex flex-col relative right-3 overflow-hidden transition-all duration-500 ease-in-out
-                    ${isExpanded ? 'max-w-[160px] opacity-100' : 'max-w-0 opacity-0'}
+                    flex flex-col transition-all duration-500 ease-in-out
+                    ${isExpanded ? 'max-w-[160px] opacity-100 ml-1' : 'max-w-0 opacity-0'}
                 `}>
-                    <span className={`text-2xl font-black tracking-tighter whitespace-nowrap ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                    <span className={`text-2xl relative right-5 font-black tracking-tighter whitespace-nowrap ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
                         RentEase
                     </span>
-                    <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-violet-500 whitespace-nowrap">
+                    <span className="text-[13px] relative right-5 font-bold uppercase tracking-[0.12em] text-violet-500 whitespace-nowrap">
                         Tenant Dashboard
                     </span>
                 </div>

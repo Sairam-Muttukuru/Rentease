@@ -27,15 +27,7 @@ const LandlordLayout = ({
     return (
         <div className={`h-screen overflow-hidden flex font-sans selection:bg-emerald-500/30 transition-colors duration-500 ease-in-out ${isDarkMode ? 'bg-slate-950 text-slate-100' : 'bg-emerald-50 text-slate-900'}`}>
 
-            {/* Toast Notification */}
-            {notificationToast && (
-                <div className="fixed top-6 right-6 z-[60] animate-in slide-in-from-right-10 fade-in duration-300">
-                    <Card isDarkMode={isDarkMode} className={`px-4 py-3 border-emerald-500/30 bg-emerald-500/10 text-emerald-400 flex items-center gap-3 shadow-xl`}>
-                        <Check size={18} />
-                        <p className="font-bold text-sm">{notificationToast.message}</p>
-                    </Card>
-                </div>
-            )}
+            {/* Toast Notification Removed - Using react-toastify instead */}
 
             {/* Sidebar Overlay (Mobile) */}
             {isMobileMenuOpen && (

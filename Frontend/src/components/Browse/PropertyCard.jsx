@@ -1,13 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Heart, MapPin, Bed, Bath, Maximize, ArrowRight, Star, ChevronLeft, ChevronRight, ShieldAlert } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext'; // Assuming AuthContext exists
+import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import BASE_URL from '../../utils/apiConfig';
 
 const PropertyCard = ({ property }) => {
     const [currentImgIndex, setCurrentImgIndex] = useState(0);
     const [isHovered, setIsHovered] = useState(false);
-    const { user } = useAuth(); // simplistic auth check
+    const [inWatchlist, setInWatchlist] = useState(false);
+    const { user } = useAuth();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const checkStatus = async () => {
+            if (!user || user.role !== 'TENANT') return;
+            try {
+                const res = await axios.get(`${BASE_URL}/api/watchlist/status/${property.id}`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
+                });
+                setInWatchlist(res.data.inWatchlist);
+            } catch (err) {
+                console.error("Watchlist check failed", err);
+            }
+        };
+        checkStatus();
+    }, [property.id, user]);
+
+    const handleWatchlist = async (e) => {
+        e.stopPropagation();
+        if (!user) {
+            toast.info("Please login to manage watchlist");
+            navigate('/login');
+            return;
+        }
+        try {
+            const res = await axios.post(`${BASE_URL}/api/watchlist`, 
+                { propertyId: property.id },
+                { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } }
+            );
+            setInWatchlist(res.data.added);
+            if (res.data.added) {
+                toast.success("Added to watchlist!");
+            } else {
+                toast.info("Removed from watchlist");
+            }
+        } catch (err) {
+            toast.error("Failed to update watchlist");
+        }
+    };
 
     const nextImage = (e) => {
         e.stopPropagation();
@@ -25,44 +67,51 @@ const PropertyCard = ({ property }) => {
             navigate('/login');
             return;
         }
-        if (property.is_fake) return; // Prevent booking fake properties
-        navigate(`/properties/${property.id}`); // Or open booking modal
+        if (property.is_fake) return;
+        navigate(`/properties/${property.id}`);
     };
 
     const images = property.images && property.images.length > 0
         ? property.images.map(img => img.url)
-        : ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&q=80&w=1000"]; // Fallback
+        : ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&q=80&w=1000"];
 
     return (
         <div
-            className={`group relative bg-white dark:bg-[#0a0a0a] rounded-[2rem] overflow-hidden border transition-all duration-500 hover:shadow-[0_0_50px_rgba(139,92,246,0.15)] hover:border-violet-500/30 hover:-translate-y-2 flex flex-col h-full ${property.is_fake ? 'border-rose-500/50 grayscale-[0.3]' : 'border-gray-200 dark:border-white/5'}`}
+            className={`group relative bg-white dark:bg-[#0a0a0a] rounded-[2rem] overflow-hidden border transition-all duration-500 hover:shadow-[0_0_50px_rgba(139,92,246,0.15)] hover:border-violet-500/30 hover:-translate-y-2 flex flex-col h-full ${property.is_fake ? 'border-rose-500/20 grayscale-[0.5]' : 'border-gray-200 dark:border-white/5'}`}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
+            onClick={() => navigate(`/properties/${property.id}`)}
         >
             {/* Image Slider */}
-            <div className="relative h-72 overflow-hidden shrink-0">
+            <div className="relative aspect-[4/3] overflow-hidden shrink-0 bg-slate-100 dark:bg-slate-900">
                 {/* Fake Property Warning Overlay */}
                 {property.is_fake && (
-                    <div className="absolute inset-0 z-20 bg-rose-600/30 backdrop-blur-[2px] flex items-center justify-center pointer-events-none p-6 text-center">
-                        <div className="bg-rose-600 text-white px-5 py-3 rounded-2xl shadow-2xl border border-rose-400 flex flex-col items-center gap-2 scale-110">
-                            <ShieldAlert size={32} className="animate-bounce" />
-                            <span className="text-sm font-black uppercase tracking-tight">Reported as Fake</span>
-                            <span className="text-[10px] opacity-80">Do Not Book</span>
+                    <div className="absolute inset-0 z-30 bg-white/40 dark:bg-black/60 backdrop-blur-[1px] flex items-center justify-center pointer-events-none p-6 text-center">
+                        <div className="bg-white dark:bg-rose-900/90 text-rose-600 dark:text-rose-100 px-4 py-2 rounded-xl shadow-xl border border-rose-200 dark:border-rose-800 flex items-center gap-2">
+                            <ShieldAlert size={18} />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Under Review</span>
                         </div>
                     </div>
                 )}
                 
                 {images.map((img, index) => (
-                    <img
-                        key={index}
-                        src={img}
-                        alt={property.title}
-                        className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out ${index === currentImgIndex ? 'opacity-100 scale-100' : 'opacity-0 scale-110'
-                            }`}
-                    />
+                    <div key={index} className={`absolute inset-0 transition-opacity duration-700 ${index === currentImgIndex ? 'opacity-100' : 'opacity-0'}`}>
+                        {/* Blurred Backdrop */}
+                        <img
+                            src={img}
+                            alt=""
+                            className="absolute inset-0 w-full h-full object-cover blur-3xl opacity-40 scale-125"
+                        />
+                        {/* Main Fitted Image */}
+                        <img
+                            src={img}
+                            alt={property.title}
+                            className={`relative w-full h-full object-contain transition-transform duration-700 ${index === currentImgIndex ? 'scale-100' : 'scale-110'}`}
+                        />
+                    </div>
                 ))}
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 opacity-80" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80 z-10" />
 
                 {/* Navigation */}
                 {images.length > 1 && (
@@ -86,8 +135,8 @@ const PropertyCard = ({ property }) => {
                             {property.property_type}
                         </span>
                         {property.is_fake && (
-                            <span className="bg-rose-600 text-white text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest flex items-center gap-1 shadow-lg border border-rose-500 animate-pulse">
-                                <ShieldAlert size={10} /> SCAM ALERT
+                            <span className="bg-rose-500 text-white text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-[0.15em] flex items-center gap-1 shadow-md">
+                                <ShieldAlert size={10} strokeWidth={3} /> Flagged
                             </span>
                         )}
                         {property.is_featured && !property.is_fake && (
@@ -101,8 +150,11 @@ const PropertyCard = ({ property }) => {
                             </span>
                         )}
                     </div>
-                    <button className="p-2.5 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-red-500 hover:text-white transition-all border border-white/10 group-hover:scale-110">
-                        <Heart className="w-4 h-4" />
+                    <button 
+                        onClick={handleWatchlist}
+                        className={`p-2.5 rounded-full backdrop-blur-md border border-white/10 transition-all group-hover:scale-110 flex items-center justify-center ${inWatchlist ? 'bg-red-500 text-white border-red-400 shadow-lg shadow-red-500/30' : 'bg-black/40 text-white hover:bg-red-500/20'}`}
+                    >
+                        <Heart className={`w-4 h-4 ${inWatchlist ? 'fill-white' : ''}`} />
                     </button>
                 </div>
 

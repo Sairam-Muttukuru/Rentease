@@ -64,7 +64,8 @@ const INITIAL_NEW_PROPERTY = {
     office_type: "", seating_capacity: "", cabins_available: false, conference_room: false,
     security_deposit: "", rent_escalation_desc: "", upi_id: "", qr_code: "",
     rent_due_day: "5", late_penalty_amount: "", guidelines: "",
-    sharing_capacity: "1"
+    sharing_capacity: "1",
+    room_number: ""
 };
 
 const AddPropertyView = ({ isDarkMode, onSuccess, showNotificationToast }) => {
@@ -231,7 +232,8 @@ const AddPropertyView = ({ isDarkMode, onSuccess, showNotificationToast }) => {
                 rent_due_day: parseInt(newProperty.rent_due_day) || 5,
                 late_penalty_amount: parseFloat(newProperty.late_penalty_amount) || 0,
                 guidelines: newProperty.guidelines || null,
-                sharing_capacity: parseInt(newProperty.sharing_capacity) || 1
+                sharing_capacity: parseInt(newProperty.sharing_capacity) || 1,
+                room_number: newProperty.room_number || null
             };
             const response = await axios.post(`${import.meta.env.VITE_API_URL || 'https://rentease-1-pwm5.onrender.com'}/api/properties/addproperty`, propertyPayload, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -312,7 +314,7 @@ const AddPropertyView = ({ isDarkMode, onSuccess, showNotificationToast }) => {
                                         <option value="APARTMENT">Apartment</option>
                                         <option value="INDEPENDENT">Independent House</option>
                                         <option value="VILLA">Villa</option>
-                                        <option value="STUDIO">Studio</option>
+                                        <option value="DUPLEX">Duplex House</option>
                                         <option value="INDEPENDENT_FLOOR">Independent Floor</option>
                                         <option value="PG">PG/Hostel</option>
                                         <option value="COMMERCIAL_SHOP">Commercial Shop</option>
@@ -323,7 +325,7 @@ const AddPropertyView = ({ isDarkMode, onSuccess, showNotificationToast }) => {
                                 {newProperty.type === 'PG' && (
                                     <div className="animate-in slide-in-from-left duration-300">
                                         <label className="block text-xs font-black text-black dark:text-white uppercase tracking-widest mb-2">Room Number</label>
-                                        <input type="text" name="room_no" value={newProperty.room_no || ''} onChange={handleInputChange} className={inputClasses} placeholder="e.g. 101, B-4" />
+                                        <input type="text" name="room_number" value={newProperty.room_number || ''} onChange={handleInputChange} className={inputClasses} placeholder="e.g. 101, B-4" />
                                     </div>
                                 )}
 
@@ -539,6 +541,38 @@ const AddPropertyView = ({ isDarkMode, onSuccess, showNotificationToast }) => {
                                             <label className="flex items-center gap-3 cursor-pointer">
                                                 <input type="checkbox" name="private_garden" checked={newProperty.private_garden} onChange={handleInputChange} className="w-5 h-5 accent-violet-600 rounded-lg" />
                                                 <span className="text-sm font-bold text-black dark:text-white">Private Garden</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {newProperty.type === "DUPLEX" && (
+                                    <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-2xl bg-indigo-50/50 border border-indigo-100 dark:bg-slate-900/50 dark:border-slate-800">
+                                        <div className="md:col-span-2 flex items-center gap-2 mb-2 pb-2 border-b border-indigo-200 dark:border-slate-700">
+                                            <Home size={16} className="text-indigo-500" />
+                                            <span className="text-sm font-bold text-black dark:text-white uppercase tracking-wider">Duplex House Details</span>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-black text-black dark:text-white uppercase tracking-widest mb-2">Total Floors</label>
+                                            <input required name="total_floors" value={newProperty.total_floors} onChange={handleInputChange} type="number" placeholder="2" className={inputClasses} />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-black text-black dark:text-white uppercase tracking-widest mb-2">Parking</label>
+                                            <select name="parking_type" value={newProperty.parking_type} onChange={handleInputChange} className={inputClasses}>
+                                                <option value="">Select Parking</option>
+                                                <option value="CAR_COVERED">Internal Garage</option>
+                                                <option value="CAR_OPEN">Driveway Parking</option>
+                                                <option value="CAR_BIKE">Garage + Bike</option>
+                                            </select>
+                                        </div>
+                                        <div className="md:col-span-2 flex gap-6 mt-2">
+                                            <label className="flex items-center gap-3 cursor-pointer">
+                                                <input type="checkbox" name="private_garden" checked={newProperty.private_garden} onChange={handleInputChange} className="w-5 h-5 accent-violet-600 rounded-lg" />
+                                                <span className="text-sm font-bold text-black dark:text-white">Private Garden</span>
+                                            </label>
+                                            <label className="flex items-center gap-3 cursor-pointer">
+                                                <input type="checkbox" name="is_gated" checked={newProperty.is_gated} onChange={handleInputChange} className="w-5 h-5 accent-violet-600 rounded-lg" />
+                                                <span className="text-sm font-bold text-black dark:text-white">Gated Community</span>
                                             </label>
                                         </div>
                                     </div>

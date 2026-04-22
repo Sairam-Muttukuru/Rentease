@@ -84,6 +84,7 @@ exports.getAllByLandlordId = async (landlordId) => {
     p.sharing_capacity,
     p.late_penalty_amount as "latePenaltyAmount",
     p.rent_due_day as "rentDueDay",
+    p.room_number,
     tm.full_name as name,
     tm.phone,
     tm.tenant_emailid as email,
@@ -158,7 +159,7 @@ exports.getByUserId = async (userId) => {
     p.area_sqft,
     p.bedrooms,
     p.bathrooms,
-
+ 
     --Financials & Policies
     p.security_deposit as "securityDeposit",
     t.security_deposit_status as "securityDepositStatus",
@@ -172,7 +173,8 @@ exports.getByUserId = async (userId) => {
     p.room_type,
     p.food_included,
     p.electricity_included,
-
+    p.room_number,
+ 
     CONCAT(u.first_name, ' ', u.last_name) as landlord_name,
     u.email as landlord_email,
     u.phone as landlord_phone,
@@ -229,4 +231,17 @@ exports.getDetailedById = async (tenantId) => {
     `,
     [tenantId]
   )).rows[0];
-};
+};
+
+exports.linkUserToTenants = async (email, userId) => {
+  return await db.query(
+    `UPDATE tenants 
+     SET user_id = $1 
+     WHERE id IN (
+       SELECT tenant_id 
+       FROM tenant_members 
+       WHERE LOWER(tenant_emailid) = LOWER($2)
+     ) AND user_id IS NULL`,
+    [userId, email]
+  );
+};

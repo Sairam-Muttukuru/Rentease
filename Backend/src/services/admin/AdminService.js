@@ -38,7 +38,8 @@ exports.toggleUserStatus = async (id, reason, adminId) => {
   const newStatus = oldStatus === 'Active' ? 'Blocked' : 'Active';
 
   await model.toggleUserStatus(id);
-  await model.logAction(adminId, `${newStatus} User Access: ${user.email} (Reason: ${reason || 'N/A'})`);
+  const fullName = `${user.first_name} ${user.last_name || ""}`.trim();
+  await model.logAction(adminId, `${newStatus} User Access: ${user.email} (${fullName}) (Reason: ${reason || 'N/A'})`);
 
   // Background dispatch (Removing await for instant response)
   console.log(`[StatusUpdate] Dispatching ${newStatus === 'Blocked' ? 'Block' : 'Action'} notification...`);
@@ -57,26 +58,28 @@ exports.toggleUserStatus = async (id, reason, adminId) => {
 
 exports.getProperties = () => model.getProperties();
 exports.togglePropertyStatus = async (id, adminId) => {
+  const property = await model.getPropertyById(id);
   const res = await model.togglePropertyStatus(id);
-  await model.logAction(adminId, `Changed Property Visibility (ID: ${id})`);
+  await model.logAction(adminId, `Changed Visibility for Property: ${property?.title || "ID: " + id}`);
   return res;
 };
 
 exports.flagPropertyFake = async (id, adminId) => {
+  const property = await model.getPropertyById(id);
   const res = await model.togglePropertyFake(id);
-  await model.logAction(adminId, `Flagged Property (ID: ${id}) as SCAM/FAKE`);
+  await model.logAction(adminId, `Flagged Property: ${property?.title || "ID: " + id} as SCAM/FAKE`);
   return res;
 };
 
 exports.getComplaints = () => model.getComplaints();
 exports.resolveComplaint = async (id, adminId) => {
   const res = await model.resolveComplaint(id);
-  await model.logAction(adminId, `Resolved Complaint (ID: ${id})`);
+  await model.logAction(adminId, `Resolved Complaint (Complaint ID: ${id})`);
   return res;
 };
 exports.convertComplaint = async (id, priority, adminId) => {
   const res = await model.convertComplaint(id, priority);
-  await model.logAction(adminId, `Converted Complaint (ID: ${id}) to Service Request`);
+  await model.logAction(adminId, `Converted Complaint (Complaint ID: ${id}) to Service Request`);
   return res;
 };
 
@@ -152,8 +155,9 @@ exports.deleteProvider = async (id, reason, adminId) => {
 
 
 exports.toggleProviderStatus = async (id, adminId) => {
+  const provider = await model.getProviderById(id);
   const res = await model.toggleProviderStatus(id);
-  await model.logAction(adminId, `Toggled Service Provider Active Status (ID: ${id})`);
+  await model.logAction(adminId, `Toggled Status for Provider: ${provider?.company_name || "ID: " + id}`);
   return res;
 };
 

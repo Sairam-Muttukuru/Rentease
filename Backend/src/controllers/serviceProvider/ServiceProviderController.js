@@ -290,3 +290,14 @@ exports.updateBookingStatus = async (req, res) => {
         res.status(err.message === "Booking not found or access denied" ? 404 : 500).json({ error: err.message });
     }
 };
+
+exports.getReceipt = async (req, res) => {
+    try {
+        await ServiceProviderService.getReceipt(req.params.id, req.user.id, res);
+    } catch (err) {
+        console.error("Get Receipt Error:", err);
+        if (!res.headersSent) {
+            res.status(err.message === "Booking not found or access denied" ? 404 : 500).json({ error: err.message });
+        }
+    }
+};

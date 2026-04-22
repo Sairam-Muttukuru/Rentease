@@ -3,12 +3,11 @@ const ctrl = require("../../controllers/admin/AdminController");
 const auth = require("../../middlewares/AuthMiddleware");
 const role = require("../../middlewares/RoleMiddleware");
 
-// 🔐 Protect ALL admin routes
+// Protect ALL admin routes
 router.use(auth);
 router.use(role("ADMIN"));
 
 // ---- Admin Dashboard Routes ----
-
 router.get("/overview", ctrl.overview);
 
 // User Management

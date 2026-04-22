@@ -22,14 +22,26 @@ const sendServiceCompletionMail = async (email, userName, serviceName, providerN
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Service Completed</title>
         </head>
-        <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+        <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Outfit', sans-serif;">
             <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
                 
-                <!-- Logo Header -->
-                <div style="padding: 24px; text-align: left; background: #ffffff; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px;">
-                    <img src="${process.env.FRONTEND_URL}/favicon.png" alt="RentEase" style="height: 32px; width: 32px; border-radius: 8px;" />
-                    <span style="font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">RentEase</span>
-                </div>
+                <!-- Logo Header (Table-based for Bulletproof Rendering) -->
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-bottom: 1px solid #f1f5f9;">
+                    <tr>
+                        <td style="padding: 24px;">
+                            <table cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td style="vertical-align: middle; padding-right: 12px;">
+                                        <img src="cid:renteasefavicon" alt="RentEase" width="32" height="32" style="display: block; width: 32px; height: 32px; border-radius: 8px; object-fit: contain; background-color: #ffffff; padding: 2px;" />
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <span style="font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; font-family: 'Outfit', sans-serif;">RentEase</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
 
                 <!-- Success Header Section -->
                 <div style="background: linear-gradient(to right, #10b981, #059669); padding: 40px; text-align: center; color: #ffffff;">
@@ -69,6 +81,18 @@ const sendServiceCompletionMail = async (email, userName, serviceName, providerN
                             </tr>
                         </table>
                     </div>
+
+                    ${safePaymentMethod === 'Online' ? `
+                    <div style="background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: 16px; padding: 20px; margin-bottom: 32px; text-align: center;">
+                        <h3 style="color: #92400e; font-size: 16px; font-weight: 800; margin: 0 0 10px 0;">💳 Payment Action Required</h3>
+                        <p style="color: #b45309; font-size: 14px; margin: 0 0 16px 0;">
+                            The service has been completed successfully. Please settle the amount immediately using our secure online payment system.
+                        </p>
+                        <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" style="display: inline-block; background-color: #d97706; color: #ffffff; padding: 12px 30px; border-radius: 10px; font-weight: 700; text-decoration: none; font-size: 14px;">
+                            Pay Immediately
+                        </a>
+                    </div>
+                    ` : ''}
 
                     <div style="text-align: center;">
                         <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" style="display: inline-block; background-color: #0f172a; color: #ffffff; padding: 18px 40px; border-radius: 12px; font-weight: 700; text-decoration: none; font-size: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.1);">

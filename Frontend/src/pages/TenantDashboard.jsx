@@ -23,6 +23,7 @@ import TenantSettings from '../components/tenant/settings/TenantSettings';
 import TenantHomeServices from './TenantHomeServices';
 import NoticeBoardPage from '../components/tenant/community/NoticeBoardPage';
 import TenantMessagesView from '../components/tenant/dashboard/TenantMessagesView';
+import WatchlistPage from '../components/tenant/dashboard/WatchlistPage';
 
 // Modals
 import ChangePasswordModal from '../components/tenant/modals/ChangePasswordModal';
@@ -243,17 +244,26 @@ export default function TenantDashboard() {
   // --- Handlers ---
   const handleLogout = async () => {
     try {
+      const currentTheme = localStorage.getItem('theme');
       await axios.post(`${BASE_URL}/api/auth/logout`, {}, { withCredentials: true });
       localStorage.clear();
+      if (currentTheme) localStorage.setItem('theme', currentTheme);
       toast.success("Logged out successfully");
       setTimeout(() => window.location.href = "/", 1000);
     } catch (err) {
+      const currentTheme = localStorage.getItem('theme');
       localStorage.clear();
+      if (currentTheme) localStorage.setItem('theme', currentTheme);
       window.location.href = "/";
     }
   };
 
   const handleUpdateProfile = async () => {
+    if (tenantData.phone && tenantData.phone.length !== 10) {
+      toast.error("Phone number must be exactly 10 digits");
+      return;
+    }
+
     setIsUpdatingProfile(true);
     try {
       const token = localStorage.getItem("accessToken");
@@ -376,7 +386,8 @@ export default function TenantDashboard() {
   }
 
   return (
-    <TenantLayout
+    <>
+      <TenantLayout
       isSidebarOpen={isSidebarOpen}
       setIsSidebarOpen={setIsSidebarOpen}
       isDarkMode={isDarkMode}
@@ -430,6 +441,7 @@ export default function TenantDashboard() {
             setShowPaymentModal={setShowPaymentModal}
           />
         } />
+        <Route path="/watchlist" element={<WatchlistPage />} />
         <Route path="/notices" element={<NoticeBoardPage />} />
         <Route path="/payments" element={<PaymentsPage payments={payments} />} />
         <Route path="/complaints" element={
@@ -474,6 +486,8 @@ export default function TenantDashboard() {
         } />
       </Routes>
 
+    </TenantLayout>
+
       {showChangePasswordModal && (
         <ChangePasswordModal
           isDarkMode={isDarkMode}
@@ -509,6 +523,6 @@ export default function TenantDashboard() {
           t={t}
         />
       )}
-    </TenantLayout>
+    </>
   );
 }

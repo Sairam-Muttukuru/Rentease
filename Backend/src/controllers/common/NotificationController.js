@@ -26,3 +26,12 @@ exports.markAllAsRead = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
+exports.requestVacate = async (req, res) => {
+    try {
+        const result = await NotificationService.requestVacate(req.user.id, req.body);
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};

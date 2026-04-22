@@ -9,12 +9,26 @@ const sendWelcomeEmail = require("../../utils/email/sendWelcomeEmail");
 const resetOtps = new Map();
 
 const signup = async (data) => {
+    // Check if user already exists
+    const existingUser = await User.findUserByEmail(data.email);
+    if (existingUser) {
+        throw new Error("User already exists!");
+    }
+
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
     const user = await User.createUser({
         ...data,
         password: hashedPassword
     });
+
+    // 🔗 LINK: If this user was added to a property via email before signing up, link them now
+    try {
+        const Tenant = require("../../models/tenant/TenantModel");
+        await Tenant.linkUserToTenants(data.email, user.id);
+    } catch (linkError) {
+        console.error("Failed to link tenant to user at signup:", linkError);
+    }
 
     // Send welcome email asynchronously
     if (user && user.email) {
@@ -56,6 +70,16 @@ const login = async (email, password) => {
         role: user.role,
         avatar_url: user.avatar_url
     };
+
+    // 🔗 LINK: Ensure tenant record is linked if not already (handles invites sent before or during existence)
+    if (user.role?.toLowerCase() === 'tenant' || user.role?.toLowerCase() === 'user') {
+        try {
+            const Tenant = require("../../models/tenant/TenantModel");
+            await Tenant.linkUserToTenants(user.email, user.id);
+        } catch (linkError) {
+            console.error("Failed to link tenant to user at login:", linkError);
+        }
+    }
 
     return { accessToken, refreshToken, user: userResponse };
 };

@@ -1,5 +1,10 @@
 const db = require("../../config/db");
 
+exports.getProviderById = async (providerId) => {
+    const res = await db.query("SELECT * FROM service_providers WHERE id = $1", [providerId]);
+    return res.rows[0];
+};
+
 exports.getProviderId = async (userId) => {
     const res = await db.query("SELECT id FROM service_providers WHERE user_id = $1", [userId]);
     return res.rows[0]?.id;
@@ -521,11 +526,14 @@ exports.addCatalogService = async (data) => {
 exports.getBookings = async (providerId) => {
     const res = await db.query(
         `SELECT sr.id, sr.tenant_id, sr.user_id, sr.service_id, sr.assigned_provider_id, sr.status, sr.priority,
-                sr.address, sr.payment_method, sr.amount, sr.scheduled_date as booking_date, sr.scheduled_time as booking_time,
-                sr.created_at,
-                u.first_name || ' ' || u.last_name as customer, s.name as service,
+                sr.address, sr.payment_method, sr.amount, sr.booking_date as requested_date, sr.booking_time as requested_time, sr.scheduled_date, sr.scheduled_time,
+                sr.created_at, sr.service_payment_status, sr.service_receipt_number,
+                u.first_name || ' ' || u.last_name as customer,
+                COALESCE(s.name, sr.service_type, st.name, sc.name, 'Service Request') as service,
                 COALESCE(sc.name, 'General') as category_name,
-                COALESCE(st.name, 'Standard') as type_name,
+                COALESCE(st.name, sr.service_type, 'Standard') as type_name,
+                s.image_url as service_image_url,
+                sr.cancellation_reason,
                 latest_slot.visit_date, latest_slot.start_time, latest_slot.end_time
          FROM service_requests sr
          LEFT JOIN tenants t ON sr.tenant_id = t.id
@@ -572,7 +580,16 @@ exports.getStats = async (providerId) => {
     );
 
     const totalEarnings = await db.query(
-        "SELECT SUM(amount) FROM service_requests WHERE assigned_provider_id = $1 AND status = 'Completed'", 
+        "SELECT SUM(amount) FROM service_requests WHERE assigned_provider_id = $1 AND status = 'Completed' AND (payment_method = 'COD' OR service_payment_status = 'PAID')", 
+        [providerId]
+    );
+
+    const pendingPayments = await db.query(
+        `SELECT SUM(amount) FROM service_requests 
+         WHERE assigned_provider_id = $1 
+         AND status = 'Completed' 
+         AND payment_method = 'Online' 
+         AND (service_payment_status IS NULL OR service_payment_status != 'PAID')`,
         [providerId]
     );
 
@@ -580,7 +597,8 @@ exports.getStats = async (providerId) => {
         totalServices: parseInt(services.rows[0].count),
         activeServices: parseInt(activeServices.rows[0].count),
         pendingJobs: parseInt(pendingJobs.rows[0].count),
-        totalEarnings: parseFloat(totalEarnings.rows[0].sum || 0)
+        totalEarnings: parseFloat(totalEarnings.rows[0].sum || 0),
+        pendingPayments: parseFloat(pendingPayments.rows[0].sum || 0)
     };
 };
 
@@ -642,4 +660,24 @@ exports.getReviews = async (providerId) => {
         [providerId]
     );
     return res.rows;
+};
+
+exports.getBookingForReceipt = async (bookingId, providerId) => {
+    const res = await db.query(
+        `SELECT sr.service_receipt_number as "receipt_number",
+                u.first_name || ' ' || u.last_name as "payer_name",
+                COALESCE(s.name, sr.service_type, 'Service Request') as "service_name",
+                sr.address as "property_address",
+                sp.company_name as "provider_name",
+                sr.updated_at as "payment_date",
+                sr.amount
+         FROM service_requests sr
+         LEFT JOIN tenants t ON sr.tenant_id = t.id
+         LEFT JOIN users u ON u.id = COALESCE(sr.user_id, t.user_id)
+         LEFT JOIN services s ON sr.service_id = s.id
+         LEFT JOIN service_providers sp ON sr.assigned_provider_id = sp.id
+         WHERE sr.id = $1 AND sr.assigned_provider_id = $2`,
+        [bookingId, providerId]
+    );
+    return res.rows[0];
 };

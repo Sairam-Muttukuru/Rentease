@@ -86,7 +86,7 @@ const Signup = () => {
         {
           firstName,
           lastName,
-          email,
+          email: email.toLowerCase(),
           password,
           role: selectedRole.toUpperCase() // 🔥 VERY IMPORTANT uppercase for DB constraint
         },

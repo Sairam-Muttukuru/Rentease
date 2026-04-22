@@ -47,7 +47,10 @@ const ensureSchema = async () => {
             'provider_service_id INTEGER',
             'customer_email CHARACTER VARYING(150)',
             'booking_date DATE',
-            'booking_time CHARACTER VARYING(50)'
+            'booking_time CHARACTER VARYING(50)',
+            'cancellation_reason TEXT',
+            'service_payment_status VARCHAR(20) DEFAULT \'PENDING\'',
+            'service_receipt_number VARCHAR(50)'
         ];
 
         for (const col of columns) {
@@ -72,6 +75,17 @@ const ensureSchema = async () => {
 };
 
 ensureSchema();
+
+exports.cancelRequest = async (id, userId, reason) => {
+    const res = await db.query(
+        `UPDATE service_requests 
+         SET status = 'Cancelled', cancellation_reason = $1, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $2 AND (user_id = $3 OR tenant_id IN (SELECT id FROM tenants WHERE user_id = $3))
+         RETURNING *`,
+        [reason, id, userId]
+    );
+    return res.rows[0];
+};
 
 exports.create = async (data) => {
     const {

@@ -32,6 +32,7 @@ exports.updateTenant = async (req, res) => {
       req.params.tenantId,
       req.body
     );
+    await AuditService.logTenantAction(req.user.id, req.params.tenantId, "N/A", "Updated", `Fields: ${Object.keys(req.body).join(", ")}`);
     res.json(tenant);
   } catch (err) {
     res.status(403).json({ error: err.message });
@@ -192,6 +193,17 @@ exports.updateServiceRequestComment = async (req, res) => {
     res.json(request);
   } catch (err) {
     console.error(`[Controller] Error updating review:`, err);
+    res.status(err.message === "Request not found or access denied" ? 404 : 500).json({ error: err.message });
+  }
+};
+
+exports.cancelServiceRequest = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const request = await BookingService.cancelServiceRequest(req.params.id, req.user.id, reason);
+    res.json(request);
+  } catch (err) {
+    console.error(`[Controller] Error cancelling service:`, err);
     res.status(err.message === "Request not found or access denied" ? 404 : 500).json({ error: err.message });
   }
 };

@@ -40,5 +40,6 @@ router.get("/catalog/services-by-subtype/:subTypeId", controller.getServicesBySu
 router.post("/service-request", auth, controller.createServiceRequest);
 router.get("/service-requests", auth, controller.getServiceRequests);
 router.put("/service-requests/:id/comment", auth, controller.updateServiceRequestComment);
+router.post("/service-requests/:id/cancel", auth, controller.cancelServiceRequest);
 
 module.exports = router;

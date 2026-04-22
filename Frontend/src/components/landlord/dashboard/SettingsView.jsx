@@ -31,6 +31,12 @@ const SettingsView = ({ user, handleLogout, onUpdateUser }) => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+        if (name === 'phone') {
+            // Only allow digits and max 10 chars
+            const cleaned = value.replace(/\D/g, '').slice(0, 10);
+            setFormData(prev => ({ ...prev, [name]: cleaned }));
+            return;
+        }
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
@@ -44,6 +50,12 @@ const SettingsView = ({ user, handleLogout, onUpdateUser }) => {
         e.preventDefault();
         const token = localStorage.getItem("accessToken");
         if (!token) return;
+        
+        if (formData.phone && formData.phone.length !== 10) {
+            toast.error("Phone number must be exactly 10 digits");
+            return;
+        }
+
         setIsUpdatingProfile(true);
         try {
             const response = await axios.put(`${BASE_URL}/api/auth/update-profile`, formData, {

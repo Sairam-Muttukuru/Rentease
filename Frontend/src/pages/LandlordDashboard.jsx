@@ -30,6 +30,7 @@ import SettingsView from '../components/landlord/dashboard/SettingsView';
 import LandlordAnnouncementsView from '../components/landlord/dashboard/LandlordAnnouncementsView.jsx';
 import LandlordMessagesView from '../components/landlord/dashboard/LandlordMessagesView';
 import LandlordTransactionsView from '../components/landlord/dashboard/LandlordTransactionsView';
+import LandlordHomeServices from './LandlordHomeServices';
 
 // Modals
 import EditPropertyModal from '../components/landlord/modals/EditPropertyModal';
@@ -68,7 +69,6 @@ export default function LandlordDashboard() {
   const [notifications, setNotifications] = useState([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [notificationToast, setNotificationToast] = useState(null);
   const [showInitialLoader, setShowInitialLoader] = useState(() => {
     return !sessionStorage.getItem('landlord_loaded');
   });
@@ -99,9 +99,9 @@ export default function LandlordDashboard() {
     }
   };
 
-  const showNotificationToast = (message) => {
-    setNotificationToast({ message });
-    setTimeout(() => setNotificationToast(null), 3000);
+  const showNotificationToast = (message, type = 'success') => {
+    if (type === 'error') toast.error(message);
+    else toast.success(message);
   };
 
   // Modal & Selection State
@@ -109,6 +109,11 @@ export default function LandlordDashboard() {
     const saved = localStorage.getItem('selectedTenantId');
     return saved ? parseInt(saved) : null;
   });
+  const handleUpdateUser = (updatedUser) => {
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+  };
+
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
@@ -127,7 +132,7 @@ export default function LandlordDashboard() {
   // Tab management
   const pathParts = location.pathname.split('/').filter(Boolean);
   const lastSegment = pathParts[pathParts.length - 1];
-  const knownTabs = ['properties', 'add-property', 'tenants', 'messages', 'requests', 'request-details', 'finance', 'settings', 'tenant-details', 'bookings', 'announcements', 'transactions'];
+  const knownTabs = ['properties', 'add-property', 'tenants', 'messages', 'requests', 'request-details', 'finance', 'settings', 'tenant-details', 'bookings', 'announcements', 'transactions', 'home-services'];
   const activeTab = knownTabs.includes(lastSegment) ? lastSegment : 'dashboard';
 
   const setActiveTab = (tab) => {
@@ -329,6 +334,11 @@ export default function LandlordDashboard() {
   };
 
   const handleUpdateTenant = async (updatedData) => {
+    if (updatedData.phone && updatedData.phone.length !== 10) {
+        toast.error("Phone number must be exactly 10 digits");
+        return;
+    }
+
     try {
       const token = localStorage.getItem("accessToken");
       await axios.put(`${BASE_URL}/api/tenants/${updatedData.id}`, updatedData, {
@@ -499,7 +509,6 @@ export default function LandlordDashboard() {
       setIsMobileMenuOpen={setIsMobileMenuOpen}
       isNotificationOpen={isNotificationOpen}
       setIsNotificationOpen={setIsNotificationOpen}
-      notificationToast={notificationToast}
     >
       <div key={activeTab} className="animate-in fade-in slide-in-from-bottom-8 duration-700">
         {activeTab === 'dashboard' && (
@@ -581,6 +590,7 @@ export default function LandlordDashboard() {
             setSelectedTenantId={setSelectedTenantId}
             showNotificationToast={showNotificationToast}
             onUpdateStatus={handleUpdatePaymentStatus}
+            onDeleteTenant={handleDeleteTenant}
             onChatClick={(tenant) => {
               setChatRecipient(tenant);
               setIsChatOpen(true);
@@ -638,12 +648,19 @@ export default function LandlordDashboard() {
           />
         )}
 
+        {activeTab === 'home-services' && (
+          <LandlordHomeServices 
+            isDarkMode={isDarkMode} 
+            user={user}
+          />
+        )}
+
         {activeTab === 'settings' && (
           <SettingsView
             user={user}
             isDarkMode={isDarkMode}
             handleLogout={handleLogout}
-            onUpdateUser={setUser}
+            onUpdateUser={handleUpdateUser}
           />
         )}
       </div>

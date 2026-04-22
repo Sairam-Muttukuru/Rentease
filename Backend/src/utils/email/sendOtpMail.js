@@ -16,12 +16,12 @@ const sendOtp = async (to, otp) => {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Verification Code</title>
         </head>
-        <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+        <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: 'Outfit', sans-serif;">
             <div style="max-width: 480px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
                 
                 <!-- Logo Header -->
                 <div style="padding: 32px 32px 10px 32px; text-align: center;">
-                    <img src="${process.env.FRONTEND_URL || 'https://rentease-home.vercel.app'}/favicon.png" alt="RentEase" style="height: 48px; width: 48px; border-radius: 12px; margin-bottom: 16px;" />
+                    <img src="cid:renteasefavicon" alt="RentEase" style="height: 48px; width: 48px; border-radius: 12px; margin-bottom: 16px; object-fit: contain; background-color: #ffffff; padding: 2px;" />
                     <div style="font-size: 24px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">RentEase</div>
                 </div>
 

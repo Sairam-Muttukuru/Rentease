@@ -53,7 +53,14 @@ const LandlordPropertiesView = ({
                         <div key={prop.id} className={`group bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 hover:shadow-xl transition-all duration-300 flex flex-col`}>
 
                             {/* Image Section */}
-                            <div className="h-64 relative overflow-hidden cursor-pointer" onClick={() => onGalleryClick(prop)}>
+                            <div className="aspect-[4/3] relative overflow-hidden cursor-pointer bg-slate-100 dark:bg-slate-950 shadow-inner" onClick={() => onGalleryClick(prop)}>
+                                {/* Blurred Backdrop */}
+                                <img
+                                    src={prop.image || prop.images?.[0] || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1073&q=80"}
+                                    alt=""
+                                    className="absolute inset-0 w-full h-full object-cover blur-3xl opacity-40 scale-125"
+                                />
+                                {/* Main Fitted Image */}
                                 <img
                                     src={prop.image || prop.images?.[0] || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1073&q=80"}
                                     alt={prop.name}
@@ -61,8 +68,9 @@ const LandlordPropertiesView = ({
                                         e.target.onerror = null;
                                         e.target.src = "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1073&q=80";
                                     }}
-                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    className="relative w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
                                 />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
 
                                 {/* Status Badge - Like the reference */}
                                 <div className="absolute top-4 right-4">
@@ -72,17 +80,31 @@ const LandlordPropertiesView = ({
                                         }`}>
                                         {prop.type === 'PG' ? `${prop.tenant_count || 0}/${prop.sharing_capacity || 1} Rented` : (prop.status === 'Occupied' ? 'Rented' : 'Available')}
                                     </span>
+                                    {prop.is_fake && (
+                                        <div className="mt-2 flex justify-end">
+                                            <span className="bg-rose-600 text-white text-[10px] font-black px-3 py-1 rounded-lg uppercase tracking-widest shadow-lg border border-rose-500 animate-pulse">
+                                                Fake Reported
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
                             {/* Content Section */}
-                            <div className="p-6 flex-1 flex flex-col">
+                            <div className={`p-6 flex-1 flex flex-col ${prop.is_fake ? 'opacity-75 grayscale-[0.3]' : ''}`}>
                                 <div className="mb-4">
                                     <h3 className={`text-xl font-bold mb-2 leading-tight ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{prop.name}</h3>
                                     <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
                                         <MapPin size={16} className="shrink-0" />
                                         <span className="truncate">{prop.address || "No address provided"}</span>
                                     </div>
+                                    {prop.room_number && (
+                                        <div className="mt-3 flex items-center gap-2">
+                                            <span className="px-3 py-1 rounded-lg bg-indigo-600/10 text-indigo-500 border border-indigo-500/20 text-[10px] font-black uppercase tracking-widest">
+                                                Room {prop.room_number}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Stats Grid - Based on Reference */}

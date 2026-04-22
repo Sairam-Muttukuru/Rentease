@@ -2,7 +2,7 @@ const sendMail = require("./sendMail");
 
 module.exports = async (email, slot) => {
   try {
-    const { visit_date, start_time, end_time, propertyName, propertyImage } = slot;
+    const { visit_date, start_time, end_time, propertyName, propertyImage, name, worker_details } = slot;
     const subject = `Visit Scheduled: Slot Confirmed for ${propertyName || 'Your Property'}`;
     const formattedDate = new Date(visit_date).toLocaleDateString(undefined, {
       weekday: 'long',
@@ -19,6 +19,22 @@ module.exports = async (email, slot) => {
       return `${hours % 12 || 12}:${m} ${ampm}`;
     };
 
+    const workersHtml = worker_details && Array.isArray(worker_details) && worker_details.length > 0 
+      ? `
+      <div style="background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 16px; padding: 24px; margin-bottom: 32px;">
+          <h2 style="font-size: 11px; color: #0369a1; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 16px 0;">Technical Team Assigned</h2>
+          <table style="width: 100%; border-collapse: collapse;">
+              ${worker_details.map(worker => `
+                <tr>
+                    <td style="padding: 8px 0; color: #0f172a; font-size: 14px; font-weight: 700;">${worker.name}</td>
+                    <td style="padding: 8px 0; color: #0369a1; font-size: 14px; font-weight: 600; text-align: right;">${worker.phone}</td>
+                </tr>
+              `).join('')}
+          </table>
+      </div>
+      `
+      : '';
+
     const htmlContent = `
     <!DOCTYPE html>
     <html lang="en">
@@ -27,7 +43,7 @@ module.exports = async (email, slot) => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Visit Scheduled</title>
     </head>
-    <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Outfit', sans-serif;">
         <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
             
             <!-- Logo Header (Table-based for Bulletproof Rendering) -->
@@ -37,10 +53,10 @@ module.exports = async (email, slot) => {
                         <table cellpadding="0" cellspacing="0" border="0">
                             <tr>
                                 <td style="vertical-align: middle; padding-right: 12px;">
-                                    <img src="${process.env.FRONTEND_URL || 'https://rentease-home.vercel.app'}/favicon.png" alt="Logo" width="32" height="32" style="display: block; width: 32px; height: 32px; border-radius: 8px;" />
+                                    <img src="cid:renteasefavicon" alt="Logo" width="32" height="32" style="display: block; width: 32px; height: 32px; border-radius: 8px; object-fit: contain; background-color: #ffffff; padding: 2px;" />
                                 </td>
                                 <td style="vertical-align: middle;">
-                                    <span style="font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; font-family: 'Segoe UI', Arial, sans-serif;">RentEase</span>
+                                    <span style="font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; font-family: 'Outfit', sans-serif;">RentEase</span>
                                 </td>
                             </tr>
                         </table>
@@ -56,7 +72,7 @@ module.exports = async (email, slot) => {
                     <span style="background: #4f46e5; color: white; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; display: inline-block;">
                         Service Scheduled
                     </span>
-                    <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">Hi ${name}! 👋</h1>
+                    <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">Hi ${name || 'Valued Customer'}! 👋</h1>
                     <p style="margin: 8px 0 0; color: rgba(255,255,255,0.9); font-size: 16px;">${propertyName}</p>
                 </div>
             </div>
@@ -65,8 +81,10 @@ module.exports = async (email, slot) => {
             <div style="padding: 40px 32px;">
                 <p style="font-size: 16px; color: #475569; line-height: 1.7; margin: 0 0 32px 0;">
                     Hello,<br><br>
-                    A professional visit has been scheduled for your service request. Please review the confirmed time slot below and ensure someone is available at the location.
+                    A professional visit has been scheduled for your service request. Please review the confirmed time slot and the assigned personnel below.
                 </p>
+
+                ${workersHtml}
                 
                 <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 32px;">
                     <h2 style="font-size: 11px; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 20px 0;">Slot Specifications</h2>
@@ -77,11 +95,11 @@ module.exports = async (email, slot) => {
                             <td style="padding: 10px 0; color: #0f172a; font-size: 14px; font-weight: 700; text-align: right;">${formattedDate}</td>
                         </tr>
                         <tr>
-                            <td style="padding: 10px 0; color: #64748b; font-size: 14px;">Start Time</td>
+                            <td style="padding: 10px 0; color: #64748b; font-size: 14px;">Arrival window starts</td>
                             <td style="padding: 10px 0; color: #0f172a; font-size: 14px; font-weight: 700; text-align: right;">${formatTime(start_time)}</td>
                         </tr>
                         <tr>
-                            <td style="padding: 10px 0; color: #64748b; font-size: 14px;">End Time</td>
+                            <td style="padding: 10px 0; color: #64748b; font-size: 14px;">Arrival window ends</td>
                             <td style="padding: 10px 0; color: #0f172a; font-size: 14px; font-weight: 700; text-align: right;">${formatTime(end_time)}</td>
                         </tr>
                         <tr style="border-top: 1px solid #e2e8f0;">

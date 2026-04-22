@@ -301,9 +301,24 @@ class PaymentService {
      * Download Receipt
      */
     async getPaymentByReceipt(paymentId) {
-        const result = await db.query("SELECT * FROM rent_payments WHERE id = $1", [paymentId]);
+        const result = await db.query(`
+            SELECT 
+                rp.*,
+                CONCAT(tu.first_name, ' ', tu.last_name) AS tenant_name,
+                CONCAT(lu.first_name, ' ', lu.last_name) AS landlord_name,
+                COALESCE(p.title, p2.title)               AS property_title,
+                COALESCE(p.address, p2.address)           AS property_address
+            FROM rent_payments rp
+            LEFT JOIN tenants t   ON t.id = rp.tenant_id
+            LEFT JOIN users   tu  ON tu.id = t.user_id
+            LEFT JOIN properties p  ON p.id = rp.property_id
+            LEFT JOIN properties p2 ON p2.id = t.property_id
+            LEFT JOIN users   lu  ON lu.id = COALESCE(p.landlord_id, p2.landlord_id)
+            WHERE rp.id = $1
+        `, [paymentId]);
         return result.rows[0];
     }
+
 
     /**
      * Get the latest Security Deposit payment for a tenant

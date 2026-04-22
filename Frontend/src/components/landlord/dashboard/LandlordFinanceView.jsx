@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import BASE_URL from '../../../utils/apiConfig';
 import { toast } from 'react-toastify';
-import { Download, IndianRupee, Users, PieChart, CheckCircle2, Home } from 'lucide-react';
+import { Download, IndianRupee, Users, PieChart, CheckCircle2, Home, Eye, X } from 'lucide-react';
 import { Card } from '../../ui/card';
 import LandlordButton from '../common/LandlordButton';
 import RevenueTrendsChart from './charts/RevenueTrendsChart';
@@ -11,6 +11,7 @@ import RevenueTrendsChart from './charts/RevenueTrendsChart';
 const LandlordFinanceView = ({ isDarkMode, tenants, onUpdateStatus, setActiveTab }) => {
     const [realPayments, setRealPayments] = useState([]);
     const [loadingPayments, setLoadingPayments] = useState(true);
+    const [previewUrl, setPreviewUrl] = useState(null);
 
     useEffect(() => {
         fetchPayments();
@@ -51,6 +52,23 @@ const LandlordFinanceView = ({ isDarkMode, tenants, onUpdateStatus, setActiveTab
         } catch (error) {
             console.error("Download failed", error);
             toast.error("Receipt not found or failed to generate");
+        }
+    };
+
+    const previewReceipt = async (paymentId) => {
+        try {
+            const token = localStorage.getItem("accessToken");
+            const res = await axios.get(`${BASE_URL}/api/payment/download-receipt/${paymentId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+                responseType: 'blob'
+            });
+
+            const file = new Blob([res.data], { type: 'application/pdf' });
+            const fileURL = URL.createObjectURL(file);
+            setPreviewUrl(fileURL);
+        } catch (error) {
+            console.error("Preview failed", error);
+            toast.error("Receipt not found or failed to generate for preview");
         }
     };
 
@@ -146,13 +164,22 @@ const LandlordFinanceView = ({ isDarkMode, tenants, onUpdateStatus, setActiveTab
                                             <p className={`font-black ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>₹{Number(p.amount).toLocaleString()}</p>
                                             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{p.status}</p>
                                         </div>
-                                        <button
-                                            onClick={() => downloadReceipt(p.id)}
-                                            className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`}
-                                            title="Download Receipt"
-                                        >
-                                            <Download size={18} />
-                                        </button>
+                                        <div className="flex gap-1">
+                                            <button
+                                                onClick={() => previewReceipt(p.id)}
+                                                className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`}
+                                                title="Preview Receipt"
+                                            >
+                                                <Eye size={18} />
+                                            </button>
+                                            <button
+                                                onClick={() => downloadReceipt(p.id)}
+                                                className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`}
+                                                title="Download Receipt"
+                                            >
+                                                <Download size={18} />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -167,7 +194,7 @@ const LandlordFinanceView = ({ isDarkMode, tenants, onUpdateStatus, setActiveTab
                     <div>
                         <h3 className={`text-2xl font-black ${isDarkMode ? 'text-white' : 'text-slate-900'} flex items-center gap-3`}>
                             <Users className="text-rose-500" size={28} /> 
-                            Arrears Monitoring <span className="text-rose-500/50">/ Unpaid Tenants</span>
+                            unpaid tenant
                         </h3>
                         <p className="text-sm text-slate-500 font-medium">Follow up with tenants who have outstanding balances.</p>
                     </div>
@@ -231,6 +258,33 @@ const LandlordFinanceView = ({ isDarkMode, tenants, onUpdateStatus, setActiveTab
                     </table>
                 </div>
             </Card>
+
+            {/* Receipt Preview Modal */}
+            {previewUrl && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 sm:p-10">
+                    <div className={`relative w-full h-full max-w-5xl rounded-2xl overflow-hidden shadow-2xl flex flex-col ${isDarkMode ? 'bg-slate-900 border border-slate-800' : 'bg-white'}`}>
+                        <div className={`flex justify-between items-center p-4 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+                            <h3 className={`font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Receipt Preview</h3>
+                            <button
+                                onClick={() => {
+                                    URL.revokeObjectURL(previewUrl);
+                                    setPreviewUrl(null);
+                                }}
+                                className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-200 text-slate-500'}`}
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="flex-1 w-full bg-[#525659]">
+                            <iframe 
+                                src={previewUrl} 
+                                className="w-full h-full border-0"
+                                title="Receipt PDF"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

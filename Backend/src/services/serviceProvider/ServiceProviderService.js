@@ -2,6 +2,7 @@ const ProviderModel = require("../../models/serviceProvider/ServiceProviderModel
 const sendServiceAcceptanceMail = require("../../utils/email/sendServiceAcceptanceMail");
 const sendServiceRejectionMail = require("../../utils/email/sendServiceRejectionMail");
 const sendServiceCompletionMail = require("../../utils/email/sendServiceCompletionMail");
+const AuditService = require("../common/AuditService");
 
 class ServiceProviderService {
     async getProfile(userId) {
@@ -13,6 +14,7 @@ class ServiceProviderService {
     async updateProfile(userId, data) {
         const profile = await ProviderModel.updateProfile(userId, data);
         if (!profile) throw new Error("Provider profile not found");
+        await AuditService.logUserAction(userId, userId, "Updated Provider Profile", `Company: ${profile.company_name}`);
         return profile;
     }
 
@@ -33,18 +35,19 @@ class ServiceProviderService {
 
         const imageUrl = file ? file.path : null;
 
-        if (data.service_id) {
-            return await ProviderModel.addService(providerId, {
+        const result = data.service_id
+            ? await ProviderModel.addService(providerId, {
                 ...data,
                 image_url: imageUrl || data.image_url
+            })
+            : await ProviderModel.createAndAddService(providerId, {
+                ...data,
+                image_url: imageUrl || data.image_url,
+                features: typeof data.features === 'string' ? JSON.parse(data.features) : data.features
             });
-        }
 
-        return await ProviderModel.createAndAddService(providerId, {
-            ...data,
-            image_url: imageUrl || data.image_url,
-            features: typeof data.features === 'string' ? JSON.parse(data.features) : data.features
-        });
+        await AuditService.logServiceAction(userId, result.id || "N/A", "Listed Service", `Name: ${data.name || data.service_name}`);
+        return result;
     }
 
     async updateService(serviceId, userId, data, file) {
@@ -59,6 +62,7 @@ class ServiceProviderService {
 
     async deleteService(serviceId, userId) {
         const providerId = await ProviderModel.getProviderId(userId);
+        await AuditService.logServiceAction(userId, serviceId, "Deleted Service");
         return await ProviderModel.deleteService(serviceId, providerId);
     }
 
@@ -77,6 +81,8 @@ class ServiceProviderService {
         const providerId = await ProviderModel.getProviderId(userId);
         const booking = await ProviderModel.updateBookingStatus(bookingId, providerId, status, rejectionReason);
         if (!booking) throw new Error("Booking not found or access denied");
+
+        await AuditService.logServiceAction(userId, bookingId, "Updated Booking Status", `New Status: ${status}`);
 
         // Orchestrate Email Notifications
         console.log(`[DEBUG] updateBookingStatus: Orchestrating emails for booking ${bookingId}, status: ${status}`);
@@ -171,6 +177,18 @@ class ServiceProviderService {
     async getCatalogServicesBySubType(subTypeId, userId) {
         const providerId = await ProviderModel.getProviderId(userId);
         return await ProviderModel.getCatalogServicesBySubType(subTypeId, providerId);
+    }
+
+    async getReceipt(bookingId, userId, res) {
+        const providerId = await ProviderModel.getProviderId(userId);
+        const booking = await ProviderModel.getBookingForReceipt(bookingId, providerId);
+        
+        if (!booking) {
+            throw new Error("Booking not found or access denied");
+        }
+
+        const generateServiceReceipt = require('../../utils/helpers/generateServiceReceipt');
+        await generateServiceReceipt(res, booking);
     }
 }
 

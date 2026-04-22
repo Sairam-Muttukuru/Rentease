@@ -47,9 +47,10 @@ exports.delete = async (id) => {
 exports.getAllForTenant = async (propertyId, tenantId) => {
     return (await db.query(
         `
-        SELECT a.*, u.first_name || ' ' || u.last_name as author_name
+        SELECT a.*, u.first_name || ' ' || u.last_name as author_name, p.title as property_title
         FROM announcements a
         JOIN users u ON a.landlord_id = u.id
+        JOIN properties p ON a.property_id = p.id
         WHERE a.property_id = $1 
         AND (a.target_type = 'all' OR a.target_tenant_id = $2)
         ORDER BY a.created_at DESC

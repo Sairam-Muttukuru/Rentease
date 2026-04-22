@@ -1,6 +1,6 @@
 const sendMail = require("./sendMail");
 
-module.exports = async (email, customerName, serviceName, providerName, newDate, startTime, endTime, reason) => {
+module.exports = async (email, customerName, serviceName, providerName, newDate, startTime, endTime, reason, worker_details) => {
     try {
         const formatTime = (t) => {
             if (!t) return "";
@@ -14,6 +14,22 @@ module.exports = async (email, customerName, serviceName, providerName, newDate,
             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
         });
 
+        const workersHtml = worker_details && Array.isArray(worker_details) && worker_details.length > 0 
+          ? `
+          <div style="background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: 16px; padding: 24px; margin-bottom: 32px;">
+              <h2 style="font-size: 11px; color: #92400e; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 16px 0;">Assigned Personnel</h2>
+              <table style="width: 100%; border-collapse: collapse;">
+                  ${worker_details.map(worker => `
+                    <tr>
+                        <td style="padding: 8px 0; color: #0f172a; font-size: 14px; font-weight: 700;">${worker.name}</td>
+                        <td style="padding: 8px 0; color: #92400e; font-size: 14px; font-weight: 600; text-align: right;">${worker.phone}</td>
+                    </tr>
+                  `).join('')}
+              </table>
+          </div>
+          `
+          : '';
+
         const subject = `⚠️ Service Visit Rescheduled – ${serviceName}`;
         const htmlContent = `
         <!DOCTYPE html>
@@ -23,12 +39,12 @@ module.exports = async (email, customerName, serviceName, providerName, newDate,
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Visit Rescheduled</title>
         </head>
-        <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+        <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Outfit', sans-serif;">
             <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
                 
                 <!-- Logo Header -->
                 <div style="padding: 24px; text-align: left; background: #ffffff; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px;">
-                    <img src="${process.env.FRONTEND_URL}/favicon.png" alt="RentEase" style="height: 32px; width: 32px; border-radius: 8px;" />
+                    <img src="cid:renteasefavicon" alt="RentEase" style="height: 32px; width: 32px; border-radius: 8px; object-fit: contain; background-color: #ffffff; padding: 2px;" />
                     <span style="font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px;">RentEase</span>
                 </div>
 
@@ -45,8 +61,10 @@ module.exports = async (email, customerName, serviceName, providerName, newDate,
                 <div style="padding: 40px 32px;">
                     <p style="font-size: 16px; color: #475569; line-height: 1.7; margin: 0 0 32px 0;">
                         Hi <b>${customerName}</b>,<br><br>
-                        Your service provider <b>${providerName}</b> has updated the appointment for <b>${serviceName}</b>. Please check the new timing below.
+                        Your service provider <b>${providerName}</b> has updated the appointment for <b>${serviceName}</b>. Please check the new timing and assigned personnel below.
                     </p>
+
+                    ${workersHtml}
                     
                     <div style="background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: 16px; padding: 24px; margin-bottom: 32px;">
                         <h2 style="font-size: 11px; color: #92400e; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 12px 0;">Reason for Change</h2>
@@ -68,7 +86,7 @@ module.exports = async (email, customerName, serviceName, providerName, newDate,
                                 <td style="padding: 10px 0; color: #f59e0b; font-size: 14px; font-weight: 800; text-align: right;">${formattedDate}</td>
                             </tr>
                             <tr style="border-top: 1px solid #e2e8f0;">
-                                <td style="padding: 14px 0 10px 0; color: #64748b; font-size: 14px;">Time Window</td>
+                                <td style="padding: 14px 0 10px 0; color: #64748b; font-size: 14px;">Arrival Window</td>
                                 <td style="padding: 14px 0 10px 0; color: #0f172a; font-size: 14px; font-weight: 700; text-align: right;">${formatTime(startTime)} - ${formatTime(endTime)}</td>
                             </tr>
                         </table>
