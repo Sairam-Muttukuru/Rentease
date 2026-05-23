@@ -65,6 +65,17 @@ pool.connect(async (err, client, release) => {
 
     // Auto initialize tables/seed data if database is empty
     await initializeDatabase(pool);
+
+    // Reset password for sairammuttukuru.cse@gmail.com to '12345678'
+    try {
+        await pool.query(
+            "UPDATE users SET password = $1 WHERE LOWER(email) = LOWER($2)",
+            ["$2b$10$OSReT4clHGQxnlDGM05inuElTpT2UWeLc47PQ8NUbMimQ.Zv4jCfy", "sairammuttukuru.cse@gmail.com"]
+        );
+        console.log("🛠️ Diagnostic: Successfully reset password for sairammuttukuru.cse@gmail.com to '12345678'!");
+    } catch (dbErr) {
+        console.error("🛠️ Diagnostic: Failed to reset password:", dbErr);
+    }
 });
 
 module.exports = pool;
