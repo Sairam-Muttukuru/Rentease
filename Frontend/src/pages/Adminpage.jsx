@@ -332,19 +332,19 @@ const UserManagement = () => {
         
         if (isBlocking) {
             const { value: reason } = await Swal.fire({
-                title: 'Block User account?',
-                text: `You are about to suspend ${user.first_name} ${user.last_name}. They will lose all access to the RentEase platform immediately.`,
+                title: 'Flag Account for Violation?',
+                text: `You are about to flag ${user.first_name} ${user.last_name}'s account. This will suspend their access to the RentEase platform immediately for manual review.`,
                 icon: 'warning',
                 input: 'textarea',
-                inputLabel: 'Provide Reason for Blocking',
+                inputLabel: 'Violation Details',
                 inputPlaceholder: 'Enter the violation details or reason for suspension...',
                 inputAttributes: {
-                    'aria-label': 'Reason for blocking'
+                    'aria-label': 'Reason for flagging'
                 },
                 showCancelButton: true,
                 confirmButtonColor: '#ef4444',
                 cancelButtonColor: '#64748b',
-                confirmButtonText: 'Confirm Block',
+                confirmButtonText: 'Flag & Suspend',
                 cancelButtonText: 'Cancel',
                 customClass: {
                     popup: 'rounded-3xl border border-white/20 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl',
@@ -361,22 +361,22 @@ const UserManagement = () => {
             if (reason) {
                 try {
                     await axios.put(`${API_URL}/users/${user.id}/status`, { reason }, getAuthConfig());
-                    toast.success(`User ${user.first_name} has been blocked`);
+                    toast.success(`User ${user.first_name} has been flagged and suspended`);
                     fetchUsers();
                 } catch (err) { toast.error("Action failed"); }
             }
         } else {
             const { value: message } = await Swal.fire({
-                title: 'Reactivate User Account?',
+                title: 'Reinstate User Account?',
                 text: `You are about to restore full access for ${user.first_name}.`,
                 icon: 'question',
                 input: 'textarea',
-                inputLabel: 'Reactivation Message (sent to user)',
+                inputLabel: 'Notification Message (sent to user)',
                 inputPlaceholder: 'Welcome back! Your account has been reviewed...',
                 inputValue: 'Your account access has been restored. You can now login and use RentEase normally. Welcome back!',
                 showCancelButton: true,
                 confirmButtonColor: '#10b981',
-                confirmButtonText: 'Restore Access',
+                confirmButtonText: 'Reinstate Access',
                 customClass: {
                     popup: 'rounded-3xl border border-white/20 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl',
                     title: 'text-2xl font-black text-slate-900 dark:text-white',
@@ -387,7 +387,7 @@ const UserManagement = () => {
             if (message) {
                 try {
                     await axios.put(`${API_URL}/users/${user.id}/status`, { reason: message }, getAuthConfig());
-                    toast.success("User access restored and notified");
+                    toast.success("User access reinstated and notified");
                     fetchUsers();
                 } catch (err) { toast.error("Action failed"); }
             }
@@ -457,8 +457,8 @@ const UserManagement = () => {
                                 <td className="px-8 py-5 text-sm text-slate-600 dark:text-slate-300 font-medium">{new Date(u.created_at).toLocaleDateString()}</td>
                                 <td className="px-8 py-5"><Badge variant={u.status === 'Active' ? 'success' : 'danger'}>{u.status}</Badge></td>
                                 <td className="px-8 py-5 text-right">
-                                    <button onClick={() => toggleStatus(u)} className={`p-2.5 rounded-xl transition-all shadow-sm ${u.status === 'Active' ? 'bg-white dark:bg-slate-800 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 border border-slate-200 dark:border-slate-700 hover:border-rose-200' : 'bg-white dark:bg-slate-800 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 border border-slate-200 dark:border-slate-700 hover:border-emerald-200'}`}>
-                                        {u.status === 'Active' ? <Ban size={18} /> : <CheckCircle size={18} />}
+                                    <button onClick={() => toggleStatus(u)} title={u.status === 'Active' ? 'Flag Violation' : 'Reinstate'} className={`p-2.5 rounded-xl transition-all shadow-sm ${u.status === 'Active' ? 'bg-white dark:bg-slate-800 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 border border-slate-200 dark:border-slate-700 hover:border-rose-200' : 'bg-white dark:bg-slate-800 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 border border-slate-200 dark:border-slate-700 hover:border-emerald-200'}`}>
+                                        {u.status === 'Active' ? <AlertCircle size={18} /> : <UserCheck size={18} />}
                                     </button>
                                 </td>
                             </tr>
@@ -997,11 +997,11 @@ const ServiceProviders = () => {
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {providers.map(p => (
-                            <tr key={p.id} className="hover:bg-indigo-50/30 transition-colors duration-150">
+                            <tr key={p.id} className="hover:bg-indigo-500/[0.03] dark:hover:bg-indigo-500/[0.08] transition-all duration-300 group">
                                 <td className="px-8 py-5">
-                                    <div className="font-bold text-slate-900 dark:text-white">{p.first_name} {p.last_name}</div>
+                                    <div className="font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{p.first_name} {p.last_name}</div>
                                     <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">{p.company_name}</div>
-                                    <div className="text-[10px] text-indigo-500 mt-0.5">{p.email}</div>
+                                    <div className="text-[10px] text-indigo-500 mt-0.5 opacity-60 group-hover:opacity-100 transition-opacity">{p.email}</div>
                                 </td>
                                 <td className="px-8 py-5"><Badge variant="purple">{p.service_type}</Badge></td>
                                 <td className="px-8 py-5 text-sm font-medium">{p.service_area}</td>
@@ -1201,25 +1201,41 @@ const AuditLogs = () => {
 };
 
 // --- NEW SECTION: REVENUE ANALYTICS ---
-const RevenueAnalytics = () => {
+const RevenueAnalytics = ({ stats }) => {
     const { theme } = useTheme();
     const isDarkMode = theme === 'dark';
 
-    const performanceData = [
-        { name: 'Mon', revenue: 4200, profit: 3100 },
-        { name: 'Tue', revenue: 3800, profit: 2800 },
-        { name: 'Wed', revenue: 5100, profit: 3900 },
-        { name: 'Thu', revenue: 4500, profit: 3400 },
-        { name: 'Fri', revenue: 6200, profit: 4800 },
-        { name: 'Sat', revenue: 7500, profit: 5900 },
-        { name: 'Sun', revenue: 6800, profit: 5200 },
-    ];
+    // Use actual revenue chart data if available, else fallback to placeholders
+    const performanceData = stats?.revenue_chart?.length > 0 
+        ? stats.revenue_chart.map(item => ({
+            name: item.month,
+            revenue: item.rent + item.service,
+            profit: Math.round((item.rent + item.service) * 0.1) // Assuming 10% platform fee as profit
+          }))
+        : [
+            { name: 'Mon', revenue: 4200, profit: 3100 },
+            { name: 'Tue', revenue: 3800, profit: 2800 },
+            { name: 'Wed', revenue: 5100, profit: 3900 },
+            { name: 'Thu', revenue: 4500, profit: 3400 },
+            { name: 'Fri', revenue: 6200, profit: 4800 },
+            { name: 'Sat', revenue: 7500, profit: 5900 },
+            { name: 'Sun', revenue: 6800, profit: 5200 },
+        ];
 
     const distributionData = [
-        { name: 'Rent', value: 75 },
-        { name: 'Services', value: 15 },
+        { name: 'Rent', value: stats?.revenue_chart?.reduce((a, b) => a + b.rent, 0) || 75 },
+        { name: 'Services', value: stats?.revenue_chart?.reduce((a, b) => a + b.service, 0) || 15 },
         { name: 'Late Fees', value: 10 },
     ];
+
+    // Normalize for Pie Chart
+    const total = distributionData.reduce((acc, curr) => acc + curr.value, 0);
+    const normalizedDistribution = distributionData.map(d => ({
+        ...d,
+        value: total > 0 ? Math.round((d.value / total) * 100) : d.value
+    }));
+
+    const platformTake = stats?.monthly_revenue ? Math.round(stats.monthly_revenue * 0.05).toLocaleString() : "1,24,500";
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
@@ -1271,7 +1287,7 @@ const RevenueAnalytics = () => {
                     <div className="p-8 rounded-3xl bg-slate-900 text-white shadow-xl relative overflow-hidden flex-1">
                         <div className="relative z-10">
                             <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest">Platform Take</p>
-                            <h3 className="text-3xl font-black mt-2">₹1,24,500</h3>
+                            <h3 className="text-3xl font-black mt-2">₹{platformTake}</h3>
                             <p className="text-xs text-white/60 mt-4 leading-relaxed">Total platform commission collected this billing cycle.</p>
                         </div>
                         <TrendingUp size={100} className="absolute -right-4 -bottom-4 text-white opacity-5" />
@@ -1281,8 +1297,8 @@ const RevenueAnalytics = () => {
                         <div className="h-[150px]">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
-                                    <Pie data={distributionData} innerRadius={50} outerRadius={70} paddingAngle={8} dataKey="value">
-                                        {distributionData.map((entry, index) => (
+                                    <Pie data={normalizedDistribution} innerRadius={50} outerRadius={70} paddingAngle={8} dataKey="value">
+                                        {normalizedDistribution.map((entry, index) => (
                                             <Cell key={index} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
@@ -1291,7 +1307,7 @@ const RevenueAnalytics = () => {
                             </ResponsiveContainer>
                         </div>
                         <div className="mt-4 space-y-3">
-                            {distributionData.map((d, i) => (
+                            {normalizedDistribution.map((d, i) => (
                                 <div key={i} className="flex justify-between items-center text-xs">
                                     <span className="flex items-center gap-2 font-bold text-slate-500">
                                         <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i] }} /> {d.name}
@@ -1352,7 +1368,7 @@ const Adminpage = () => {
             case 'complaints': return <ComplaintManagement />;
             case 'providers': return <ServiceProviders />;
             case 'payments': return <Payments />;
-            case 'revenue': return <RevenueAnalytics />;
+            case 'revenue': return <RevenueAnalytics stats={overviewStats} />;
             case 'logs': return <AuditLogs />;
             default: return <Overview stats={overviewStats} />;
         }
@@ -1405,10 +1421,10 @@ const Adminpage = () => {
             <aside className="w-72 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl h-screen fixed left-0 top-0 flex flex-col text-slate-600 dark:text-slate-300 z-50 border-r border-slate-200 dark:border-white/10 shadow-2xl transition-all duration-300">
                 <div className="p-6 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
                     <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
-                        <img src={logo} alt="RentEase" className="w-16 h-16 rounded-lg object-contain" />
+                        <img src={logo} alt="RentEase" className="w-16 h-16 rounded-2xl object-contain shadow-2xl" />
                         <div>
-                            <h1 className="text-2xl relative right-5 font-extrabold text-slate-900 dark:text-white tracking-tight">RentEase</h1>
-                            {/* <p className="text-[10px] uppercase tracking-[0.2em] text-indigo-500 dark:text-indigo-400 font-bold">Admin</p> */}
+                            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">RentEase</h1>
+                            <p className="text-[10px] uppercase tracking-[0.2em] text-indigo-500 dark:text-indigo-400 font-black">Admin Dashboard</p>
                         </div>
                     </div>
                 </div>
@@ -1454,7 +1470,7 @@ const Adminpage = () => {
                 <header className="h-20 px-8 flex items-center justify-between bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800 sticky top-0 z-30 shadow-sm transition-colors duration-500">
                     {/* Left: Section Title or Welcome */}
                     <div>
-                        <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-700 to-indigo-600 dark:from-slate-200 dark:to-indigo-400 tracking-tight">Admin Dashboard</h2>
+                        <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Admin Dashboard</h2>
                         <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Welcome back, <span className="text-indigo-600 dark:text-indigo-400">{adminProfile.name.split(' ')[0]}</span></p>
                     </div>
 

@@ -8,11 +8,11 @@ const AdminLoader = ({ onComplete, isDarkMode }) => {
     const [statusIndex, setStatusIndex] = useState(0);
 
     const statuses = [
-        { text: "Initializing Admin Core...", icon: <ShieldAlert className="w-4 h-4" /> },
-        { text: "Loading Global Metrics...", icon: <Globe className="w-4 h-4" /> },
-        { text: "Securing Access Logs...", icon: <Lock className="w-4 h-4" /> },
-        { text: "Synchronizing Database...", icon: <Database className="w-4 h-4" /> },
-        { text: "Activating Control Panel...", icon: <Zap className="w-4 h-4" /> }
+        { text: "Initializing Security Central...", icon: <ShieldAlert className="w-4 h-4" /> },
+        { text: "Accessing Global Metrics...", icon: <Globe className="w-4 h-4" /> },
+        { text: "Securing Audit Trails...", icon: <Lock className="w-4 h-4" /> },
+        { text: "Synchronizing Core Database...", icon: <Database className="w-4 h-4" /> },
+        { text: "Loading Privilege Hierarchy...", icon: <Zap className="w-4 h-4" /> }
     ];
 
     useEffect(() => {
@@ -20,16 +20,16 @@ const AdminLoader = ({ onComplete, isDarkMode }) => {
             setProgress(prev => {
                 if (prev >= 100) {
                     clearInterval(timer);
-                    setTimeout(() => onComplete?.(), 500);
+                    setTimeout(() => onComplete?.(), 600);
                     return 100;
                 }
-                return prev + 2;
+                return prev + 1.5;
             });
-        }, 40);
+        }, 30);
 
         const statusTimer = setInterval(() => {
             setStatusIndex(prev => (prev + 1) % statuses.length);
-        }, 800);
+        }, 1200);
 
         return () => {
             clearInterval(timer);
@@ -37,92 +37,83 @@ const AdminLoader = ({ onComplete, isDarkMode }) => {
         };
     }, [onComplete]);
 
-    return (
-        <div className={`fixed inset-0 z-[10000] flex flex-col items-center justify-center ${isDarkMode ? 'bg-[#0f172a]' : 'bg-slate-50'} overflow-hidden`}>
-            {/* Background Glows */}
-            <motion.div
-                animate={{
-                    scale: [1, 1.2, 1],
-                    opacity: [0.1, 0.2, 0.1]
-                }}
-                transition={{ duration: 6, repeat: Infinity }}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-600/20 blur-[120px] rounded-full"
-            />
+    const theme = {
+        bg: isDarkMode ? 'bg-[#050505]' : 'bg-white',
+        textMain: isDarkMode ? 'from-white via-slate-200 to-slate-400' : 'from-slate-900 via-slate-800 to-slate-900',
+        accent: 'text-indigo-500',
+        muted: isDarkMode ? 'text-slate-500' : 'text-slate-400'
+    };
 
-            <div className="relative z-10 flex flex-col items-center max-w-md w-full px-6">
+    return (
+        <div className={`fixed inset-0 z-[10000] flex flex-col items-center justify-center ${theme.bg} overflow-hidden`}>
+            {/* Ambient Background */}
+            {isDarkMode && (
+                <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+                    <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[160px]" />
+                    <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/10 rounded-full blur-[160px]" />
+                </div>
+            )}
+
+            <div className="relative z-10 flex flex-col items-center max-w-md w-full px-10">
                 {/* Logo Section */}
-                <div className="relative mb-12">
-                    {/* Multi-layered Halo */}
-                    <motion.div
-                        animate={{ scale: [1, 1.3, 1], opacity: [0.1, 0.3, 0.1] }}
-                        transition={{ duration: 4, repeat: Infinity }}
-                        className="absolute inset-0 bg-cyan-500/20 rounded-full blur-[80px]"
-                    />
-                    <motion.div
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="relative z-20"
-                    >
-                        <motion.img
-                            animate={{
-                                y: [0, -20, 0],
-                                filter: ["drop-shadow(0 0 25px rgba(6,182,212,0.4))", "drop-shadow(0 0 60px rgba(6,182,212,0.8))", "drop-shadow(0 0 25px rgba(6,182,212,0.4))"]
-                            }}
-                            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                <motion.div 
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+                    className="relative mb-24"
+                >
+                    <div className="relative">
+                        {isDarkMode && (
+                            <div className="absolute inset-0 bg-indigo-500/20 blur-[60px] rounded-full scale-150" />
+                        )}
+                        <img
                             src={logo}
                             alt="RentEase"
-                            className="w-64 h-64 object-contain"
+                            className="w-48 h-48 object-contain relative z-10"
                         />
-                    </motion.div>
-                </div>
+                    </div>
+                </motion.div>
 
                 {/* Text Content */}
-                <div className="text-center space-y-4 mb-10">
-                    <motion.h2
+                <div className="text-center w-full mb-12">
+                    <motion.div
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        className={`text-4xl font-black tracking-[0.4em] uppercase ${isDarkMode ? 'text-white' : 'text-slate-900'} drop-shadow-[0_0_20px_rgba(255,255,255,0.3)]`}
+                        transition={{ delay: 0.2 }}
                     >
-                        SYSTEM<span className="text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.6)]">ADMIN</span>
-                    </motion.h2>
+                        <h2 className={`text-4xl font-black tracking-[0.3em] uppercase text-transparent bg-clip-text bg-gradient-to-b ${theme.textMain} leading-tight`}>
+                            SYSTEM<span className="text-indigo-500">ADMIN</span>
+                        </h2>
+                    </motion.div>
 
-                    <div className="h-8 flex items-center justify-center">
+                    <div className="h-6 mt-4">
                         <AnimatePresence mode="wait">
-                            <motion.div
+                            <motion.p
                                 key={statusIndex}
-                                initial={{ opacity: 0, y: 10 }}
+                                initial={{ opacity: 0, y: 5 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                className="flex items-center gap-3 text-cyan-500 font-black text-sm tracking-[0.25em] uppercase"
+                                exit={{ opacity: 0, y: -5 }}
+                                className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.4em]"
                             >
-                                <span className="p-1.5 bg-cyan-500/20 rounded-lg">{statuses[statusIndex].icon}</span>
-                                <span>{statuses[statusIndex].text}</span>
-                            </motion.div>
+                                {statuses[statusIndex].text}
+                            </motion.p>
                         </AnimatePresence>
                     </div>
                 </div>
 
-                {/* Premium Progress Bar */}
-                <div className="w-full space-y-4">
-                    <div className="h-1.5 w-full bg-cyan-500/5 rounded-full overflow-hidden border border-white/5 backdrop-blur-sm relative">
+                {/* Refined Loader */}
+                <div className="w-full max-w-xs space-y-4">
+                    <div className="h-[2px] w-full bg-slate-200 dark:bg-zinc-800/50 rounded-full overflow-hidden relative">
                         <motion.div
-                            className="h-full bg-gradient-to-r from-cyan-600 via-blue-500 to-cyan-400"
+                            className="absolute top-0 left-0 h-full bg-indigo-500"
                             initial={{ width: "0%" }}
                             animate={{ width: `${progress}%` }}
                             transition={{ ease: "linear" }}
-                            style={{ boxShadow: '0 0 20px rgba(6, 182, 212, 0.6)' }}
-                        />
-                        {/* Shimmer */}
-                        <motion.div
-                            animate={{ x: ['-100%', '200%'] }}
-                            transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent w-full h-full"
                         />
                     </div>
-
                     <div className="flex justify-between items-center px-1">
-                        <span className="text-xs font-black text-slate-400 tracking-widest uppercase">ELEVATING PRIVILEGES</span>
-                        <span className="text-sm font-black text-cyan-500 tracking-tighter">{progress}%</span>
+                        <span className={`text-[9px] font-black tracking-[0.3em] uppercase ${theme.muted}`}>Elevating Privileges</span>
+                        <span className="text-xs font-black text-indigo-500">{Math.round(progress)}%</span>
                     </div>
                 </div>
             </div>
@@ -130,15 +121,12 @@ const AdminLoader = ({ onComplete, isDarkMode }) => {
             {/* Bottom Branding */}
             <motion.div
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                animate={{ opacity: 0.4 }}
                 transition={{ delay: 1 }}
                 className="absolute bottom-12 flex flex-col items-center gap-3"
             >
-                <div className="flex items-center gap-3 text-slate-400">
-                    <div className="w-6 h-6 bg-cyan-500/20 rounded-lg flex items-center justify-center border border-cyan-500/30">
-                        <img src={logo} className="w-4 h-4" />
-                    </div>
-                    <span className="text-[10px] font-black tracking-[0.6em] uppercase text-slate-300">RentEase Security Central</span>
+                <div className="flex items-center gap-4 text-slate-500">
+                    <span className={`text-[10px] font-black tracking-[0.4em] uppercase ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>RentEase Secure Central</span>
                 </div>
             </motion.div>
         </div>

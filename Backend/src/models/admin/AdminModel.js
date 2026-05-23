@@ -13,8 +13,8 @@ exports.countOpenComplaints = async () =>
   (await db.query("SELECT COUNT(*)::integer FROM complaints WHERE status!='Resolved'")).rows[0].count;
 
 exports.getMonthlyRevenue = async () => {
-  const rent = (await db.query("SELECT COALESCE(SUM(amount),0)::integer FROM rent_payments WHERE date_trunc('month', payment_date)=date_trunc('month', CURRENT_DATE)")).rows[0].coalesce;
-  const service = (await db.query("SELECT COALESCE(SUM(amount),0)::integer FROM service_requests WHERE date_trunc('month', created_at)=date_trunc('month', CURRENT_DATE) AND status='Paid'")).rows[0].coalesce;
+  const rent = (await db.query("SELECT COALESCE(SUM(amount),0)::integer as sum FROM rent_payments WHERE date_trunc('month', payment_date)=date_trunc('month', CURRENT_DATE)")).rows[0].sum;
+  const service = (await db.query("SELECT COALESCE(SUM(amount),0)::integer as sum FROM service_requests WHERE date_trunc('month', created_at)=date_trunc('month', CURRENT_DATE) AND status != 'Cancelled'")).rows[0].sum;
   return Number(rent) + Number(service);
 };
 
@@ -23,7 +23,7 @@ exports.revenueChart = async () =>
     WITH months AS (
         SELECT to_char(m, 'Mon') as month,
                EXTRACT(MONTH FROM m) as month_num,
-               date_trunc('month', m) as month_start
+               date_trunc('month', m)::DATE as month_start
         FROM generate_series(
             date_trunc('month', current_date - interval '5 months'),
             date_trunc('month', current_date),
@@ -31,18 +31,18 @@ exports.revenueChart = async () =>
         ) m
     ),
     rent_stats AS (
-        SELECT date_trunc('month', payment_date) as month_start,
+        SELECT date_trunc('month', payment_date)::DATE as month_start,
                SUM(amount)::integer as rent
         FROM rent_payments
-        WHERE payment_date > current_date - interval '6 months'
+        WHERE payment_date > current_date - interval '8 months'
         GROUP BY 1
     ),
     service_stats AS (
-        SELECT date_trunc('month', created_at) as month_start,
+        SELECT date_trunc('month', created_at)::DATE as month_start,
                SUM(amount)::integer as service
         FROM service_requests
-        WHERE created_at > current_date - interval '6 months'
-          AND status = 'Paid'
+        WHERE created_at > current_date - interval '8 months'
+          AND status != 'Cancelled'
         GROUP BY 1
     )
     SELECT m.month, 
@@ -217,7 +217,12 @@ exports.toggleProviderStatus = async (id) =>
   db.query(`UPDATE service_providers SET status = CASE WHEN status = 'Active' THEN 'Suspended' ELSE 'Active' END WHERE id = $1`, [id]);
 
 exports.getPayments = async () =>
-  (await db.query("SELECT * FROM rent_payments ORDER BY payment_date DESC")).rows;
+  (await db.query(`
+    SELECT id, amount, 'Rent' as type, payment_date as date, 'Completed' as status FROM rent_payments
+    UNION ALL
+    SELECT id, amount, 'Service' as type, created_at as date, status FROM service_requests WHERE status != 'Cancelled'
+    ORDER BY date DESC
+  `)).rows;
 
 exports.getLogs = async () =>
   (await db.query(`
