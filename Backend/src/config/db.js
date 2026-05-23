@@ -26,6 +26,15 @@ const { Pool } = require("pg");
 // Check if running in production (Render or NODE_ENV)
 const isProduction = process.env.NODE_ENV === "production" || process.env.RENDER === "true";
 
+if (isProduction) {
+    const dbUrl = process.env.DATABASE_URL || "";
+    // Clean and parse URL (masking password)
+    const maskedUrl = dbUrl.replace(/:[^:@]+@/, ":****@");
+    console.log("Connecting to Production Database URL:", maskedUrl);
+} else {
+    console.log(`Connecting to Development Database: Host=${process.env.DB_HOST}, DB=${process.env.DB_DATABASE}`);
+}
+
 const pool = new Pool(
     isProduction
         ? {
