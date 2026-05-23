@@ -44,13 +44,18 @@ const pool = new Pool(
 );
 
 
+const initializeDatabase = require("./initDb");
+
 // Test the database connection
-pool.connect((err, client, release) => {
+pool.connect(async (err, client, release) => {
     if (err) {
         return console.error('Database Connection Error:', err.stack);
     }
     console.log('✅ Connected to the PostgreSQL database successfully!');
     release();
+
+    // Auto initialize tables/seed data if database is empty
+    await initializeDatabase(pool);
 });
 
 module.exports = pool;
