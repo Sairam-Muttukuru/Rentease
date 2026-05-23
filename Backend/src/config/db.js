@@ -23,8 +23,8 @@ require("dotenv").config({ path: require("path").join(__dirname, "..", ".env") }
 
 const { Pool } = require("pg");
 
-// Check if running in production (Render)
-const isProduction = process.env.NODE_ENV === "production";
+// Check if running in production (Render or NODE_ENV)
+const isProduction = process.env.NODE_ENV === "production" || process.env.RENDER === "true";
 
 const pool = new Pool(
     isProduction
