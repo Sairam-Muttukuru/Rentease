@@ -112,7 +112,7 @@ const LoginPage = () => {
       toast.success("Login successful!");
       // Navigation is now handled by the useEffect above
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Login error:", error.message || "Login failed");
       toast.error(error.response?.data?.error || error.message || "Login failed");
     } finally {
       setIsLoading(false);
