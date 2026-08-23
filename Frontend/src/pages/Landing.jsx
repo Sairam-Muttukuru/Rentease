@@ -1,7 +1,5 @@
-import React, { useCallback } from "react";
+import React from "react";
 import Snowfall from 'react-snowfall';
-import Particles from "react-tsparticles";
-import { loadSlim } from "tsparticles-slim";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../components/Navbar";
 import Hero from "../components/Hero";
@@ -11,11 +9,7 @@ import RevealOnScroll from "../components/RevealOnScroll";
 import { useTheme } from "../context/ThemeContext";
 
 const LandingPage = () => {
-  const { theme, toggleTheme } = useTheme();
-
-  const particlesInit = useCallback(async (engine) => {
-    await loadSlim(engine);
-  }, []);
+  const { theme } = useTheme();
 
   return (
     <div
@@ -23,7 +17,7 @@ const LandingPage = () => {
         }`}
     >
       <AnimatePresence mode="wait">
-        {theme === 'dark' ? (
+        {theme === 'dark' && (
           <motion.div
             key="dark-snow"
             initial={{ opacity: 0 }}
@@ -43,56 +37,6 @@ const LandingPage = () => {
               speed={[0.2, 0.8]}   // Cinematic slow speed
               wind={[-0.5, 1.0]}    // Gentle swaying
               radius={[0.5, 3.0]}   // Varied sizes
-            />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="light-particles"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 2 }} // Slow 2s fade
-          >
-            <Particles
-              id="tsparticles"
-              init={particlesInit}
-              options={{
-                fullScreen: { enable: true, zIndex: 10 },
-                particles: {
-                  number: { value: 60, density: { enable: true, area: 800 } },
-                  color: { value: "#6366f1" },
-                  shape: { type: "circle" },
-                  opacity: { value: 0.5 },
-                  size: { value: { min: 1, max: 4 } },
-                  move: {
-                    enable: true,
-                    speed: 1,
-                    direction: "none",
-                    random: true,
-                    straight: false,
-                    outModes: { default: "out" },
-                  },
-                  links: {
-                    enable: true,
-                    distance: 150,
-                    color: "#6366f1",
-                    opacity: 0.2,
-                    width: 1,
-                  },
-                },
-                interactivity: {
-                  events: {
-                    onHover: { enable: true, mode: "grab" },
-                    onClick: { enable: true, mode: "push" },
-                  },
-                  modes: {
-                    grab: { distance: 140, links: { opacity: 0.5 } },
-                    push: { quantity: 4 },
-                  },
-                },
-                background: { color: "transparent" },
-                detectRetina: true,
-              }}
             />
           </motion.div>
         )}

@@ -18,7 +18,7 @@ import {
 } from 'recharts';
 import { useTheme } from '../context/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
-import logo from "/favicon.png";
+const logo = "/favicon.png";
 import AdminLoader from '../components/AdminLoader';
 
 // --- THEME TOGGLE (Reused) ---

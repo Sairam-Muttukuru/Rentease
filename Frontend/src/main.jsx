@@ -41,17 +41,19 @@ const originalFetch = window.fetch;
 window.fetch = async function (...args) {
   try {
     const response = await originalFetch.apply(this, args);
-    const cloned = response.clone();
-    cloned.json().then(data => {
-      const urlStr = args[0]?.url || args[0] || 'Unknown';
+    const urlStr = typeof args[0] === 'string' ? args[0] : (args[0]?.url || '');
+    if (urlStr.includes('/api/')) {
       try {
-        const urlObj = new URL(urlStr, window.location.origin);
-        if (urlObj.pathname.includes('/api/')) {
-          console.log(`✅ [FETCH: ${urlObj.pathname}]`);
-          console.log(JSON.stringify(data, null, 2));
-        }
+        const cloned = response.clone();
+        cloned.json().then(data => {
+          try {
+            const urlObj = new URL(urlStr, window.location.origin);
+            console.log(`✅ [FETCH: ${urlObj.pathname}]`);
+            console.log(JSON.stringify(data, null, 2));
+          } catch(e) {}
+        }).catch(() => {});
       } catch(e) {}
-    }).catch(() => {});
+    }
     return response;
   } catch (err) {
     throw err;

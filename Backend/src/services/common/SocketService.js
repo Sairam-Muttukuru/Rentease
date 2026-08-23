@@ -35,39 +35,52 @@ const init = (server) => {
         const userId = socket.handshake.query.userId;
         
         if (userId && userId !== 'undefined') {
-            socket.join(`user_${userId}`);
-            
-            if (!connectedUsers.has(userId)) {
-                connectedUsers.set(userId, { socketIds: new Set(), online: true });
-                // Broadcast that this user is now online
-                io.emit("user_status_change", { userId, status: "online" });
-                logger({ userId }, "User connected (First session)");
+            try {
+                socket.join(`user_${userId}`);
+                
+                if (!connectedUsers.has(userId)) {
+                    connectedUsers.set(userId, { socketIds: new Set(), online: true });
+                    io.emit("user_status_change", { userId, status: "online" });
+                    logger({ userId }, "User connected (First session)");
+                }
+                connectedUsers.get(userId).socketIds.add(socket.id);
+                logger({ userId, socketId: socket.id }, "User session added");
+            } catch (err) {
+                console.error("[SocketService] Connection handler error:", err.message);
             }
-            connectedUsers.get(userId).socketIds.add(socket.id);
-            logger({ userId, socketId: socket.id }, "User session added");
         }
 
         socket.on("disconnect", () => {
-            if (userId && connectedUsers.has(userId)) {
-                const userData = connectedUsers.get(userId);
-                userData.socketIds.delete(socket.id);
-                
-                if (userData.socketIds.size === 0) {
-                    connectedUsers.delete(userId);
-                    // Broadcast that this user is now offline
-                    io.emit("user_status_change", { userId, status: "offline" });
-                    logger({ userId }, "User fully disconnected");
+            try {
+                if (userId && connectedUsers.has(userId)) {
+                    const userData = connectedUsers.get(userId);
+                    userData.socketIds.delete(socket.id);
+                    
+                    if (userData.socketIds.size === 0) {
+                        connectedUsers.delete(userId);
+                        io.emit("user_status_change", { userId, status: "offline" });
+                        logger({ userId }, "User fully disconnected");
+                    }
                 }
+            } catch (err) {
+                console.error("[SocketService] Disconnect error:", err.message);
             }
         });
 
         // Handle typing events
         socket.on("typing", (data) => {
-            // data: { receiverId, isTyping }
-            socket.to(`user_${data.receiverId}`).emit("display_typing", {
-                senderId: userId,
-                isTyping: data.isTyping
-            });
+            try {
+                socket.to(`user_${data.receiverId}`).emit("display_typing", {
+                    senderId: userId,
+                    isTyping: data.isTyping
+                });
+            } catch (err) {
+                console.error("[SocketService] Typing event error:", err.message);
+            }
+        });
+
+        socket.on("error", (err) => {
+            console.error("[SocketService] Socket error:", err.message);
         });
     });
 

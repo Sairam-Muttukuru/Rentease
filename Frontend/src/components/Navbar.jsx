@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Menu, X, Sun, Moon, User, LogOut, LayoutDashboard, ChevronDown, Bookmark, ShoppingBag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext'; // Added missing import heart
-import logo from "/favicon.png";
+const logo = "/favicon.png";
 import RevealOnScroll from "../components/RevealOnScroll";
 import { useTheme } from "../context/ThemeContext";
 

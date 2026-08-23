@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import logo from "/favicon.png";
+const logo = "/favicon.png";
 
 const PreLoader = ({ userName, isDarkMode, role = 'Resident' }) => {
     const firstName = userName ? userName.split(' ')[0] : role;

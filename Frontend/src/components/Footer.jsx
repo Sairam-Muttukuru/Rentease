@@ -1,5 +1,5 @@
 import React from "react";
-import logo from "/favicon.png";
+const logo = "/favicon.png";
 
 const Footer = () => (
   <footer className="bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 py-12">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Home, Building2, UserCheck, ShieldCheck, Sparkles } from 'lucide-react';
-import logo from "/favicon.png";
+const logo = "/favicon.png";
 // Exported for use in App.jsx as a first-launch preloader
 export const RentEaseLoader = ({ onComplete }) => {
     const [loadingStep, setLoadingStep] = useState(0);

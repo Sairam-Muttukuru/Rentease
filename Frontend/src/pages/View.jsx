@@ -94,7 +94,7 @@ import {
   ShieldAlert
 } from 'lucide-react';
 
-import logo from "/favicon.png";
+const logo = "/favicon.png";
 
 import RevealOnScroll from '../components/RevealOnScroll';
 import { useNavigate } from 'react-router-dom';

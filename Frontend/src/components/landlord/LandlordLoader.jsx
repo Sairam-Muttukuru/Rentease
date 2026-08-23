@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Building2, ShieldCheck, TrendingUp, Users, Wallet } from 'lucide-react';
-import logo from "/favicon.png";
+const logo = "/favicon.png";
 
 const LandlordLoader = ({ onComplete, isDarkMode }) => {
     const [progress, setProgress] = useState(0);

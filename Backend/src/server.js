@@ -8,14 +8,14 @@ const server = http.createServer(app);
 
 app.get("/", (req, res) => {
     res.send("Server is running");
-})
+});
+
 // Initialize Socket.io
 socketService.init(server);
 
 const PORT = process.env.PORT || 5000;
+
 server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT} with WebSockets`);
-    // Start Cron Jobs
+    console.log(`🚀 Server running on port ${PORT} with WebSockets`);
     initRentScheduler();
-    require("./script/RentReminderCron");
 });

@@ -21,7 +21,7 @@ import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import Swal from 'sweetalert2';
-import logo from "/favicon.png"; // UPDATED LOGO
+const logo = "/favicon.png"; // UPDATED LOGO
 import PreLoader from '../components/ui/PreLoader';
 import { initSocket, disconnectSocket } from '../utils/socket';
 
@@ -3079,13 +3079,13 @@ const ServiceProvider = () => {
             {/* SIDEBAR */}
             <aside className={`w-72 bg-white/95  dark:bg-slate-900/95 backdrop-blur-xl h-screen fixed left-0 top-0 flex flex-col text-slate-600 dark:text-slate-300 z-50 border-r border-slate-200 dark:border-white/10 shadow-2xl transition-all duration-300 transform lg:translate-x-0 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
                 <div className="p-8 border-b border-slate-200 dark:border-white/10">
-                    <div className="flex items-center gap-3">
+                    <Link to="/" className="flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity">
                         <div className="relative group">
                             <div className="absolute inset-0 bg-sky-500 blur-[20px] opacity-20 group-hover:opacity-40 transition-opacity duration-500 rounded-full"></div>
                             <img src="/favicon.png" alt="RentEase" className="w-14 h-13 object-contain relative z-10 drop-shadow-lg" />
                         </div>
                         <span className="text-2xl font-black text-slate-900 dark:text-white relative right-4 tracking-tighter">RentEase</span>
-                    </div>
+                    </Link>
                 </div>
 
                 {/* Partner Status Card - REMOVED */}

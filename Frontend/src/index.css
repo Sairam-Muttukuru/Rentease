@@ -2,10 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-/* IMPORTANT: Reset margins to prevent layout breakage */
+/* Global Typography - Inter font */
+*,
+*::before,
+*::after,
+body,
+html,
+input,
+button,
+textarea,
+select {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
 body,
 html {
-  font-family: 'Outfit', sans-serif;
   margin: 0;
   padding: 0;
   width: 100%;

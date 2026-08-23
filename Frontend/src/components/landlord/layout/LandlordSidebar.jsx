@@ -43,7 +43,11 @@ const LandlordSidebar = ({ activeTab, setActiveTab, handleLogout, isDarkMode, is
                 {isExpanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
             </button>
 
-            <div className={`border-b flex flex-col items-center transition-all duration-500 ease-in-out ${isExpanded ? 'p-8 pb-1 relative bottom-3' : 'p-4 pt-10'} ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+            <Link
+                to="/"
+                title="Go to Home"
+                className={`border-b flex flex-col items-center cursor-pointer hover:opacity-90 transition-all duration-500 ease-in-out ${isExpanded ? 'p-8 pb-1 relative bottom-3' : 'p-4 pt-10'} ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}
+            >
                 <div className={`flex ${isExpanded ? 'flex-col items-center' : 'justify-center'} w-full`}>
                     <div className={`flex items-center gap-3 w-full ${isExpanded ? 'justify-start mb-2' : 'justify-center'}`}>
                         <div className="relative group shrink-0">
@@ -69,7 +73,7 @@ const LandlordSidebar = ({ activeTab, setActiveTab, handleLogout, isDarkMode, is
                         </>
                     )}
                 </div>
-            </div>
+            </Link>
 
             <nav className={`flex-1 ${isExpanded ? 'p-4' : 'p-3'} space-y-2 mt-4 overflow-y-auto scrollbar-hide flex flex-col items-center`}>
                 {LANDLORD_MENU.map((item) => (

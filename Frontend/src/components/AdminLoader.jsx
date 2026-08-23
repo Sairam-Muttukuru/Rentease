@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldAlert, Database, Lock, Globe, Zap } from 'lucide-react';
-import logo from "/favicon.png";
+const logo = "/favicon.png";
 
 const AdminLoader = ({ onComplete, isDarkMode }) => {
     const [progress, setProgress] = useState(0);

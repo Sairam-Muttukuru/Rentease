@@ -207,36 +207,42 @@ const Hero = () => {
   };
 
   return (
-    <section className="relative pt-24 pb-16 lg:pt-32 lg:pb-24 overflow-hidden min-h-screen flex flex-col justify-center">
+    <section className="relative pt-14 pb-12 lg:pt-16 lg:pb-16 overflow-hidden min-h-screen flex flex-col justify-center">
       {/* Background Gradients */}
       {theme === 'dark' && (
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full z-0 pointer-events-none">
-          <div className="absolute top-20 left-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-[100px] animate-pulse" />
-          <div className="absolute top-40 right-1/4 w-96 h-96 bg-blue-400/20 rounded-full blur-[100px] animate-pulse delay-1000" />
+          <div className="absolute top-16 left-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-[100px] animate-pulse" />
+          <div className="absolute top-32 right-1/4 w-96 h-96 bg-blue-400/20 rounded-full blur-[100px] animate-pulse delay-1000" />
         </div>
       )}
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
         <RevealOnScroll delay={200}>
-          <div className="relative w-40 h-40 md:w-64 md:h-64 mx-auto mb-6 group">
+          <div
+            onClick={() => {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+              navigate('/');
+            }}
+            className="relative w-48 h-48 md:w-72 md:h-72 mx-auto mt-4 mb-4 group cursor-pointer"
+          >
             {theme === 'dark' && (
-              <div className="absolute inset-0 bg-indigo-500/30 rounded-full blur-3xl group-hover:bg-indigo-500/50 transition-all duration-700"></div>
+              <div className="absolute inset-0 bg-indigo-500/35 rounded-full blur-3xl group-hover:bg-indigo-500/60 transition-all duration-700"></div>
             )}
             <img
               src="/favicon.png"
               alt="RentEase Logo"
-              className={`relative w-full h-full object-contain hover:scale-110 transition-transform duration-700 ease-in-out ${theme === 'dark' ? 'drop-shadow-2xl' : ''
+              className={`relative w-full h-full object-contain hover:scale-105 transition-transform duration-700 ease-in-out ${theme === 'dark' ? 'drop-shadow-[0_20px_50px_rgba(79,70,229,0.35)]' : 'drop-shadow-lg'
                 }`}
             />
           </div>
-          <h1 className="text-5xl md:text-7xl dark:text-slate-200 font-extrabold tracking-tight mb-4 leading-tight text-slate-900">
+          <h1 className="text-5xl md:text-7xl dark:text-slate-200 font-extrabold tracking-tight mb-3 leading-tight text-slate-900">
             Rental Management <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">Reimagined.</span>
           </h1>
         </RevealOnScroll>
 
         <RevealOnScroll delay={400}>
-          <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-8 leading-relaxed">
+          <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto mb-6 leading-relaxed">
             The all-in-one platform connecting Tenants, Landlords, and Admins.
           </p>
         </RevealOnScroll>

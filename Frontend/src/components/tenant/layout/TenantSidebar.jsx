@@ -54,8 +54,11 @@ const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout
             </button>
 
             {/* ── Logo Section ── */}
-            <div className={`
-                flex items-center border-b overflow-hidden
+            <Link
+                to="/"
+                title="Go to Home"
+                className={`
+                flex items-center border-b overflow-hidden cursor-pointer hover:opacity-90
                 transition-all duration-500 ease-in-out
                 ${isExpanded ? 'px-6 py-5 gap-3' : 'px-1 py-5 justify-center gap-0'}
                 ${isDarkMode ? 'border-white/5' : 'border-slate-100'}
@@ -86,7 +89,7 @@ const TenantSidebar = ({ isSidebarOpen, setIsSidebarOpen, userName, handleLogout
                         Tenant Dashboard
                     </span>
                 </div>
-            </div>
+            </Link>
 
             {/* ── Nav Links ── */}
             <nav className={`
